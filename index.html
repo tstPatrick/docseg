@@ -270,6 +270,22 @@
 </head>
 <body>
 
+<!-- TELA DE ATIVAÇÃO (código da empresa) -->
+<div class="modal-bg" id="activationScreen" style="z-index:300;">
+  <div class="modal" style="border-radius:16px 16px 0 0; max-width:480px; margin:auto;">
+    <h2 style="margin-top:4px;">Ativar o DocSeg neste aparelho</h2>
+    <p class="desc">Digite o código que você recebeu do técnico de segurança do trabalho da sua empresa.</p>
+    <div class="field">
+      <label>Código da empresa</label>
+      <input type="text" id="actCodeInput" placeholder="Ex: PLASKEM4821" style="text-align:center;font-size:18px;letter-spacing:1px;text-transform:uppercase;font-weight:700;">
+    </div>
+    <p id="actErr" style="display:none;color:var(--red-dark);font-size:12.5px;margin:-6px 0 10px;"></p>
+    <button type="button" class="btn btn-primary" style="width:100%" id="actConfirm">Ativar</button>
+    <p class="hint" style="text-align:center;margin-top:14px;">Não tem um código? Fale com o responsável pela segurança do trabalho da sua empresa.</p>
+    <button type="button" id="actManagerBypass" style="display:block;margin:16px auto 4px;background:none;border:none;color:#918E86;font-size:11.5px;text-decoration:underline;cursor:pointer;">Sou o técnico responsável — configurar do zero</button>
+  </div>
+</div>
+
 <div class="topbar">
   <div style="display:flex;align-items:center;gap:10px;min-width:0;">
     <button class="icon-btn" id="btnMenu" title="Documentos" style="margin-right:2px;">☰</button>
@@ -454,20 +470,49 @@
     </div>
     <input type="file" accept="application/json" id="importCfgFile" style="display:none;">
 
-    <p class="desc" style="margin-bottom:6px; margin-top:18px; border-top:1px solid var(--line); padding-top:14px;">Link de configuração para uma empresa</p>
-    <p class="hint" style="margin-top:-4px;margin-bottom:10px;">Gera um link (e QR code) que já entra com as configurações desta empresa aplicadas sozinho — envie para o grupo dos colaboradores. Não inclui logos nem senha (essas ficam por aparelho).</p>
-    <button type="button" class="btn btn-primary" style="width:100%;margin-bottom:10px;" id="btnGenLink">🔗 Gerar link e QR code desta configuração</button>
-    <div id="genLinkResult" style="display:none;">
+    <div id="gerenteOnlyBlock">
+    <p class="desc" style="margin-bottom:6px; margin-top:18px; border-top:1px solid var(--line); padding-top:14px;">Perguntas dos formulários</p>
+    <p class="hint" style="margin-top:-4px;margin-bottom:10px;">Edite, adicione ou remova perguntas de cada checklist. Toque no título de cada grupo para abrir.</p>
+    <div id="questionEditor"></div>
+    <div class="row2" style="margin-top:4px;">
+      <button type="button" class="btn btn-ghost" id="btnResetQuestions">Restaurar padrão de fábrica</button>
+      <button type="button" class="btn btn-primary" id="btnSaveQuestions">Salvar perguntas</button>
+    </div>
+
+    <p class="desc" style="margin-bottom:6px; margin-top:18px; border-top:1px solid var(--line); padding-top:14px;">Publicar para uma empresa (gera códigos de acesso)</p>
+    <p class="hint" style="margin-top:-4px;margin-bottom:10px;">Cria/atualiza um código de <b>técnico</b> (acesso completo, igual ao seu) e um código de <b>colaborador</b> (só preenche e envia) para esta empresa, usando a configuração e as perguntas acima. Requer a URL do Google Apps Script salva em cima.</p>
+    <div class="field"><label>Nome da empresa</label><input type="text" id="pubEmpresaNome" placeholder="Ex: Plaskem Embalagens"></div>
+    <button type="button" class="btn btn-primary" style="width:100%;margin-bottom:10px;" id="btnPublishCompany">📡 Publicar / atualizar configuração desta empresa</button>
+    <div id="publishResult" style="display:none;">
       <div class="field">
-        <label>Link para enviar aos colaboradores</label>
+        <label>Código do técnico/gerente (acesso completo)</label>
         <div style="display:flex;gap:6px;">
-          <input type="text" id="genLinkOutput" readonly style="flex:1;font-size:12px;" onclick="this.select()">
-          <button type="button" id="btnCopyLink" style="flex-shrink:0;width:60px;border:1.5px solid #D6D3CC;background:#fff;border-radius:8px;font-size:12.5px;cursor:pointer;">Copiar</button>
+          <input type="text" id="pubAdminCode" readonly style="flex:1;font-weight:700;text-align:center;" onclick="this.select()">
+          <button type="button" class="copybtn" data-copy="pubAdminCode" style="flex-shrink:0;width:60px;border:1.5px solid #D6D3CC;background:#fff;border-radius:8px;font-size:12.5px;cursor:pointer;">Copiar</button>
         </div>
       </div>
-      <div style="text-align:center;margin-bottom:14px;">
-        <div id="genLinkQR" style="display:inline-block;padding:10px;background:#fff;border:1px solid var(--line);border-radius:10px;"></div>
+      <div class="field">
+        <label>Código do colaborador (envie este pro grupo)</label>
+        <div style="display:flex;gap:6px;">
+          <input type="text" id="pubUserCode" readonly style="flex:1;font-weight:700;text-align:center;" onclick="this.select()">
+          <button type="button" class="copybtn" data-copy="pubUserCode" style="flex-shrink:0;width:60px;border:1.5px solid #D6D3CC;background:#fff;border-radius:8px;font-size:12.5px;cursor:pointer;">Copiar</button>
+        </div>
       </div>
+      <div class="field">
+        <label>Link direto (se o app for aberto pelo navegador/PWA)</label>
+        <div style="display:flex;gap:6px;">
+          <input type="text" id="pubUserLink" readonly style="flex:1;font-size:11.5px;" onclick="this.select()">
+          <button type="button" class="copybtn" data-copy="pubUserLink" style="flex-shrink:0;width:60px;border:1.5px solid #D6D3CC;background:#fff;border-radius:8px;font-size:12.5px;cursor:pointer;">Copiar</button>
+        </div>
+      </div>
+      <div style="text-align:center;margin:10px 0 14px;">
+        <p class="hint" style="margin-bottom:4px;">QR code do colaborador:</p>
+        <div id="pubQR" style="display:inline-block;padding:10px;background:#fff;border:1px solid var(--line);border-radius:10px;"></div>
+      </div>
+    </div>
+
+    <p class="desc" style="margin-bottom:6px; margin-top:18px; border-top:1px solid var(--line); padding-top:14px;">Zona de risco</p>
+    <button type="button" class="btn btn-ghost" style="width:100%;color:var(--red-dark);" id="btnReconfigDevice">🔄 Reconfigurar este aparelho (sair e pedir novo código)</button>
     </div>
   </div>
 </div>
@@ -503,13 +548,13 @@ const state = makeEmptyState();
 function saveDraft(){ try{ localStorage.setItem('pt_draft', JSON.stringify(state)); }catch(e){} }
 function loadDraft(){ try{ const d=localStorage.getItem('pt_draft'); if(d){ Object.assign(state, JSON.parse(d)); } }catch(e){} }
 
-/* ============ QUESTION SETS ============ */
-const Q_ELETRICO = [
+/* ============ QUESTION SETS (padrões de fábrica) ============ */
+const Q_ELETRICO_DEFAULT = [
   ["e1","O pessoal está devidamente qualificado, habilitado e treinado para execução das atividades?"],
   ["e2","As fontes de energias estão isoladas?"],
   ["e3","As ferramentas manuais estão com os devidos isolamentos?"]
 ];
-const Q_ALTURA = [
+const Q_ALTURA_DEFAULT = [
   ["a1","Todas as pessoas envolvidas no trabalho em altura possuem treinamento de NR-35?"],
   ["a2","Área de trabalho isolada e sinalizada?"],
   ["a3","As condições climáticas estão adequadas para realização da atividade?"],
@@ -521,12 +566,12 @@ const Q_ALTURA = [
   ["a9","A escada superior a 3m, possui travamento?"],
   ["a10","A escada de alumínio, para uso residencial, está em boas condições?"]
 ];
-const Q_SAUDE = [
+const Q_SAUDE_DEFAULT = [
   ["s1","Você faz uso de algum remédio diariamente e esqueceu de tomar a dose do dia de hoje?"],
   ["s2","Você fez uso de bebidas alcoólicas nas últimas 12 horas que agora esteja produzindo ressaca (náusea, dor de cabeça, tontura, outros)?"],
   ["s3","Você sente algum mal estar ou desconforto quando trabalha em altura?"]
 ];
-const Q_INSTALACAO = [
+const Q_INSTALACAO_DEFAULT = [
   ["i1","AR para a atividade está disponível?"],
   ["i2","Materiais de sinalização (cones, fitas, etc.) disponíveis?"],
   ["i3","Equipamentos e ferramentas foram inspecionados? Área limpa e organizada?"],
@@ -535,17 +580,137 @@ const Q_INSTALACAO = [
 const EPI_LIST = ["Capacete de segurança com jugular","Cinto de segurança com talabarte","Calçado de segurança","Blusão e calça com faixa refletiva","Óculos de segurança","Luvas de segurança"];
 const FERRAMENTAS_LIST = ["Kit FTTH","Alicate de corte","Fusimec catraca","Furadeira","Martelo"];
 
+/* ============ PERGUNTAS PERSONALIZÁVEIS (override salvo pelo gerente) ============ */
+const QUESTIONS_KEY = 'pt_custom_questions';
+function loadCustomQuestions(){ try{ return JSON.parse(localStorage.getItem(QUESTIONS_KEY)||'{}'); }catch(e){ return {}; } }
+function saveCustomQuestions(obj){ try{ localStorage.setItem(QUESTIONS_KEY, JSON.stringify(obj)); }catch(e){} }
+function getQ(key){
+  const custom = loadCustomQuestions();
+  if(Array.isArray(custom[key]) && custom[key].length) return custom[key];
+  const defaults = {
+    eletrico: Q_ELETRICO_DEFAULT, altura: Q_ALTURA_DEFAULT, saude: Q_SAUDE_DEFAULT, instalacao: Q_INSTALACAO_DEFAULT,
+    veiculoBasico: VEICULO_BASICO_DEFAULT, veiculoManut: VEICULO_MANUT_DEFAULT, escada: ESCADA_ITEMS_DEFAULT
+  };
+  return defaults[key] || [];
+}
+
+const QUESTION_GROUPS = [
+  {key:'eletrico', label:'PT — Proteção contra choque elétrico'},
+  {key:'altura', label:'PT — Trabalhos em altura'},
+  {key:'saude', label:'PT — Questionário de saúde'},
+  {key:'instalacao', label:'PT — Checklist da instalação'},
+  {key:'veiculoBasico', label:'Checklist de Veículo — Itens básicos'},
+  {key:'veiculoManut', label:'Checklist de Veículo — Manutenção/Conservação'},
+  {key:'escada', label:'Checklist de Escada — Itens a verificar'}
+];
+let questionEditorState = null;
+function renderQuestionEditor(){
+  questionEditorState = {};
+  QUESTION_GROUPS.forEach(g=>{ questionEditorState[g.key] = getQ(g.key).map(item=>item.slice()); });
+  paintQuestionEditor();
+}
+function paintQuestionEditor(){
+  const box = document.getElementById('questionEditor');
+  if(!box) return;
+  box.innerHTML = QUESTION_GROUPS.map(g=>{
+    const rows = questionEditorState[g.key].map((item,idx)=>`
+      <div style="display:flex;gap:6px;margin-bottom:6px;align-items:flex-start;">
+        <textarea data-qgroup="${g.key}" data-qidx="${idx}" style="flex:1;min-height:40px;font-size:12.5px;padding:7px 9px;border:1px solid #D6D3CC;border-radius:8px;font-family:inherit;">${(item[1]||'').replace(/</g,'&lt;')}</textarea>
+        <button type="button" data-qrm="${g.key}:${idx}" style="width:32px;height:32px;flex-shrink:0;border:1.5px solid #D6D3CC;background:#fff;border-radius:8px;cursor:pointer;">✕</button>
+      </div>`).join('');
+    return `<details style="border:1px solid var(--line);border-radius:8px;margin-bottom:8px;padding:8px 10px;">
+      <summary style="font-size:12.5px;font-weight:700;cursor:pointer;">${g.label} <span style="font-weight:400;color:#918E86;">(${questionEditorState[g.key].length})</span></summary>
+      <div style="margin-top:10px;">${rows}</div>
+      <button type="button" data-qadd="${g.key}" style="margin-top:2px;border:1.5px dashed #D6D3CC;background:#fff;border-radius:8px;padding:7px 10px;font-size:12px;cursor:pointer;color:var(--red-dark);">+ Adicionar pergunta</button>
+    </details>`;
+  }).join('');
+  box.querySelectorAll('textarea[data-qgroup]').forEach(ta=>{
+    ta.oninput = ()=>{
+      const g = ta.getAttribute('data-qgroup'), idx = parseInt(ta.getAttribute('data-qidx'),10);
+      questionEditorState[g][idx][1] = ta.value;
+    };
+  });
+  box.querySelectorAll('[data-qrm]').forEach(btn=>{
+    btn.onclick = ()=>{
+      const [g,idxStr] = btn.getAttribute('data-qrm').split(':');
+      questionEditorState[g].splice(parseInt(idxStr,10),1);
+      paintQuestionEditor();
+    };
+  });
+  box.querySelectorAll('[data-qadd]').forEach(btn=>{
+    btn.onclick = ()=>{
+      const g = btn.getAttribute('data-qadd');
+      const newId = g + '_' + Date.now().toString(36);
+      questionEditorState[g].push([newId, '']);
+      paintQuestionEditor();
+    };
+  });
+}
+
+/* ============ CÓDIGO DA EMPRESA / PAPÉIS (gerente x colaborador) ============ */
+// Coloque aqui a URL fixa do SEU Google Apps Script (a mesma para todas as
+// empresas — os dados de cada empresa ficam separados dentro dele por código).
+// Isso permite que um aparelho novo (ainda sem nada configurado) consiga
+// ativar-se digitando só o código, sem precisar colar a URL do script antes.
+const DEFAULT_SCRIPT_URL = "";
+const ROLE_KEY = 'docseg_role';
+const ACTIVATED_KEY = 'docseg_activated';
+function getRole(){ return localStorage.getItem(ROLE_KEY) || 'colaborador'; }
+function isActivated(){ return localStorage.getItem(ACTIVATED_KEY) === '1'; }
+function applyRoleVisibility(){
+  const role = getRole();
+  const btn = document.getElementById('btnSettings');
+  if(btn) btn.style.display = (role === 'gerente') ? 'flex' : 'none';
+}
+function maybeShowActivationScreen(){
+  const screen = document.getElementById('activationScreen');
+  if(!screen) return;
+  if(isActivated()){ screen.classList.remove('show'); return; }
+  screen.classList.add('show');
+  const params = new URLSearchParams(location.search);
+  const codeFromUrl = params.get('codigo');
+  if(codeFromUrl){
+    document.getElementById('actCodeInput').value = codeFromUrl.toUpperCase();
+    const clean = location.pathname + (location.hash||'');
+    history.replaceState({}, document.title, clean);
+    document.getElementById('actConfirm').click();
+  }
+}
+async function activateWithCode(code){
+  const scriptUrl = (loadCfg().scriptUrl) || DEFAULT_SCRIPT_URL;
+  if(!scriptUrl) throw new Error('Nenhum backend configurado neste app. Fale com quem preparou o aplicativo.');
+  const controller = new AbortController();
+  const timer = setTimeout(()=>controller.abort(), 12000);
+  let resp, data;
+  try{
+    resp = await fetch(scriptUrl + '?action=getCompanyConfig&code=' + encodeURIComponent(code), {signal:controller.signal});
+    data = await resp.json();
+  }catch(e){
+    throw new Error(e.name === 'AbortError' ? 'Tempo esgotado. Confira sua conexão e tente de novo.' : 'Não foi possível verificar o código. Confira sua conexão.');
+  }finally{
+    clearTimeout(timer);
+  }
+  if(data.error) throw new Error(data.error);
+  const cfgToSave = Object.assign({}, data.cfg||{}, {scriptUrl: scriptUrl});
+  saveCfg(cfgToSave);
+  if(data.questions) saveCustomQuestions(data.questions);
+  localStorage.setItem(ROLE_KEY, data.role === 'gerente' ? 'gerente' : 'colaborador');
+  localStorage.setItem(ACTIVATED_KEY, '1');
+  localStorage.setItem('docseg_company_code', code);
+  return data;
+}
+
 /* ============ STEP DEFINITIONS ============ */
 const steps = [
   {key:"ident", name:"Identificação", render: renderIdent},
   {key:"trabalho", name:"Trabalho a ser realizado", render: renderTrabalho},
   {key:"ferramentas", name:"Ferramentas", render: renderFerramentas},
-  {key:"eletrico", name:"Proteção contra choque elétrico", render: () => renderQuestions("eletrico", Q_ELETRICO, true)},
+  {key:"eletrico", name:"Proteção contra choque elétrico", render: () => renderQuestions("eletrico", getQ('eletrico'), true)},
   {key:"altura", name:"Trabalhos em altura", render: renderAltura},
   {key:"outras", name:"Outras atividades", render: renderOutras},
   {key:"epis", name:"Equipamentos de Proteção (EPIs)", render: renderEpis},
   {key:"saude", name:"Questionário de saúde", render: renderSaude},
-  {key:"instalacao", name:"Checklist da instalação", render: () => renderQuestions("instalacao", Q_INSTALACAO, false)},
+  {key:"instalacao", name:"Checklist da instalação", render: () => renderQuestions("instalacao", getQ('instalacao'), false)},
   {key:"equipe", name:"Equipe autorizada", render: renderEquipe},
   {key:"final", name:"Responsáveis e encerramento", render: renderFinal}
 ];
@@ -638,7 +803,7 @@ function renderQuestions(prefix, list, threeState){
 }
 
 function renderAltura(){
-  const body = Q_ALTURA.map(([id,txt])=>questionRow("altura",id,txt,true)).join('') + `
+  const body = getQ('altura').map(([id,txt])=>questionRow("altura",id,txt,true)).join('') + `
     <div class="field" style="margin-top:6px">
       <label>Foram tomadas medidas de proteção coletiva? Quais?</label>
       <textarea id="f_protColetiva" placeholder="Descreva as medidas">${state.alturaProtecaoColetiva}</textarea>
@@ -673,7 +838,7 @@ function renderEpis(){
 }
 
 function renderSaude(){
-  const body = Q_SAUDE.map(([id,txt])=>questionRow("saude",id,txt,false)).join('') + `
+  const body = getQ('saude').map(([id,txt])=>questionRow("saude",id,txt,false)).join('') + `
     <div class="warn-box" style="margin-top:12px">Qualquer resposta "sim" — o avaliado deve ser encaminhado, pelo responsável, ao serviço médico.</div>
     <div class="field"><label>Nome do colaborador avaliado</label><input type="text" id="f_colabNome" value="${state.colaboradorNome}" placeholder="Nome completo"></div>
   `;
@@ -1200,6 +1365,11 @@ function openSettingsModal(){
   document.getElementById('removePinBtn').style.display = hasPin() ? 'inline' : 'none';
   bindLogoInputs();
   document.getElementById('sheetAuditBox').style.display = 'none';
+  renderQuestionEditor();
+  document.getElementById('pubEmpresaNome').value = cfg.empresaPadrao || '';
+  document.getElementById('publishResult').style.display = 'none';
+  document.getElementById('pubAdminCode').value = cfg.publishedAdminCode || '';
+  document.getElementById('pubUserCode').value = cfg.publishedUserCode || '';
   document.getElementById('settingsModal').classList.add('show');
   if(cfg.scriptUrl){
     fetch(cfg.scriptUrl + '?action=peekNumber&prefix=' + encodeURIComponent(cfg.ptPrefix||''))
@@ -1332,41 +1502,13 @@ document.getElementById('importCfgFile').onchange = ()=>{
   reader.readAsText(file);
 };
 
-/* ============ LINK/QR DE CONFIGURAÇÃO AUTOMÁTICA (multi-empresa) ============ */
+/* ============ LINK DE CONFIGURAÇÃO RÁPIDA (fallback simples, sem backend) ============ */
 function encodeCfgForLink(obj){
   return btoa(unescape(encodeURIComponent(JSON.stringify(obj))));
 }
 function decodeCfgFromLink(str){
   return JSON.parse(decodeURIComponent(escape(atob(str))));
 }
-document.getElementById('btnGenLink').onclick = ()=>{
-  const cfg = loadCfg();
-  const linkBundle = {
-    v:1,
-    cfg: {
-      scriptUrl: cfg.scriptUrl||'', destEmail: cfg.destEmail||'', empresaPadrao: cfg.empresaPadrao||'',
-      ptPrefix: cfg.ptPrefix||'', themeColor: cfg.themeColor||'#C8272A', themeColor2: cfg.themeColor2||'#F4B400',
-      soundEnabled: cfg.soundEnabled !== false
-    }
-  };
-  const encoded = encodeCfgForLink(linkBundle);
-  const baseUrl = location.href.split('?')[0].split('#')[0];
-  const link = baseUrl + '?cfg=' + encoded;
-  document.getElementById('genLinkOutput').value = link;
-  document.getElementById('genLinkResult').style.display = 'block';
-  document.getElementById('genLinkQR').innerHTML = '';
-  if(window.QRCode){
-    new QRCode(document.getElementById('genLinkQR'), {text: link, width:180, height:180, colorDark:'#1B1D1F', colorLight:'#ffffff'});
-  } else {
-    document.getElementById('genLinkQR').textContent = 'QR indisponível offline — use o link acima.';
-  }
-};
-document.getElementById('btnCopyLink').onclick = ()=>{
-  const input = document.getElementById('genLinkOutput');
-  input.select();
-  try{ document.execCommand('copy'); toast('Link copiado!', 'ok'); }
-  catch(e){ navigator.clipboard && navigator.clipboard.writeText(input.value).then(()=>toast('Link copiado!','ok')); }
-};
 function applyCfgFromUrlIfPresent(){
   const params = new URLSearchParams(location.search);
   const encoded = params.get('cfg');
@@ -1382,6 +1524,125 @@ function applyCfgFromUrlIfPresent(){
     return false;
   }
 }
+
+/* ============ TELA DE ATIVAÇÃO (código da empresa) ============ */
+document.getElementById('actConfirm').onclick = async ()=>{
+  const code = document.getElementById('actCodeInput').value.trim().toUpperCase();
+  const errEl = document.getElementById('actErr');
+  errEl.style.display = 'none';
+  if(!code){ errEl.textContent = 'Digite o código.'; errEl.style.display='block'; return; }
+  const btn = document.getElementById('actConfirm');
+  btn.disabled = true; btn.textContent = 'Verificando...';
+  try{
+    const data = await activateWithCode(code);
+    document.getElementById('activationScreen').classList.remove('show');
+    applyTheme(loadCfg());
+    if(!state.empresaNome && data.cfg && data.cfg.empresaPadrao) state.empresaNome = data.cfg.empresaPadrao;
+    updateBrand();
+    applyRoleVisibility();
+    renderCurrentStep();
+    toast('Aparelho ativado para ' + (data.empresa||'sua empresa') + '!', 'ok');
+  }catch(err){
+    errEl.textContent = err.message || 'Não foi possível verificar o código.';
+    errEl.style.display = 'block';
+  } finally {
+    btn.disabled = false; btn.textContent = 'Ativar';
+  }
+};
+document.getElementById('actCodeInput').addEventListener('keydown', (e)=>{ if(e.key==='Enter') document.getElementById('actConfirm').click(); });
+document.getElementById('actManagerBypass').onclick = ()=>{
+  localStorage.setItem(ROLE_KEY, 'gerente');
+  localStorage.setItem(ACTIVATED_KEY, '1');
+  document.getElementById('activationScreen').classList.remove('show');
+  applyRoleVisibility();
+  toast('Modo técnico ativado. Configure em ⚙ e depois publique para as empresas.', 'ok');
+};
+document.getElementById('btnReconfigDevice').onclick = ()=>{
+  if(confirm('Isso vai pedir um novo código neste aparelho (a configuração atual continua salva até você ativar outro código). Continuar?')){
+    localStorage.removeItem(ACTIVATED_KEY);
+    localStorage.removeItem(ROLE_KEY);
+    document.getElementById('settingsModal').classList.remove('show');
+    document.getElementById('actCodeInput').value = '';
+    document.getElementById('actErr').style.display = 'none';
+    document.getElementById('activationScreen').classList.add('show');
+  }
+};
+
+/* ============ PUBLICAR CONFIGURAÇÃO DA EMPRESA (gera os 2 códigos) ============ */
+document.getElementById('btnPublishCompany').onclick = async ()=>{
+  const cfg = loadCfg();
+  const empresa = document.getElementById('pubEmpresaNome').value.trim();
+  if(!empresa){ toast('Digite o nome da empresa.', 'err'); return; }
+  if(!cfg.scriptUrl){ toast('Salve a URL do Google Apps Script antes de publicar.', 'err'); return; }
+  const btn = document.getElementById('btnPublishCompany');
+  btn.disabled = true; const oldTxt = btn.textContent; btn.textContent = 'Publicando...';
+  try{
+    const cleaned = {};
+    Object.keys(questionEditorState||{}).forEach(k=>{
+      cleaned[k] = questionEditorState[k].filter(([id,txt])=>txt && txt.trim());
+    });
+    const payload = {
+      action: 'publishCompany',
+      empresa: empresa,
+      cfg: {
+        destEmail: cfg.destEmail||'', empresaPadrao: empresa,
+        ptPrefix: cfg.ptPrefix||'', themeColor: cfg.themeColor||'#C8272A', themeColor2: cfg.themeColor2||'#F4B400',
+        soundEnabled: cfg.soundEnabled !== false
+      },
+      questions: cleaned,
+      adminCode: cfg.publishedAdminCode || '',
+      userCode: cfg.publishedUserCode || ''
+    };
+    const resp = await fetch(cfg.scriptUrl, {method:'POST', body: JSON.stringify(payload)});
+    const data = await resp.json();
+    if(data.error) throw new Error(data.error);
+    saveCustomQuestions(cleaned);
+    cfg.publishedAdminCode = data.adminCode;
+    cfg.publishedUserCode = data.userCode;
+    saveCfg(cfg);
+    document.getElementById('pubAdminCode').value = data.adminCode;
+    document.getElementById('pubUserCode').value = data.userCode;
+    const baseUrl = location.href.split('?')[0].split('#')[0];
+    const userLink = baseUrl + '?codigo=' + encodeURIComponent(data.userCode);
+    document.getElementById('pubUserLink').value = userLink;
+    document.getElementById('publishResult').style.display = 'block';
+    document.getElementById('pubQR').innerHTML = '';
+    if(window.QRCode){
+      new QRCode(document.getElementById('pubQR'), {text: userLink, width:180, height:180, colorDark:'#1B1D1F', colorLight:'#ffffff'});
+    } else {
+      document.getElementById('pubQR').textContent = 'QR indisponível offline — use o código ou link acima.';
+    }
+    toast('Empresa publicada! Copie os códigos abaixo.', 'ok');
+  }catch(err){
+    toast(err.message || 'Não foi possível publicar. Confira a URL do script e a conexão.', 'err');
+  } finally {
+    btn.disabled = false; btn.textContent = oldTxt;
+  }
+};
+document.querySelectorAll('.copybtn').forEach(btn=>{
+  btn.onclick = ()=>{
+    const input = document.getElementById(btn.getAttribute('data-copy'));
+    if(!input) return;
+    input.select();
+    try{ document.execCommand('copy'); toast('Copiado!', 'ok'); }
+    catch(e){ navigator.clipboard && navigator.clipboard.writeText(input.value).then(()=>toast('Copiado!','ok')); }
+  };
+});
+document.getElementById('btnSaveQuestions').onclick = ()=>{
+  const cleaned = {};
+  Object.keys(questionEditorState||{}).forEach(k=>{
+    cleaned[k] = questionEditorState[k].filter(([id,txt])=>txt && txt.trim());
+  });
+  saveCustomQuestions(cleaned);
+  toast('Perguntas salvas — já valem para os próximos preenchimentos.', 'ok');
+};
+document.getElementById('btnResetQuestions').onclick = ()=>{
+  if(confirm('Restaurar todas as perguntas para o padrão de fábrica? Isso apaga qualquer personalização feita.')){
+    saveCustomQuestions({});
+    renderQuestionEditor();
+    toast('Perguntas restauradas ao padrão.', 'ok');
+  }
+};
 
 /* ============ PDF TEMPLATE BUILD ============ */
 function ansCell(prefix,id){
@@ -1431,13 +1692,13 @@ function buildPrintTemplate(){
     <div class="bar">PROTEÇÃO CONTRA CHOQUE ELÉTRICOS</div>
     <table>
       <tr><th class="ans">SIM</th><th class="ans">NÃO</th><th class="ans">N/A</th><th>PERGUNTA</th></tr>
-      ${Q_ELETRICO.map(([id,txt])=>`<tr>${threeCells('eletrico',id)}<td>${txt}</td></tr>`).join('')}
+      ${getQ('eletrico').map(([id,txt])=>`<tr>${threeCells('eletrico',id)}<td>${txt}</td></tr>`).join('')}
     </table>
 
     <div class="bar">TRABALHOS EM ALTURA</div>
     <table>
       <tr><th class="ans">SIM</th><th class="ans">NÃO</th><th class="ans">N/A</th><th>PERGUNTA</th></tr>
-      ${Q_ALTURA.map(([id,txt])=>`<tr>${threeCells('altura',id)}<td>${txt}</td></tr>`).join('')}
+      ${getQ('altura').map(([id,txt])=>`<tr>${threeCells('altura',id)}<td>${txt}</td></tr>`).join('')}
       <tr><td colspan="3">Medidas de proteção coletiva:</td><td>${T.alturaProtecaoColetiva||''}</td></tr>
     </table>
 
@@ -1456,14 +1717,14 @@ function buildPrintTemplate(){
     <div class="bar">QUESTIONÁRIO DE SAÚDE</div>
     <table>
       <tr><th class="ans">SIM</th><th class="ans">NÃO</th><th>PERGUNTA</th></tr>
-      ${Q_SAUDE.map(([id,txt])=>`<tr>${twoCells('saude',id)}<td>${txt}</td></tr>`).join('')}
+      ${getQ('saude').map(([id,txt])=>`<tr>${twoCells('saude',id)}<td>${txt}</td></tr>`).join('')}
     </table>
     <table><tr><td>Colaborador avaliado: ${T.colaboradorNome||''}</td></tr></table>
 
     <div class="bar">CHECKLIST DA INSTALAÇÃO</div>
     <table>
       <tr><th class="ans">SIM</th><th class="ans">NÃO</th><th>PERGUNTA</th></tr>
-      ${Q_INSTALACAO.map(([id,txt])=>`<tr>${twoCells('instalacao',id)}<td>${txt}</td></tr>`).join('')}
+      ${getQ('instalacao').map(([id,txt])=>`<tr>${twoCells('instalacao',id)}<td>${txt}</td></tr>`).join('')}
     </table>
 
     <div class="bar">EQUIPE AUTORIZADA A EXECUTAR A ATIVIDADE</div>
@@ -1790,7 +2051,7 @@ async function generateAndSendDoc(opts){
 
 /* ============ CHECKLIST DE VEÍCULO ============ */
 const VEICULO_OPTS = [["CONFORME","Conforme"],["IRREGULAR","Irregular"],["NA","N/A"]];
-const VEICULO_BASICO = [
+const VEICULO_BASICO_DEFAULT = [
   ['v1','Cintos de segurança'],['v2','Buzina'],['v3','Limpadores de para-brisas/esguicho'],
   ['v5','Desembaçador traseiro'],['v6','Extintor de incêndio se aplicável'],['v7','Freio de estacionamento'],
   ['v8','Retrovisores externos e internos'],['v9','Pneus sem danos ou desgaste anormal'],
@@ -1799,7 +2060,7 @@ const VEICULO_BASICO = [
   ['v16','Luz traseira'],['v17','Luz de freio'],['v18','Triângulo/cone de sinalização'],
   ['v19','Macaco e chave de roda disponíveis?'],['v20','Trava das portas/pino de segurança']
 ];
-const VEICULO_MANUT = [
+const VEICULO_MANUT_DEFAULT = [
   ['v21','Cabine climatizada'],['v22','Controle de manutenção do veículo'],
   ['v23','Nível de óleo do motor'],['v24','Nível de água do radiador']
 ];
@@ -1843,11 +2104,11 @@ function renderVeiculoPage(){
     </div></div>
 
     <div class="section active"><div class="section-head">1. Básico<small>Marque o estado de cada item</small></div><div class="section-body">
-      ${VEICULO_BASICO.map(([id,txt])=>genericQuestionRow(vState,id,txt,VEICULO_OPTS,'IRREGULAR')).join('')}
+      ${getQ('veiculoBasico').map(([id,txt])=>genericQuestionRow(vState,id,txt,VEICULO_OPTS,'IRREGULAR')).join('')}
     </div></div>
 
     <div class="section active"><div class="section-head">2. Manutenção / Conservação / Ergonomia</div><div class="section-body">
-      ${VEICULO_MANUT.map(([id,txt])=>genericQuestionRow(vState,id,txt,VEICULO_OPTS,'IRREGULAR')).join('')}
+      ${getQ('veiculoManut').map(([id,txt])=>genericQuestionRow(vState,id,txt,VEICULO_OPTS,'IRREGULAR')).join('')}
     </div></div>
 
     <div class="section active"><div class="section-head">Ação requerida<small>Preencha se algum item ficou irregular</small></div><div class="section-body">
@@ -1904,8 +2165,8 @@ function buildPrintTemplateVeiculo(){
     const v = (vState.itens[id]||{}).val||'';
     return `<td class="ans">${v===code?'X':''}</td>`;
   }).join('');
-  const rowsBasico = VEICULO_BASICO.map(([id,txt])=>`<tr><td>${txt}</td>${markCell(id)}</tr>`).join('');
-  const rowsManut = VEICULO_MANUT.map(([id,txt])=>`<tr><td>${txt}</td>${markCell(id)}</tr>`).join('');
+  const rowsBasico = getQ('veiculoBasico').map(([id,txt])=>`<tr><td>${txt}</td>${markCell(id)}</tr>`).join('');
+  const rowsManut = getQ('veiculoManut').map(([id,txt])=>`<tr><td>${txt}</td>${markCell(id)}</tr>`).join('');
   const acoesRows = vState.acoes.filter(a=>a.item||a.desc).map(a=>`<tr><td>${a.item}</td><td>${a.desc}</td><td>${a.resp}</td><td>${a.dataAcao}</td><td>${a.conclusao}</td></tr>`).join('');
   const html = `
     <table style="margin-bottom:0"><tr>
@@ -1944,7 +2205,7 @@ function resetVeiculoForm(){
 
 /* ============ CHECKLIST DE ESCADA EXTENSIVA ============ */
 const ESCADA_OPTS = [["CONFORME","Conforme"],["NAO_CONFORME","Não conforme"],["NA","N/A"]];
-const ESCADA_ITEMS = [
+const ESCADA_ITEMS_DEFAULT = [
   ['e1','Foram verificadas as travas de segurança da escada?'],
   ['e2','Foi verificado o risco de contato com a rede elétrica ou outros equipamentos energizados?'],
   ['e3','A cinta de apoio está em boas condições de uso?'],
@@ -1985,7 +2246,7 @@ function renderEscadaPage(){
     </div></div>
 
     <div class="section active"><div class="section-head">Itens a verificar<small>Legenda: Conforme / Não conforme / N/A</small></div><div class="section-body">
-      ${ESCADA_ITEMS.map(([id,txt])=>genericQuestionRow(eState,id,txt,ESCADA_OPTS,'NAO_CONFORME')).join('')}
+      ${getQ('escada').map(([id,txt])=>genericQuestionRow(eState,id,txt,ESCADA_OPTS,'NAO_CONFORME')).join('')}
     </div></div>
 
     <div class="section active"><div class="section-head">Confirmação e observações</div><div class="section-body">
@@ -2046,7 +2307,7 @@ function buildPrintTemplateEscada(){
     const v = (eState.itens[id]||{}).val||'';
     return `<td class="ans">${v===code?'X':''}</td>`;
   }).join('');
-  const rows = ESCADA_ITEMS.map(([id,txt])=>`<tr><td>${txt}</td>${markCell(id)}</tr>`).join('');
+  const rows = getQ('escada').map(([id,txt])=>`<tr><td>${txt}</td>${markCell(id)}</tr>`).join('');
   const html = `
     <table style="margin-bottom:0"><tr>
       <td style="width:15%;text-align:center;vertical-align:middle">${logoCell(logos.logo1 || DEFAULT_LOGO1)}</td>
@@ -2243,6 +2504,8 @@ async function initApp(){
   applyTheme(loadCfg());
   if(!state.empresaNome){ const c=loadCfg(); if(c.empresaPadrao) state.empresaNome = c.empresaPadrao; }
   updateBrand();
+  applyRoleVisibility();
+  maybeShowActivationScreen();
   renderCurrentStep();
   switchDoc(currentDoc);
   if(cfgApplied) toast('Configuração da empresa aplicada automaticamente neste aparelho!', 'ok');
