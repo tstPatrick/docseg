@@ -381,6 +381,7 @@
       <div class="nav-sep admin-only"></div>
       <div class="nav-section-label admin-only">Administração</div>
       <button class="nav-item admin-only" id="navUsuarios"><span class="nav-ic">👤</span>Usuários</button>
+      <button class="nav-item admin-only" id="navEmpresas"><span class="nav-ic">🏢</span>Empresas</button>
       <button class="nav-item admin-only" id="navConfig"><span class="nav-ic">⚙</span>Configurações</button>
     </nav>
     <div class="sidebar-user">
@@ -388,7 +389,7 @@
         <b id="sbUserName">—</b>
         <span id="sbUserRole">—</span>
       </div>
-      <button class="icon-btn" id="btnLogout" title="Sair">⏻</button>
+      <button class="icon-btn" id="btnLogout" title="Sair" style="width:auto;padding:0 12px;font-size:12.5px;font-weight:700;letter-spacing:.3px;">Sair</button>
     </div>
   </aside>
 
@@ -504,6 +505,34 @@
   </div>
 </div>
 
+<!-- EMPRESAS MODAL (Administrador) -->
+<div class="modal-bg" id="empresasModal">
+  <div class="modal">
+    <button class="modal-close" id="closeEmpresas">×</button>
+    <h2>Empresas</h2>
+    <p class="desc">Cada empresa tem seu próprio conjunto de perguntas nos formulários. Use exatamente o mesmo nome cadastrado no campo "Empresa" dos usuários dela.</p>
+
+    <div id="empresasList" style="margin-bottom:18px;"></div>
+
+    <p class="desc" style="margin-bottom:6px; border-top:1px solid var(--line); padding-top:14px;" id="empresaFormTitle">Nova empresa</p>
+    <div class="field">
+      <label>Nome da empresa</label>
+      <input type="text" id="empresaFormNome" placeholder="Ex: Global Seg">
+      <p class="hint">Deve ser idêntico ao nome usado no cadastro dos usuários dessa empresa (em Usuários → Empresa).</p>
+    </div>
+
+    <p class="desc" style="margin-bottom:6px; margin-top:14px; border-top:1px solid var(--line); padding-top:14px;">Perguntas dos formulários desta empresa</p>
+    <p class="hint" style="margin-top:-4px;margin-bottom:10px;">Se não personalizar, os técnicos dessa empresa usam as perguntas padrão de fábrica. Toque no título de cada grupo para abrir.</p>
+    <div id="empresaQuestionEditor"></div>
+
+    <div class="row2" style="margin-top:10px;">
+      <button type="button" class="btn btn-ghost" id="btnEmpresaFormCancel">Cancelar edição</button>
+      <button type="button" class="btn btn-primary" id="btnEmpresaFormSave">Salvar empresa</button>
+    </div>
+    <button type="button" class="btn btn-ghost" style="width:100%;margin-top:8px;" id="btnEmpresaResetQuestions">Restaurar perguntas padrão de fábrica (desta empresa)</button>
+  </div>
+</div>
+
 <!-- SETTINGS MODAL -->
 <div class="modal-bg" id="settingsModal">
   <div class="modal">
@@ -584,14 +613,6 @@
       <button type="button" class="btn btn-ghost" id="btnImportCfg">⭱ Importar configuração</button>
     </div>
     <input type="file" accept="application/json" id="importCfgFile" style="display:none;">
-
-    <p class="desc" style="margin-bottom:6px; margin-top:18px; border-top:1px solid var(--line); padding-top:14px;">Perguntas dos formulários</p>
-    <p class="hint" style="margin-top:-4px;margin-bottom:10px;">Edite, adicione ou remova perguntas de cada checklist. Toque no título de cada grupo para abrir.</p>
-    <div id="questionEditor"></div>
-    <div class="row2" style="margin-top:4px;">
-      <button type="button" class="btn btn-ghost" id="btnResetQuestions">Restaurar padrão de fábrica</button>
-      <button type="button" class="btn btn-primary" id="btnSaveQuestions">Salvar perguntas</button>
-    </div>
   </div>
 </div>
 
@@ -661,17 +682,26 @@ const EPI_LIST = ["Capacete de segurança com jugular","Cinto de segurança com 
 const FERRAMENTAS_LIST = ["Kit FTTH","Alicate de corte","Fusimec catraca","Furadeira","Martelo"];
 
 /* ============ PERGUNTAS PERSONALIZÁVEIS (override salvo pelo gerente) ============ */
+// Cache local (por aparelho) das perguntas da empresa do usuário logado —
+// atualizada automaticamente a cada login, a partir do que o admin salvou
+// no servidor para aquela empresa (tela "Empresas").
 const QUESTIONS_KEY = 'pt_custom_questions';
 function loadCustomQuestions(){ try{ return JSON.parse(localStorage.getItem(QUESTIONS_KEY)||'{}'); }catch(e){ return {}; } }
 function saveCustomQuestions(obj){ try{ localStorage.setItem(QUESTIONS_KEY, JSON.stringify(obj)); }catch(e){} }
-function getQ(key){
-  const custom = loadCustomQuestions();
-  if(Array.isArray(custom[key]) && custom[key].length) return custom[key];
-  const defaults = {
+// Função (não objeto no topo do arquivo) porque VEICULO_BASICO_DEFAULT e
+// ESCADA_ITEMS_DEFAULT só são declaradas mais abaixo no script — chamando
+// isso depois de tudo carregado evita erro de inicialização.
+function getDefaultQuestions(key){
+  const map = {
     eletrico: Q_ELETRICO_DEFAULT, altura: Q_ALTURA_DEFAULT, saude: Q_SAUDE_DEFAULT, instalacao: Q_INSTALACAO_DEFAULT,
     veiculoBasico: VEICULO_BASICO_DEFAULT, veiculoManut: VEICULO_MANUT_DEFAULT, escada: ESCADA_ITEMS_DEFAULT
   };
-  return defaults[key] || [];
+  return map[key] || [];
+}
+function getQ(key){
+  const custom = loadCustomQuestions();
+  if(Array.isArray(custom[key]) && custom[key].length) return custom[key];
+  return getDefaultQuestions(key);
 }
 
 const QUESTION_GROUPS = [
@@ -683,14 +713,20 @@ const QUESTION_GROUPS = [
   {key:'veiculoManut', label:'Checklist de Veículo — Manutenção/Conservação'},
   {key:'escada', label:'Checklist de Escada — Itens a verificar'}
 ];
+// Estado do editor de perguntas na tela "Empresas" (Administrador) — trabalha
+// sobre as perguntas de UMA empresa por vez, não sobre o aparelho.
 let questionEditorState = null;
-function renderQuestionEditor(){
+function initQuestionEditorFromPerguntas(perguntas){
+  perguntas = perguntas || {};
   questionEditorState = {};
-  QUESTION_GROUPS.forEach(g=>{ questionEditorState[g.key] = getQ(g.key).map(item=>item.slice()); });
+  QUESTION_GROUPS.forEach(g=>{
+    const custom = Array.isArray(perguntas[g.key]) && perguntas[g.key].length ? perguntas[g.key] : getDefaultQuestions(g.key);
+    questionEditorState[g.key] = custom.map(item=>item.slice());
+  });
   paintQuestionEditor();
 }
 function paintQuestionEditor(){
-  const box = document.getElementById('questionEditor');
+  const box = document.getElementById('empresaQuestionEditor');
   if(!box) return;
   box.innerHTML = QUESTION_GROUPS.map(g=>{
     const rows = questionEditorState[g.key].map((item,idx)=>`
@@ -818,7 +854,7 @@ async function attemptLogin(username, password){
     }catch(e){ /* sem conexão — tenta o login padrão de fábrica abaixo */ }
   }
   if(serverChecked && serverResult && serverResult.ok){
-    return { username: uname, role: serverResult.role === 'admin' ? 'admin' : 'consulta', passwordHash: passHash, cfg: serverResult.cfg || null };
+    return { username: uname, role: serverResult.role === 'admin' ? 'admin' : 'consulta', passwordHash: passHash, cfg: serverResult.cfg || null, perguntas: serverResult.perguntas || null };
   }
   if(serverChecked && serverResult && serverResult.error === 'senha incorreta'){
     throw new Error('Usuário ou senha inválidos.');
@@ -853,6 +889,9 @@ document.getElementById('loginConfirm').onclick = async ()=>{
     }
     saveCfg(deviceCfg);
     if(deviceCfg.empresaPadrao){ state.empresaNome = deviceCfg.empresaPadrao; saveDraft(); }
+    // Aplica as perguntas personalizadas da empresa deste usuário (ou volta
+    // ao padrão de fábrica, se a empresa ainda não tiver personalização).
+    saveCustomQuestions((session.perguntas && Object.keys(session.perguntas).length) ? session.perguntas : {});
     hideLoginScreen();
     applyRoleVisibility();
     applyTheme(loadCfg());
@@ -1046,38 +1085,14 @@ function sigCanvasHtml(id, placeholder){
   </div>`;
 }
 
-/* ============ CARIMBO/ASSINATURA DO TÉCNICO (imagem — compartilhado PT/Veículo/Escada) ============ */
-// Espaço grande o bastante para colar o carimbo do técnico ou uma assinatura
-// digital (ex: certificado do gov.br), em vez de assinar na tela.
-function carimboBoxHtml(inputId, previewId){
+/* ============ CARIMBO DO TÉCNICO (retângulo em branco — compartilhado PT/Veículo/Escada) ============ */
+// Espaço em branco, maior, reservado para carimbar (fisicamente, depois de
+// impresso) ou colar o carimbo do técnico — sem upload de imagem pelo app.
+function carimboBoxHtml(){
   return `<div class="field">
-    <label>Carimbo ou assinatura digital do técnico (imagem)</label>
-    <input type="file" accept="image/*" id="${inputId}">
-    <p class="hint">Aceita foto do carimbo, print da assinatura digital (gov.br) ou qualquer imagem — vai aparecer em tamanho grande no PDF.</p>
-    <div id="${previewId}" class="carimbo-preview" style="margin-top:8px"></div>
+    <label>Carimbo do Técnico de Segurança do Trabalho</label>
+    <div class="carimbo-box" style="border:1px solid var(--line);border-radius:10px;height:170px;background:#fff;margin-top:4px;"></div>
   </div>`;
-}
-function renderCarimboBox(store, previewId){
-  const box = document.getElementById(previewId);
-  if(!box) return;
-  box.innerHTML = store.tecCarimbo
-    ? `<img src="${store.tecCarimbo}" style="max-height:150px;max-width:280px;width:100%;object-fit:contain;background:#f4f4f2;border:1px solid var(--line);border-radius:8px;padding:8px;">
-       <br><button type="button" class="rm-carimbo-btn" style="margin-top:6px;border:none;background:none;color:var(--red);font-size:12px;cursor:pointer;">remover</button>`
-    : '';
-}
-function bindCarimboBox(inputId, previewId, store, saveFn){
-  renderCarimboBox(store, previewId);
-  const input = document.getElementById(inputId);
-  if(input) input.onchange = ()=>{
-    const file = input.files[0];
-    if(!file) return;
-    const reader = new FileReader();
-    reader.onload = ()=>{ store.tecCarimbo = reader.result; saveFn(); renderCarimboBox(store, previewId); };
-    reader.readAsDataURL(file);
-  };
-  const box = document.getElementById(previewId);
-  const rm = box ? box.querySelector('.rm-carimbo-btn') : null;
-  if(rm) rm.onclick = ()=>{ store.tecCarimbo = ""; saveFn(); renderCarimboBox(store, previewId); };
 }
 
 /* ============ FOTOS ANEXADAS (compartilhado PT/Veículo/Escada) ============ */
@@ -1149,7 +1164,7 @@ function renderFinal(){
       <p class="field-err-msg" id="err_f_respNome" style="display:none;">⚠ Campo obrigatório</p></div>
     <div class="field"><label>Assinatura do responsável</label>${sigCanvasHtml('sigResp','Assine aqui')}</div>
     <div class="field"><label>Técnico de Segurança do Trabalho</label><div class="fixed-value">${tecFixo || 'Não configurado — fale com o administrador'}</div></div>
-    ${carimboBoxHtml('f_carimboInput','f_carimboPreview')}
+    ${carimboBoxHtml()}
     <div class="field"><label>Observações de não conformidades durante as atividades</label><textarea id="f_naoConf">${state.naoConformidades}</textarea></div>
     <div class="field"><label>Ações gerais</label><textarea id="f_acoes">${state.acoesGerais}</textarea></div>
     <div class="row2">
@@ -1362,7 +1377,7 @@ function bindStepEvents(stepKey){
     if(addBtn) addBtn.onclick = ()=>{ state.equipe.push({nome:"",doc:""}); renderCurrentStep(); };
   }
 
-  if(stepKey==="final"){ initSignaturePads(); bindPhotoPicker(state, saveDraft, renderCurrentStep); bindCarimboBox('f_carimboInput','f_carimboPreview', state, saveDraft); }
+  if(stepKey==="final"){ initSignaturePads(); bindPhotoPicker(state, saveDraft, renderCurrentStep); }
   if(stepKey==="ident") bindLocationButton();
 }
 
@@ -1564,7 +1579,6 @@ function openSettingsModal(){
   document.getElementById('cfgSoundEnabled').checked = cfg.soundEnabled !== false;
   bindLogoInputs();
   document.getElementById('sheetAuditBox').style.display = 'none';
-  renderQuestionEditor();
   document.getElementById('settingsModal').classList.add('show');
   if(cfg.scriptUrl){
     fetch(cfg.scriptUrl + '?action=peekNumber&prefix=' + encodeURIComponent(cfg.ptPrefix||''))
@@ -1802,22 +1816,108 @@ async function deleteUserByUsername(username){
   }
 }
 
-/* ============ PERGUNTAS DOS FORMULÁRIOS (Administrador) ============ */
-document.getElementById('btnSaveQuestions').onclick = ()=>{
+/* ============ EMPRESAS E SUAS PERGUNTAS PERSONALIZADAS (Administrador) ============ */
+let lastLoadedEmpresas = [];
+function resetEmpresaForm(){
+  document.getElementById('empresaFormNome').value = '';
+  document.getElementById('empresaFormTitle').textContent = 'Nova empresa';
+  initQuestionEditorFromPerguntas({});
+}
+async function openEmpresasModal(){
   if(!isAdmin()){ toast('Acesso restrito ao administrador.', 'err'); return; }
+  resetEmpresaForm();
+  document.getElementById('empresasModal').classList.add('show');
+  await loadEmpresasList();
+}
+document.getElementById('navEmpresas').onclick = openEmpresasModal;
+document.getElementById('closeEmpresas').onclick = ()=> document.getElementById('empresasModal').classList.remove('show');
+
+async function loadEmpresasList(){
+  if(!isAdmin()) return;
+  const cfg = loadCfg();
+  const scriptUrl = cfg.scriptUrl || DEFAULT_SCRIPT_URL;
+  const box = document.getElementById('empresasList');
+  if(!scriptUrl){ box.innerHTML = '<p class="hint">Configure a URL do Google Apps Script em Configurações primeiro.</p>'; return; }
+  box.innerHTML = '<p class="hint">Carregando...</p>';
+  try{
+    const creds = currentAdminCreds();
+    const url = scriptUrl + '?action=listEmpresas&adminUsername=' + encodeURIComponent(creds.adminUsername) + '&adminPasswordHash=' + encodeURIComponent(creds.adminPasswordHash);
+    const resp = await fetch(url);
+    const data = await resp.json();
+    if(data.error) throw new Error(data.error);
+    lastLoadedEmpresas = data.empresas || [];
+    if(!lastLoadedEmpresas.length){ box.innerHTML = '<p class="hint">Nenhuma empresa com perguntas personalizadas ainda — use o formulário abaixo para criar.</p>'; return; }
+    box.innerHTML = lastLoadedEmpresas.map(emp => `
+      <div class="user-row">
+        <div><b>${emp.nome}</b></div>
+        <div style="display:flex;gap:6px;">
+          <button type="button" class="rm-btn edit-empresa" data-nome="${emp.nome.replace(/"/g,'&quot;')}" title="Editar">✎</button>
+          <button type="button" class="rm-btn del-empresa" data-nome="${emp.nome.replace(/"/g,'&quot;')}" title="Excluir">✕</button>
+        </div>
+      </div>`).join('');
+    box.querySelectorAll('.edit-empresa').forEach(btn=> btn.onclick = ()=> loadEmpresaIntoForm(btn.getAttribute('data-nome')));
+    box.querySelectorAll('.del-empresa').forEach(btn=> btn.onclick = ()=> deleteEmpresaByNome(btn.getAttribute('data-nome')));
+  }catch(err){
+    box.innerHTML = '<p class="hint" style="color:var(--red-dark);">Erro ao carregar: ' + (err.message||'falha de conexão') + '</p>';
+  }
+}
+function loadEmpresaIntoForm(nome){
+  if(!isAdmin()) return;
+  const emp = lastLoadedEmpresas.find(x=>x.nome===nome);
+  if(!emp) return;
+  document.getElementById('empresaFormNome').value = emp.nome;
+  document.getElementById('empresaFormTitle').textContent = 'Editar empresa: ' + emp.nome;
+  initQuestionEditorFromPerguntas(emp.perguntas);
+}
+document.getElementById('btnEmpresaFormCancel').onclick = resetEmpresaForm;
+document.getElementById('btnEmpresaFormSave').onclick = async ()=>{
+  if(!isAdmin()){ toast('Acesso restrito ao administrador.', 'err'); return; }
+  const cfg = loadCfg();
+  const scriptUrl = cfg.scriptUrl || DEFAULT_SCRIPT_URL;
+  if(!scriptUrl){ toast('Configure a URL do Google Apps Script em Configurações primeiro.', 'err'); return; }
+  const nome = document.getElementById('empresaFormNome').value.trim();
+  if(!nome){ toast('Digite o nome da empresa.', 'err'); return; }
   const cleaned = {};
   Object.keys(questionEditorState||{}).forEach(k=>{
     cleaned[k] = questionEditorState[k].filter(([id,txt])=>txt && txt.trim());
   });
-  saveCustomQuestions(cleaned);
-  toast('Perguntas salvas — já valem para os próximos preenchimentos.', 'ok');
+  const btn = document.getElementById('btnEmpresaFormSave');
+  btn.disabled = true; const oldTxt = btn.textContent; btn.textContent = 'Salvando...';
+  try{
+    const payload = Object.assign({action:'saveEmpresa', nome, perguntas: cleaned}, currentAdminCreds());
+    const resp = await fetch(scriptUrl, {method:'POST', body: JSON.stringify(payload)});
+    const data = await resp.json();
+    if(data.error) throw new Error(data.error);
+    toast('Empresa salva! Os técnicos dela recebem essas perguntas no próximo login.', 'ok');
+    resetEmpresaForm();
+    await loadEmpresasList();
+  }catch(err){
+    toast(err.message || 'Não foi possível salvar.', 'err');
+  } finally {
+    btn.disabled = false; btn.textContent = oldTxt;
+  }
 };
-document.getElementById('btnResetQuestions').onclick = ()=>{
+async function deleteEmpresaByNome(nome){
+  if(!isAdmin()) return;
+  if(!confirm('Excluir a personalização de perguntas da empresa "'+nome+'"? Os técnicos dela voltam a usar as perguntas padrão de fábrica.')) return;
+  const cfg = loadCfg();
+  const scriptUrl = cfg.scriptUrl || DEFAULT_SCRIPT_URL;
+  try{
+    const payload = Object.assign({action:'deleteEmpresa', nome}, currentAdminCreds());
+    const resp = await fetch(scriptUrl, {method:'POST', body: JSON.stringify(payload)});
+    const data = await resp.json();
+    if(data.error) throw new Error(data.error);
+    toast('Empresa excluída.', 'ok');
+    await loadEmpresasList();
+  }catch(err){
+    toast(err.message || 'Não foi possível excluir.', 'err');
+  }
+}
+document.getElementById('btnEmpresaResetQuestions').onclick = ()=>{
   if(!isAdmin()){ toast('Acesso restrito ao administrador.', 'err'); return; }
-  if(confirm('Restaurar todas as perguntas para o padrão de fábrica? Isso apaga qualquer personalização feita.')){
-    saveCustomQuestions({});
-    renderQuestionEditor();
-    toast('Perguntas restauradas ao padrão.', 'ok');
+  if(confirm('Restaurar as perguntas desta empresa para o padrão de fábrica nesta tela? (só some de verdade quando clicar em "Salvar empresa")')){
+    initQuestionEditorFromPerguntas({});
+    toast('Perguntas restauradas na tela — clique em "Salvar empresa" para confirmar.', 'ok');
   }
 };
 
@@ -1911,7 +2011,7 @@ function buildPrintTemplate(){
     <div class="bar">ENCERRAMENTO</div>
     <table>
       <tr><td style="width:50%"><b>Responsável pela atividade:</b> ${T.respNome||''}<br>${sigImg('sigResp')}</td>
-          <td style="width:50%"><b>Técnico de Segurança do Trabalho:</b> ${tecFixo||''}<br>${T.tecCarimbo ? `<img src="${T.tecCarimbo}" style="max-height:110px;max-width:220px;object-fit:contain;margin-top:4px">` : ''}</td></tr>
+          <td style="width:50%"><b>Técnico de Segurança do Trabalho:</b> ${tecFixo||''}<br><div style="height:90px;border:1px solid #ccc;margin-top:4px;"></div></td></tr>
       <tr><td colspan="2"><b>Observações de não conformidades:</b> ${T.naoConformidades||''}</td></tr>
       <tr><td colspan="2"><b>Ações gerais:</b> ${T.acoesGerais||''}</td></tr>
       <tr><td><b>Hora de encerramento:</b> ${T.encHora||''}</td><td><b>Motivo:</b> ${T.encMotivo||''}</td></tr>
@@ -2299,7 +2399,7 @@ function renderVeiculoPage(){
         <div class="field"><label>Técnico em segurança do trabalho</label><div class="fixed-value">${loadCfg().tecNome || 'Não configurado — fale com o administrador'}</div></div>
         <div class="field"><label>Encarregado</label><input type="text" id="v_enc" value="${vState.encarregadoNome}" placeholder="Nome"></div>
       </div>
-      ${carimboBoxHtml('v_carimboInput','v_carimboPreview')}
+      ${carimboBoxHtml()}
       <div class="field"><label>Assinatura do motorista</label>${sigCanvasHtml('sigMotorista','Assine aqui')}</div>
       <div class="field"><label>Observações</label><textarea id="v_obs">${vState.obs}</textarea></div>
       ${photoPickerHtml(vState)}
@@ -2309,7 +2409,6 @@ function renderVeiculoPage(){
   bindVeiculoEvents();
   initSignaturePads();
   bindPhotoPicker(vState, saveVDraft, renderVeiculoPage);
-  bindCarimboBox('v_carimboInput','v_carimboPreview', vState, saveVDraft);
 }
 function bindVeiculoEvents(){
   bindQuestionGroup('#veiculoSections', vState, saveVDraft);
@@ -2366,7 +2465,7 @@ function buildPrintTemplateVeiculo(){
     ${acoesRows ? `<div class="bar">AÇÃO REQUERIDA</div><table><tr><th>Item</th><th>Descrição</th><th>Responsável</th><th>Data</th><th>Conclusão</th></tr>${acoesRows}</table>` : ''}
     <div class="bar">RESPONSÁVEIS E OBSERVAÇÕES</div>
     <table>
-      <tr><td style="width:50%">Técnico em segurança: ${tecFixo||''}${vState.tecCarimbo ? `<br><img src="${vState.tecCarimbo}" style="max-height:110px;max-width:220px;object-fit:contain;margin-top:4px">` : ''}</td><td style="width:50%">Encarregado: ${vState.encarregadoNome||''}</td></tr>
+      <tr><td style="width:50%">Técnico em segurança: ${tecFixo||''}<br><div style="height:90px;border:1px solid #ccc;margin-top:4px;"></div></td><td style="width:50%">Encarregado: ${vState.encarregadoNome||''}</td></tr>
       <tr><td colspan="2">Assinatura do motorista:<br>${sigImg('sigMotorista')}</td></tr>
       <tr><td colspan="2">Observações: ${vState.obs||''}</td></tr>
     </table>
@@ -2439,13 +2538,12 @@ function renderEscadaPage(){
 
     <div class="section active"><div class="section-head">Técnico de segurança do trabalho</div><div class="section-body">
       <div class="field"><label>Técnico responsável</label><div class="fixed-value">${loadCfg().tecNome || 'Não configurado — fale com o administrador'}</div></div>
-      ${carimboBoxHtml('e_carimboInput','e_carimboPreview')}
+      ${carimboBoxHtml()}
     </div></div>
   `;
   document.getElementById('escadaSections').innerHTML = html;
   bindEscadaEvents();
   initSignaturePads();
-  bindCarimboBox('e_carimboInput','e_carimboPreview', eState, saveEDraft);
   bindPhotoPicker(eState, saveEDraft, renderEscadaPage);
 }
 function bindEscadaEvents(){
@@ -2486,7 +2584,7 @@ function buildPrintTemplateEscada(){
     </table>
     <div class="bar">TÉCNICO DE SEGURANÇA DO TRABALHO</div>
     <table>
-      <tr><td>Técnico responsável: ${tecFixo||''}${eState.tecCarimbo ? `<br><img src="${eState.tecCarimbo}" style="max-height:110px;max-width:220px;object-fit:contain;margin-top:4px">` : ''}</td></tr>
+      <tr><td>Técnico responsável: ${tecFixo||''}<br><div style="height:90px;border:1px solid #ccc;margin-top:4px;"></div></td></tr>
     </table>
     ${photosPrintHtml(eState.fotos)}
   `;
