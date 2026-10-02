@@ -343,12 +343,21 @@
   }
 
   /* ============ TELA DE MENU (home) ============ */
+  #homeMenu{display:flex; flex-direction:column; min-height:100vh;}
   .home-header{
-    background:var(--ink); color:#fff; padding:20px 16px; display:flex; align-items:center; gap:12px;
+    background:var(--ink); color:#fff; padding:20px 16px; display:flex; align-items:center; gap:12px; flex-shrink:0;
   }
   .home-header img{width:36px;height:36px;border-radius:8px;object-fit:contain;background:#fff;flex-shrink:0;}
   .home-header b{font-size:16px;}
-  .home-items{padding:18px 16px 6px; max-width:520px; margin:0 auto;}
+  /* conteúdo central (logo da empresa + botões + aviso) ocupa o espaço
+     entre o cabeçalho e o rodapé, e fica centralizado verticalmente */
+  .home-main{flex:1; display:flex; flex-direction:column; justify-content:center; padding:14px 16px 6px;}
+  .home-company-logo{display:flex; justify-content:center; margin-bottom:16px;}
+  .home-company-logo img{
+    width:76px; height:76px; border-radius:16px; object-fit:contain; background:#fff;
+    border:1.5px solid var(--line); box-shadow:0 2px 10px rgba(0,0,0,.06);
+  }
+  .home-items{max-width:520px; width:100%; margin:0 auto;}
   .home-item{
     display:flex; align-items:center; gap:12px; width:100%; text-align:left; background:var(--card);
     border:1.5px solid var(--line); color:var(--ink); padding:15px 14px; border-radius:12px;
@@ -361,9 +370,15 @@
     border-radius:999px; padding:2px 9px; flex-shrink:0;
   }
   .home-item-alert{border-color:#F0D98A; background:#FFFBEF;}
+  .home-notice{
+    max-width:520px; margin:14px auto 0; background:#FFFBEF; border:1.5px solid #F0D98A;
+    border-radius:12px; padding:14px;
+  }
+  .home-notice b{display:block; font-size:12.5px; color:#8a6d1f; margin-bottom:4px;}
+  .home-notice p{margin:0; font-size:13px; color:#6b5410; line-height:1.5; white-space:pre-wrap;}
   .home-footer{
     max-width:520px; margin:18px auto 0; padding:16px; border-top:1px solid var(--line);
-    display:flex; align-items:center; gap:10px;
+    display:flex; align-items:center; gap:10px; flex-shrink:0; width:100%;
   }
   .home-footer .hf-info{flex:1; min-width:0;}
   .home-footer b{display:block; font-size:13.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
@@ -468,7 +483,16 @@
     <img id="homeLogo" alt="Logo" style="display:none;">
     <b id="homeBrand">DocSeg Digital</b>
   </div>
-  <div class="home-items" id="homeMenuItems"></div>
+  <div class="home-main">
+    <div class="home-company-logo" id="homeCompanyLogo" style="display:none;">
+      <img id="homeCompanyLogoImg" alt="Logo da empresa">
+    </div>
+    <div class="home-items" id="homeMenuItems"></div>
+    <div class="home-notice" id="homeNotice" style="display:none;">
+      <b>📌 Aviso da empresa</b>
+      <p id="homeNoticeText"></p>
+    </div>
+  </div>
   <div class="home-footer">
     <div class="hf-info">
       <b id="homeUserName">—</b>
@@ -607,6 +631,26 @@
       <label>Nome da empresa</label>
       <input type="text" id="empresaFormNome" placeholder="Ex: Global Seg">
       <p class="hint">Deve ser idêntico ao nome usado no cadastro dos usuários dessa empresa (em Usuários → Empresa).</p>
+    </div>
+
+    <p class="desc" style="margin-bottom:6px; margin-top:14px; border-top:1px solid var(--line); padding-top:14px;">Logo da empresa</p>
+    <p class="hint" style="margin-top:-4px;margin-bottom:10px;">Aparece no menu inicial dos técnicos dessa empresa, acima dos botões. Imagem pequena (ex: o símbolo da empresa).</p>
+    <div class="field" style="display:flex;align-items:center;gap:14px;">
+      <div id="empresaLogoPreviewBox" style="width:64px;height:64px;border-radius:12px;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;overflow:hidden;background:#fafafa;flex-shrink:0;">
+        <span id="empresaLogoPreviewEmpty" style="font-size:11px;color:var(--ink-soft);text-align:center;">sem logo</span>
+        <img id="empresaLogoPreviewImg" style="display:none;width:100%;height:100%;object-fit:contain;">
+      </div>
+      <div style="flex:1;min-width:0;">
+        <input type="file" accept="image/*" id="empresaLogoFile" style="display:none;">
+        <button type="button" class="btn btn-ghost" id="btnEmpresaLogoPick" style="width:100%;margin-bottom:6px;">Escolher imagem</button>
+        <button type="button" class="btn btn-ghost" id="btnEmpresaLogoRemove" style="width:100%;">Remover logo</button>
+      </div>
+    </div>
+
+    <p class="desc" style="margin-bottom:6px; margin-top:14px; border-top:1px solid var(--line); padding-top:14px;">Aviso/lembrete para os técnicos</p>
+    <p class="hint" style="margin-top:-4px;margin-bottom:10px;">Aparece no final do menu, só para os técnicos dessa empresa. Deixe em branco pra não mostrar nenhum aviso.</p>
+    <div class="field">
+      <textarea id="empresaFormAviso" rows="3" placeholder="Ex: Uso obrigatório de cinto tipo paraquedista acima de 2m." style="width:100%;padding:11px 12px;border:1px solid #D6D3CC;border-radius:8px;font-size:14px;font-family:inherit;resize:vertical;"></textarea>
     </div>
 
     <p class="desc" style="margin-bottom:6px; margin-top:14px; border-top:1px solid var(--line); padding-top:14px;">Perguntas dos formulários desta empresa</p>
@@ -946,7 +990,11 @@ async function attemptLogin(username, password){
     }catch(e){ /* sem conexão — tenta o login padrão de fábrica abaixo */ }
   }
   if(serverChecked && serverResult && serverResult.ok){
-    return { username: uname, role: serverResult.role === 'admin' ? 'admin' : 'consulta', passwordHash: passHash, cfg: serverResult.cfg || null, perguntas: serverResult.perguntas || null };
+    return {
+      username: uname, role: serverResult.role === 'admin' ? 'admin' : 'consulta', passwordHash: passHash,
+      cfg: serverResult.cfg || null, perguntas: serverResult.perguntas || null,
+      empresaAviso: serverResult.empresaAviso || '', empresaLogoDataUrl: serverResult.empresaLogoDataUrl || ''
+    };
   }
   if(serverChecked && serverResult && serverResult.error === 'senha incorreta'){
     throw new Error('Usuário ou senha inválidos.');
@@ -1917,11 +1965,47 @@ async function deleteUserByUsername(username){
 
 /* ============ EMPRESAS E SUAS PERGUNTAS PERSONALIZADAS (Administrador) ============ */
 let lastLoadedEmpresas = [];
+// null = não mexeu na logo nesta edição (mantém a que já estava salva no
+// servidor); '' = usuário clicou em "Remover logo"; string = nova imagem.
+let empresaFormLogoDataUrl = null;
+
+function setEmpresaLogoPreview(dataUrl){
+  const img = document.getElementById('empresaLogoPreviewImg');
+  const empty = document.getElementById('empresaLogoPreviewEmpty');
+  if(dataUrl){ img.src = dataUrl; img.style.display = 'block'; empty.style.display = 'none'; }
+  else { img.src = ''; img.style.display = 'none'; empty.style.display = 'block'; }
+}
+
 function resetEmpresaForm(){
   document.getElementById('empresaFormNome').value = '';
+  document.getElementById('empresaFormAviso').value = '';
   document.getElementById('empresaFormTitle').textContent = 'Nova empresa';
+  empresaFormLogoDataUrl = null;
+  setEmpresaLogoPreview('');
   initQuestionEditorFromPerguntas({});
 }
+
+document.getElementById('btnEmpresaLogoPick').onclick = ()=> document.getElementById('empresaLogoFile').click();
+document.getElementById('empresaLogoFile').onchange = (e)=>{
+  const file = e.target.files && e.target.files[0];
+  if(!file) return;
+  // Logo pequena de propósito: cada empresa fica guardada numa única
+  // "gaveta" do servidor (limite de ~9KB) — por isso a imagem é bem
+  // comprimida (lado máx. 110px). É suficiente para um símbolo/logo simples.
+  resizeImageFile(file, 110, (dataUrl)=>{
+    if(dataUrl.length > 9000){
+      toast('Essa imagem ainda ficou grande demais. Tente uma mais simples (ideal: ícone/símbolo, não uma foto).', 'err');
+      return;
+    }
+    empresaFormLogoDataUrl = dataUrl;
+    setEmpresaLogoPreview(dataUrl);
+  });
+  e.target.value = '';
+};
+document.getElementById('btnEmpresaLogoRemove').onclick = ()=>{
+  empresaFormLogoDataUrl = '';
+  setEmpresaLogoPreview('');
+};
 async function openEmpresasModal(){
   if(!isAdmin()){ toast('Acesso restrito ao administrador.', 'err'); return; }
   resetEmpresaForm();
@@ -1966,7 +2050,10 @@ function loadEmpresaIntoForm(nome){
   const emp = lastLoadedEmpresas.find(x=>x.nome===nome);
   if(!emp) return;
   document.getElementById('empresaFormNome').value = emp.nome;
+  document.getElementById('empresaFormAviso').value = emp.aviso || '';
   document.getElementById('empresaFormTitle').textContent = 'Editar empresa: ' + emp.nome;
+  empresaFormLogoDataUrl = null; // ainda não mexeu — mantém a logo já salva, a não ser que troque/remova agora
+  setEmpresaLogoPreview(emp.logoDataUrl || '');
   initQuestionEditorFromPerguntas(emp.perguntas);
 }
 document.getElementById('btnEmpresaFormCancel').onclick = resetEmpresaForm;
@@ -1981,10 +2068,14 @@ document.getElementById('btnEmpresaFormSave').onclick = async ()=>{
   Object.keys(questionEditorState||{}).forEach(k=>{
     cleaned[k] = questionEditorState[k].filter(([id,txt])=>txt && txt.trim());
   });
+  const aviso = document.getElementById('empresaFormAviso').value.trim();
   const btn = document.getElementById('btnEmpresaFormSave');
   btn.disabled = true; const oldTxt = btn.textContent; btn.textContent = 'Salvando...';
   try{
-    const payload = Object.assign({action:'saveEmpresa', nome, perguntas: cleaned}, currentAdminCreds());
+    const payload = Object.assign({action:'saveEmpresa', nome, perguntas: cleaned, aviso: aviso}, currentAdminCreds());
+    // só manda o campo da logo quando o admin realmente mexeu nela
+    // (escolheu uma nova ou clicou em "Remover logo") — null = não mexeu.
+    if(empresaFormLogoDataUrl !== null) payload.logoDataUrl = empresaFormLogoDataUrl;
     const resp = await fetch(scriptUrl, {method:'POST', body: JSON.stringify(payload)});
     const data = await resp.json();
     if(data.error) throw new Error(data.error);
@@ -2880,8 +2971,24 @@ function homeItemHtml(id, icon, label, badge){
 function renderHomeMenu(){
   const box = document.getElementById('homeMenuItems');
   if(!box) return;
+  const admin = isAdmin();
+  const s = getSession();
+
+  // Logo da empresa (definida pelo Administrador em Empresas) — só para
+  // o menu dos técnicos, centralizada acima dos botões.
+  const companyLogoBox = document.getElementById('homeCompanyLogo');
+  const companyLogoImg = document.getElementById('homeCompanyLogoImg');
+  if(companyLogoBox && companyLogoImg){
+    if(!admin && s && s.empresaLogoDataUrl){
+      companyLogoImg.src = s.empresaLogoDataUrl;
+      companyLogoBox.style.display = 'flex';
+    } else {
+      companyLogoBox.style.display = 'none';
+    }
+  }
+
   let html = '';
-  if(isAdmin()){
+  if(admin){
     html += homeItemHtml('users', '👤', 'Usuários');
     html += homeItemHtml('empresas', '🏢', 'Empresas');
     html += homeItemHtml('settings', '⚙', 'Configurações');
@@ -2904,6 +3011,19 @@ function renderHomeMenu(){
       else openDocScreen(id);
     };
   });
+
+  // Aviso/lembrete da empresa (definido pelo Administrador em Empresas) —
+  // fecha o menu, logo abaixo de "PTs em andamento". Só para técnicos.
+  const noticeBox = document.getElementById('homeNotice');
+  const noticeText = document.getElementById('homeNoticeText');
+  if(noticeBox && noticeText){
+    if(!admin && s && s.empresaAviso){
+      noticeText.textContent = s.empresaAviso;
+      noticeBox.style.display = 'block';
+    } else {
+      noticeBox.style.display = 'none';
+    }
+  }
 }
 
 document.getElementById('ptBack').onclick = goHome;
