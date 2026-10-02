@@ -2335,7 +2335,9 @@ function playSuccessSound(){
       osc.frequency.value = freq;
       const start = ctx.currentTime + i*0.12;
       gain.gain.setValueAtTime(0.0001, start);
-      gain.gain.exponentialRampToValueAtTime(0.25, start+0.02);
+      // Volume alto por padrão (perto do máximo) — assim o som acompanha o
+      // volume do celular, em vez de soar baixo mesmo no talo.
+      gain.gain.exponentialRampToValueAtTime(0.9, start+0.02);
       gain.gain.exponentialRampToValueAtTime(0.0001, start+0.22);
       osc.connect(gain); gain.connect(ctx.destination);
       osc.start(start); osc.stop(start+0.24);
