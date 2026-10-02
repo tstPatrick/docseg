@@ -1551,8 +1551,8 @@ function updateBrand(){
   if(loginLogo){ loginLogo.src = logos.logo1 || DEFAULT_LOGIN_LOGO; loginLogo.style.display='block'; }
   const homeLogo = document.getElementById('homeLogo');
   if(homeLogo){ homeLogo.src = logo1; homeLogo.style.display='block'; }
-  const homeBrand = document.getElementById('homeBrand');
-  if(homeBrand) homeBrand.textContent = nome;
+  // O nome ao lado da logo no menu é sempre fixo "DocSeg Digital" —
+  // não muda conforme a empresa (isso já é definido direto no HTML).
   updateAppIcon(nome, logo1);
 }
 
