@@ -334,11 +334,72 @@
   .topbar-mobile b{font-size:14.5px;}
   body:not(.is-admin) .admin-only{display:none !important;}
 
+  /* A navegação agora é feita pela tela de Menu (home) + telas cheias.
+     A barra lateral antiga fica escondida (sem remover nada do JS). */
+  .sidebar, .sidebar-backdrop, .topbar-mobile{display:none !important;}
+
   @media(min-width:900px){
-    .sidebar{position:sticky; transform:none; height:100vh;}
-    .sidebar-backdrop{display:none !important;}
-    .topbar-mobile{display:none;}
     main{max-width:760px;}
+  }
+
+  /* ============ TELA DE MENU (home) ============ */
+  .home-header{
+    background:var(--ink); color:#fff; padding:20px 16px; display:flex; align-items:center; gap:12px;
+  }
+  .home-header img{width:36px;height:36px;border-radius:8px;object-fit:contain;background:#fff;flex-shrink:0;}
+  .home-header b{font-size:16px;}
+  .home-items{padding:18px 16px 6px; max-width:520px; margin:0 auto;}
+  .home-item{
+    display:flex; align-items:center; gap:12px; width:100%; text-align:left; background:var(--card);
+    border:1.5px solid var(--line); color:var(--ink); padding:15px 14px; border-radius:12px;
+    font-size:15px; font-weight:700; cursor:pointer; margin-bottom:10px;
+  }
+  .home-item:active{background:#F0EEE8;}
+  .home-item .home-item-ic{font-size:19px; width:24px; text-align:center; flex-shrink:0;}
+  .home-item-badge{
+    margin-left:auto; background:var(--red); color:#fff; font-size:11.5px; font-weight:700;
+    border-radius:999px; padding:2px 9px; flex-shrink:0;
+  }
+  .home-item-alert{border-color:#F0D98A; background:#FFFBEF;}
+  .home-footer{
+    max-width:520px; margin:18px auto 0; padding:16px; border-top:1px solid var(--line);
+    display:flex; align-items:center; gap:10px;
+  }
+  .home-footer .hf-info{flex:1; min-width:0;}
+  .home-footer b{display:block; font-size:13.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .home-footer span{display:block; font-size:11.5px; color:var(--ink-soft);}
+  .home-footer .btn-sair{
+    background:none; border:1.5px solid var(--red-dark); color:var(--red-dark); border-radius:9px;
+    padding:9px 14px; font-size:12.5px; font-weight:700; cursor:pointer;
+  }
+
+  /* ============ BARRA "VOLTAR" DAS TELAS (documentos e listas) ============ */
+  .screen-topbar{
+    background:var(--ink); color:#fff; padding:14px 16px; display:flex; align-items:center; gap:10px;
+    position:sticky; top:0; z-index:40; margin:0 0 4px;
+  }
+  .screen-topbar button{background:none; border:none; color:#fff; font-size:20px; cursor:pointer; padding:0 2px 0 0; line-height:1;}
+  .screen-topbar b{font-size:14.5px; font-weight:700;}
+
+  /* ============ TELA "PTs EM ANDAMENTO" ============ */
+  .draft-card{
+    background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px; margin-bottom:12px;
+  }
+  .draft-card b{display:block; font-size:14.5px; margin-bottom:3px;}
+  .draft-card span{display:block; font-size:12.5px; color:var(--ink-soft);}
+  .draft-card .draft-date{margin-top:2px; font-size:11.5px; color:#918E86;}
+  .draft-actions{display:flex; gap:8px; margin-top:12px;}
+  .draft-actions .btn{flex:1; padding:9px; font-size:13px;}
+
+  /* ============ TELAS DE ADMINISTRAÇÃO EM TELA CHEIA (sem caixinha/fundo escuro) ============ */
+  #usersModal, #empresasModal, #settingsModal{background:#fff; align-items:stretch; justify-content:stretch;}
+  #usersModal .modal, #empresasModal .modal, #settingsModal .modal{
+    width:100%; max-width:none; height:100%; max-height:100%; border-radius:0;
+    padding:0 16px calc(18px + env(safe-area-inset-bottom));
+  }
+  #usersModal .modal-close, #empresasModal .modal-close, #settingsModal .modal-close{
+    float:none; position:sticky; top:0; left:0; margin:0 -16px 14px; width:calc(100% + 32px);
+    text-align:left; background:var(--ink); color:#fff; padding:16px; font-size:20px; z-index:5; border-radius:0;
   }
 </style>
 </head>
@@ -389,7 +450,7 @@
         <b id="sbUserName">—</b>
         <span id="sbUserRole">—</span>
       </div>
-      <button class="icon-btn" id="btnLogout" title="Sair" style="width:auto;padding:0 12px;font-size:12.5px;font-weight:700;letter-spacing:.3px;">Sair</button>
+      <button class="icon-btn" id="btnLogoutOld" title="Sair" style="width:auto;padding:0 12px;font-size:12.5px;font-weight:700;letter-spacing:.3px;">Sair</button>
     </div>
   </aside>
 
@@ -401,13 +462,30 @@
       </div>
     </div>
 
+<!-- ===================== TELA: MENU (inicial, após o login) ===================== -->
+<div id="homeMenu" style="display:none;">
+  <div class="home-header">
+    <img id="homeLogo" alt="Logo" style="display:none;">
+    <b id="homeBrand">DocSeg Digital</b>
+  </div>
+  <div class="home-items" id="homeMenuItems"></div>
+  <div class="home-footer">
+    <div class="hf-info">
+      <b id="homeUserName">—</b>
+      <span id="homeUserRole">—</span>
+    </div>
+    <button type="button" class="btn-sair" id="btnLogout">Sair</button>
+  </div>
+</div>
+
 <div id="offlineBanner">
   <span>⚠ Sem conexão · <b id="offlineCount">0</b> documento(s) na fila</span>
   <button class="oflink" id="btnRetryQueue">Tentar reenviar agora</button>
 </div>
 
 <!-- ===================== VIEW: PT ===================== -->
-<div id="ptView">
+<div id="ptView" style="display:none;">
+  <div class="screen-topbar"><button type="button" id="ptBack" title="Voltar ao menu">←</button><b>Permissão de Trabalho</b></div>
   <div class="hero">
     <h1>Nova Permissão de Trabalho</h1>
     <p>Preencha em campo, gere o PDF e envie automaticamente por e-mail.</p>
@@ -425,10 +503,12 @@
     <button class="btn btn-ghost" id="btnBack">Voltar</button>
     <button class="btn btn-primary" id="btnNext">Avançar</button>
   </div>
+  <button type="button" class="btn btn-ghost" id="btnSaveExitPt" style="width:100%;margin-top:10px;">💾 Salvar e sair</button>
 </div>
 
 <!-- ===================== VIEW: VEÍCULO ===================== -->
 <div id="veiculoView" style="display:none;">
+  <div class="screen-topbar"><button type="button" id="veiculoBack" title="Voltar ao menu">←</button><b>Checklist de Veículo</b></div>
   <div class="hero">
     <h1>Checklist de Veículo</h1>
     <p>Inspeção diária do veículo antes do uso.</p>
@@ -441,6 +521,7 @@
 
 <!-- ===================== VIEW: ESCADA ===================== -->
 <div id="escadaView" style="display:none;">
+  <div class="screen-topbar"><button type="button" id="escadaBack" title="Voltar ao menu">←</button><b>Checklist de Escada</b></div>
   <div class="hero">
     <h1>Checklist de Escada Extensiva</h1>
     <p>Inspeção diária da escada antes do uso.</p>
@@ -453,11 +534,18 @@
 
 <!-- ===================== VIEW: HISTÓRICO ===================== -->
 <div id="historicoView" style="display:none;">
+  <div class="screen-topbar"><button type="button" id="historicoBack" title="Voltar ao menu">←</button><b>Histórico</b></div>
   <div class="hero">
     <h1>Histórico</h1>
     <p>Documentos enviados neste aparelho.</p>
   </div>
   <main id="historicoSections"></main>
+</div>
+
+<!-- ===================== VIEW: PTs EM ANDAMENTO (rascunhos salvos) ===================== -->
+<div id="draftsView" style="display:none;">
+  <div class="screen-topbar"><button type="button" id="draftsBack" title="Voltar ao menu">←</button><b>PTs em andamento</b></div>
+  <div style="padding:16px;max-width:640px;margin:0 auto;" id="draftsList"></div>
 </div>
 
   </div><!-- /main-col -->
@@ -468,7 +556,7 @@
 <!-- USERS MODAL (Administrador) -->
 <div class="modal-bg" id="usersModal">
   <div class="modal">
-    <button class="modal-close" id="closeUsers">×</button>
+    <button class="modal-close" id="closeUsers">←</button>
     <h2>Usuários</h2>
     <p class="desc">Cadastre um usuário para cada empresa/colaborador (perfil "Usuário de Consulta") ou para outro técnico (perfil "Administrador").</p>
 
@@ -508,7 +596,7 @@
 <!-- EMPRESAS MODAL (Administrador) -->
 <div class="modal-bg" id="empresasModal">
   <div class="modal">
-    <button class="modal-close" id="closeEmpresas">×</button>
+    <button class="modal-close" id="closeEmpresas">←</button>
     <h2>Empresas</h2>
     <p class="desc">Cada empresa tem seu próprio conjunto de perguntas nos formulários. Use exatamente o mesmo nome cadastrado no campo "Empresa" dos usuários dela.</p>
 
@@ -536,7 +624,7 @@
 <!-- SETTINGS MODAL -->
 <div class="modal-bg" id="settingsModal">
   <div class="modal">
-    <button class="modal-close" id="closeSettings">×</button>
+    <button class="modal-close" id="closeSettings">←</button>
     <h2>Configurações</h2>
 
     <p class="desc" style="margin-bottom:6px; margin-top:14px; border-top:1px solid var(--line); padding-top:14px;">Aparência</p>
@@ -835,6 +923,10 @@ function applyRoleVisibility(){
   const roleEl = document.getElementById('sbUserRole');
   if(nameEl) nameEl.textContent = s ? s.username : '—';
   if(roleEl) roleEl.textContent = s ? (s.role === 'admin' ? 'Administrador' : 'Usuário de Consulta') : '—';
+  const homeNameEl = document.getElementById('homeUserName');
+  const homeRoleEl = document.getElementById('homeUserRole');
+  if(homeNameEl) homeNameEl.textContent = s ? s.username : '—';
+  if(homeRoleEl) homeRoleEl.textContent = s ? (s.role === 'admin' ? 'Administrador' : 'Usuário de Consulta') : '—';
 }
 
 async function attemptLogin(username, password){
@@ -900,6 +992,7 @@ document.getElementById('loginConfirm').onclick = async ()=>{
     document.getElementById('loginPass').value = '';
     toast('Bem-vindo, ' + session.username + '!', 'ok');
     initPushNotifications(session);
+    goHome();
   }catch(err){
     errEl.textContent = err.message || 'Não foi possível entrar.';
     errEl.style.display = 'block';
@@ -1456,6 +1549,10 @@ function updateBrand(){
   if(logoImg){ logoImg.src = logo1; logoImg.style.display='block'; }
   const loginLogo = document.getElementById('loginLogo');
   if(loginLogo){ loginLogo.src = logos.logo1 || DEFAULT_LOGIN_LOGO; loginLogo.style.display='block'; }
+  const homeLogo = document.getElementById('homeLogo');
+  if(homeLogo){ homeLogo.src = logo1; homeLogo.style.display='block'; }
+  const homeBrand = document.getElementById('homeBrand');
+  if(homeBrand) homeBrand.textContent = nome;
   updateAppIcon(nome, logo1);
 }
 
@@ -1579,6 +1676,7 @@ function openSettingsModal(){
   document.getElementById('cfgSoundEnabled').checked = cfg.soundEnabled !== false;
   bindLogoInputs();
   document.getElementById('sheetAuditBox').style.display = 'none';
+  hideAllScreens();
   document.getElementById('settingsModal').classList.add('show');
   if(cfg.scriptUrl){
     fetch(cfg.scriptUrl + '?action=peekNumber&prefix=' + encodeURIComponent(cfg.ptPrefix||''))
@@ -1598,7 +1696,7 @@ function openSettingsModal(){
 }
 document.getElementById('navConfig').onclick = openSettingsModal;
 
-document.getElementById('closeSettings').onclick = ()=> document.getElementById('settingsModal').classList.remove('show');
+document.getElementById('closeSettings').onclick = goHome;
 document.getElementById('saveSettings').onclick = async ()=>{
   if(!isAdmin()){ toast('Acesso restrito ao administrador.', 'err'); return; }
   const cfg = {
@@ -1714,11 +1812,12 @@ function resetUserForm(){
 async function openUsersModal(){
   if(!isAdmin()){ toast('Acesso restrito ao administrador.', 'err'); return; }
   resetUserForm();
+  hideAllScreens();
   document.getElementById('usersModal').classList.add('show');
   await loadUsersList();
 }
 document.getElementById('navUsuarios').onclick = openUsersModal;
-document.getElementById('closeUsers').onclick = ()=> document.getElementById('usersModal').classList.remove('show');
+document.getElementById('closeUsers').onclick = goHome;
 
 let lastLoadedUsers = [];
 async function loadUsersList(){
@@ -1826,11 +1925,12 @@ function resetEmpresaForm(){
 async function openEmpresasModal(){
   if(!isAdmin()){ toast('Acesso restrito ao administrador.', 'err'); return; }
   resetEmpresaForm();
+  hideAllScreens();
   document.getElementById('empresasModal').classList.add('show');
   await loadEmpresasList();
 }
 document.getElementById('navEmpresas').onclick = openEmpresasModal;
-document.getElementById('closeEmpresas').onclick = ()=> document.getElementById('empresasModal').classList.remove('show');
+document.getElementById('closeEmpresas').onclick = goHome;
 
 async function loadEmpresasList(){
   if(!isAdmin()) return;
@@ -2713,22 +2813,19 @@ function renderHistoricoResults(){
   });
 }
 
-/* ============ MENU LATERAL (troca entre documentos) ============ */
+/* ============ NAVEGAÇÃO POR TELA CHEIA (Menu → tela escolhida → Voltar) ============ */
 const DOC_ITEMS = ['pt', 'veiculo', 'escada', 'historico'];
 let currentDoc = localStorage.getItem('docseg_current_doc') || 'pt';
 
-function markActiveNavItem(){
-  document.querySelectorAll('.nav-item[data-doc]').forEach(el=>{
-    el.classList.toggle('active', el.getAttribute('data-doc') === currentDoc);
-  });
-}
-function openSidebar(){ document.getElementById('sidebar').classList.add('open'); document.getElementById('sidebarBackdrop').classList.add('show'); }
-function closeSidebarMenu(){ document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebarBackdrop').classList.remove('show'); }
-document.getElementById('btnMenu').onclick = openSidebar;
-document.getElementById('closeSidebar').onclick = closeSidebarMenu;
-document.getElementById('sidebarBackdrop').onclick = closeSidebarMenu;
+// Antiga barra lateral — mantida escondida (ver CSS) só para não quebrar
+// nada que ainda referencie esses elementos; não é mais usada para navegar.
+function openSidebar(){ const el=document.getElementById('sidebar'); if(el) el.classList.add('open'); const bd=document.getElementById('sidebarBackdrop'); if(bd) bd.classList.add('show'); }
+function closeSidebarMenu(){ const el=document.getElementById('sidebar'); if(el) el.classList.remove('open'); const bd=document.getElementById('sidebarBackdrop'); if(bd) bd.classList.remove('show'); }
+if(document.getElementById('btnMenu')) document.getElementById('btnMenu').onclick = openSidebar;
+if(document.getElementById('closeSidebar')) document.getElementById('closeSidebar').onclick = closeSidebarMenu;
+if(document.getElementById('sidebarBackdrop')) document.getElementById('sidebarBackdrop').onclick = closeSidebarMenu;
 document.querySelectorAll('.nav-item[data-doc]').forEach(el=>{
-  el.onclick = ()=>{ switchDoc(el.getAttribute('data-doc')); closeSidebarMenu(); };
+  el.onclick = ()=>{ openDocScreen(el.getAttribute('data-doc')); closeSidebarMenu(); };
 });
 document.getElementById('btnRetryQueue').onclick = retryQueue;
 
@@ -2743,8 +2840,162 @@ function switchDoc(docId){
   if(docId==='veiculo') renderVeiculoPage();
   if(docId==='escada') renderEscadaPage();
   if(docId==='historico') renderHistoricoPage();
-  markActiveNavItem();
 }
+
+// Esconde TODAS as telas (menu, documentos, rascunhos e os 3 painéis do
+// administrador) — usada antes de mostrar qualquer uma delas, para nunca
+// ficar duas abertas ao mesmo tempo.
+function hideAllScreens(){
+  document.getElementById('homeMenu').style.display = 'none';
+  document.getElementById('ptView').style.display = 'none';
+  document.getElementById('veiculoView').style.display = 'none';
+  document.getElementById('escadaView').style.display = 'none';
+  document.getElementById('historicoView').style.display = 'none';
+  document.getElementById('draftsView').style.display = 'none';
+  document.getElementById('usersModal').classList.remove('show');
+  document.getElementById('empresasModal').classList.remove('show');
+  document.getElementById('settingsModal').classList.remove('show');
+}
+
+function goHome(){
+  hideAllScreens();
+  renderHomeMenu();
+  document.getElementById('homeMenu').style.display = 'block';
+  window.scrollTo(0,0);
+}
+
+function openDocScreen(docId){
+  hideAllScreens();
+  switchDoc(docId);
+  window.scrollTo(0,0);
+}
+
+function homeItemHtml(id, icon, label, badge){
+  return `<button type="button" class="home-item${badge?' home-item-alert':''}" data-home-item="${id}">`
+    + `<span class="home-item-ic">${icon}</span>${label}`
+    + (badge ? `<span class="home-item-badge">${badge}</span>` : '')
+    + `</button>`;
+}
+
+function renderHomeMenu(){
+  const box = document.getElementById('homeMenuItems');
+  if(!box) return;
+  let html = '';
+  if(isAdmin()){
+    html += homeItemHtml('users', '👤', 'Usuários');
+    html += homeItemHtml('empresas', '🏢', 'Empresas');
+    html += homeItemHtml('settings', '⚙', 'Configurações');
+  } else {
+    html += homeItemHtml('pt', '📋', 'Permissão de Trabalho');
+    html += homeItemHtml('veiculo', '🚗', 'Checklist de Veículo');
+    html += homeItemHtml('escada', '🪜', 'Checklist de Escada');
+    html += homeItemHtml('historico', '🕘', 'Histórico');
+    const n = listPtDrafts().length;
+    html += homeItemHtml('drafts', '📝', 'PTs em andamento', n>0 ? String(n) : '');
+  }
+  box.innerHTML = html;
+  box.querySelectorAll('[data-home-item]').forEach(btn=>{
+    btn.onclick = ()=>{
+      const id = btn.getAttribute('data-home-item');
+      if(id==='users') openUsersModal();
+      else if(id==='empresas') openEmpresasModal();
+      else if(id==='settings') openSettingsModal();
+      else if(id==='drafts') openDraftsScreen();
+      else openDocScreen(id);
+    };
+  });
+}
+
+document.getElementById('ptBack').onclick = goHome;
+document.getElementById('veiculoBack').onclick = goHome;
+document.getElementById('escadaBack').onclick = goHome;
+document.getElementById('historicoBack').onclick = goHome;
+document.getElementById('draftsBack').onclick = goHome;
+
+/* ============ PTs EM ANDAMENTO (rascunhos "estacionados") ============
+   A PT que está sendo preenchida agora continua salva como antes (chave
+   'pt_draft', ver saveDraft/loadDraft). Quando o técnico toca em "Salvar
+   e sair", essa PT atual vira um item nesta lista separada — para ele
+   poder começar outra sem perder a primeira — e uma PT nova e em branco
+   assume o lugar de "PT atual". */
+function listPtDrafts(){
+  try{ return JSON.parse(localStorage.getItem('pt_drafts_parked') || '[]'); }
+  catch(e){ return []; }
+}
+function savePtDraftsList(list){
+  try{ localStorage.setItem('pt_drafts_parked', JSON.stringify(list)); }catch(e){}
+}
+
+async function parkCurrentPtAndGoHome(){
+  const list = listPtDrafts();
+  const snapshot = JSON.parse(JSON.stringify(state));
+  list.unshift({
+    id: 'draft_' + Date.now(),
+    ptNumero: state.ptNumero || '—',
+    local: state.area || '(sem local informado)',
+    empresa: state.empresaNome || '',
+    savedAt: new Date().toISOString(),
+    data: snapshot
+  });
+  savePtDraftsList(list);
+  await resetForNewPT();
+  toast('PT salva. Continue depois em "PTs em andamento".', 'ok');
+  goHome();
+}
+
+function resumePtDraft(id){
+  const list = listPtDrafts();
+  const idx = list.findIndex(d=>d.id===id);
+  if(idx<0) return;
+  const entry = list[idx];
+  list.splice(idx,1);
+  savePtDraftsList(list);
+  Object.assign(state, entry.data);
+  saveDraft();
+  current = 0;
+  renderCurrentStep();
+  updateBrand();
+  const badge = document.getElementById('ptNumberBadge');
+  if(badge) badge.textContent = state.ptNumero;
+  openDocScreen('pt');
+}
+
+function deletePtDraft(id){
+  if(!confirm('Excluir esta PT salva? Essa ação não pode ser desfeita.')) return;
+  savePtDraftsList(listPtDrafts().filter(d=>d.id!==id));
+  renderDraftsScreen();
+}
+
+function renderDraftsScreen(){
+  const box = document.getElementById('draftsList');
+  if(!box) return;
+  const list = listPtDrafts();
+  if(!list.length){
+    box.innerHTML = '<p class="hint">Nenhuma PT salva no momento. Dentro de uma PT, toque em "Salvar e sair" para guardar o progresso aqui.</p>';
+    return;
+  }
+  box.innerHTML = list.map(d => `
+    <div class="draft-card">
+      <b>PT nº ${d.ptNumero}</b>
+      <span>${d.local}${d.empresa ? ' · ' + d.empresa : ''}</span>
+      <span class="draft-date">Salva em ${new Date(d.savedAt).toLocaleString('pt-BR')}</span>
+      <div class="draft-actions">
+        <button type="button" class="btn btn-primary" data-resume="${d.id}">Continuar</button>
+        <button type="button" class="btn btn-ghost" data-del="${d.id}">Excluir</button>
+      </div>
+    </div>`).join('');
+  box.querySelectorAll('[data-resume]').forEach(b=>{ b.onclick = ()=> resumePtDraft(b.getAttribute('data-resume')); });
+  box.querySelectorAll('[data-del]').forEach(b=>{ b.onclick = ()=> deletePtDraft(b.getAttribute('data-del')); });
+}
+
+function openDraftsScreen(){
+  hideAllScreens();
+  renderDraftsScreen();
+  document.getElementById('draftsView').style.display = 'block';
+  window.scrollTo(0,0);
+}
+
+document.getElementById('btnSaveExitPt').onclick = parkCurrentPtAndGoHome;
 
 /* ============ INIT ============ */
 async function initApp(){
@@ -2756,9 +3007,8 @@ async function initApp(){
   if(!state.empresaNome){ const c=loadCfg(); if(c.empresaPadrao) state.empresaNome = c.empresaPadrao; }
   updateBrand();
   applyRoleVisibility();
-  if(isLoggedIn()){ hideLoginScreen(); initPushNotifications(getSession()); } else showLoginScreen();
+  if(isLoggedIn()){ hideLoginScreen(); initPushNotifications(getSession()); goHome(); } else showLoginScreen();
   renderCurrentStep();
-  switchDoc(currentDoc);
   if(cfgApplied) toast('Configuração da empresa aplicada automaticamente neste aparelho!', 'ok');
   renderOfflineBanner();
   if(navigator.onLine) retryQueue();
