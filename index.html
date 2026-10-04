@@ -1899,7 +1899,7 @@ document.getElementById('saveSettings').onclick = async ()=>{
     if(steps[current].key === 'ident') renderCurrentStep();
   }
   updateBrand();
-  document.getElementById('settingsModal').classList.remove('show');
+  goHome();
   toast('Configuração salva neste aparelho.', 'ok');
 };
 
