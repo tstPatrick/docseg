@@ -142,6 +142,8 @@
     padding:12px 0;
   }
   .question:last-child{border-bottom:none;}
+  .question.q-error{background:#FFF4F4; margin:0 -14px; padding:12px 14px; border-radius:8px; box-shadow:inset 0 0 0 1.5px var(--red);}
+  .question.q-error p::after{content:" ⚠ responda esta pergunta"; color:var(--red-dark); font-size:11.5px; font-weight:700;}
   .question p{margin:0 0 9px; font-size:13.5px; line-height:1.4; color:var(--ink);}
   .segmented{display:flex; gap:6px;}
   .seg-btn{
@@ -698,12 +700,17 @@
     <div class="field">
       <label>Prefixo do número da PT (opcional)</label>
       <input type="text" id="cfgPtPrefix" placeholder="Ex: PT-">
-      <p class="hint">O número da PT é gerado sozinho a cada nova permissão (ex: TN-0001, TN-0002...). Com o script configurado abaixo, a numeração é única para todos os aparelhos.</p>
+      <p class="hint">É só o texto que aparece antes do número (ex: TN-0001). A contagem em si é sempre separada automaticamente por empresa — veja abaixo.</p>
     </div>
     <div class="field">
-      <label>Próximo número a ser usado</label>
+      <label>Numeração da PT — empresa</label>
+      <select id="cfgNumEmpresa"><option value="">Selecione a empresa...</option></select>
+      <p class="hint">Cada empresa cadastrada tem sua própria contagem (0001, 0002...), independente das outras. Escolha aqui a empresa pra ver ou corrigir o próximo número dela.</p>
+    </div>
+    <div class="field">
+      <label>Próximo número a ser usado (nessa empresa)</label>
       <input type="text" id="cfgNextNumber" inputmode="numeric" placeholder="Ex: 1">
-      <p class="hint">Ajuste aqui se precisar corrigir a sequência (ex: recomeçar do 50). Se o script estiver configurado, isso corrige o contador central para todos os aparelhos.</p>
+      <p class="hint">Ajuste aqui se precisar corrigir a sequência dessa empresa (ex: recomeçar do 50).</p>
     </div>
     <div class="field">
       <label>Logo principal (ex: sua empresa)</label>
@@ -1141,10 +1148,16 @@ function renderFerramentas(){
   `);
 }
 
+// Em quase todas as perguntas, é o "NÃO" que indica irregularidade e precisa
+// de justificativa. No questionário de saúde é o contrário: é o "SIM" que
+// indica um sintoma/condição e precisa ser detalhado.
+const QUESTION_JUST_TRIGGER = { saude: "SIM" };
+
 function questionRow(prefix, id, text, threeState){
   const cur = state[prefix][id] || {val:"", just:""};
   const opts = threeState ? [["SIM","Sim"],["NAO","Não"],["NA","N/A"]] : [["SIM","Sim"],["NAO","Não"]];
-  const showJust = cur.val === "NAO";
+  const justTrigger = QUESTION_JUST_TRIGGER[prefix] || "NAO";
+  const showJust = cur.val === justTrigger;
   return `<div class="question" data-qid="${id}" data-prefix="${prefix}">
     <p>${text}</p>
     <div class="segmented">
@@ -1205,11 +1218,30 @@ function renderSaude(){
   return sectionShell("Questionário de saúde","Antes de iniciar a atividade", body);
 }
 
+// Formata RG/CPF automaticamente enquanto digita: até 9 dígitos vira RG
+// (00.000.000-0), a partir do 10º dígito passa a ser tratado como CPF
+// (000.000.000-00).
+function formatCpfRg(raw){
+  const digits = (raw||'').replace(/\D/g,'').slice(0,11);
+  if(digits.length > 9){
+    let out = digits.slice(0,3);
+    if(digits.length>3) out += '.'+digits.slice(3,6);
+    if(digits.length>6) out += '.'+digits.slice(6,9);
+    if(digits.length>9) out += '-'+digits.slice(9,11);
+    return out;
+  }
+  let out = digits.slice(0,2);
+  if(digits.length>2) out += '.'+digits.slice(2,5);
+  if(digits.length>5) out += '.'+digits.slice(5,8);
+  if(digits.length>8) out += '-'+digits.slice(8,9);
+  return out;
+}
+
 function renderEquipe(){
   const rows = state.equipe.map((p,i)=>`
     <div class="team-row" data-idx="${i}">
       <input type="text" class="eq-nome" placeholder="Nome" value="${p.nome}">
-      <input type="text" class="eq-doc" placeholder="RG/CPF" value="${p.doc}">
+      <input type="text" class="eq-doc" inputmode="numeric" maxlength="14" placeholder="RG/CPF" value="${p.doc}">
       <button class="rm-btn" data-rm="${i}">✕</button>
     </div>`).join('');
   return sectionShell("Equipe autorizada","Colaboradores que executarão a atividade", `
@@ -1364,6 +1396,12 @@ function bindLocationButton(){
 const PT_COUNTER_KEY = 'pt_number_counter';
 function peekNextCounter(){ return parseInt(localStorage.getItem(PT_COUNTER_KEY)||'0',10) + 1; }
 function formatPtNumber(n, cfg){ return (cfg.ptPrefix||'') + String(n).padStart(4,'0'); }
+// Empresa usada para separar a numeração — vem da empresa cadastrada para o
+// usuário logado (preenchida automaticamente no login), sem precisar
+// configurar nada no aparelho.
+function empresaParaNumeracao(){
+  return (state.empresaNome || loadCfg().empresaPadrao || '').trim();
+}
 function assignNextPtNumberLocal(){
   const cfg = loadCfg();
   const n = peekNextCounter();
@@ -1376,7 +1414,8 @@ async function assignNextPtNumber(){
     try{
       const controller = new AbortController();
       const timer = setTimeout(()=>controller.abort(), 7000);
-      const resp = await fetch(cfg.scriptUrl + '?action=nextNumber&prefix=' + encodeURIComponent(cfg.ptPrefix||''), {signal: controller.signal});
+      const qs = 'prefix=' + encodeURIComponent(cfg.ptPrefix||'') + '&empresa=' + encodeURIComponent(empresaParaNumeracao());
+      const resp = await fetch(cfg.scriptUrl + '?action=nextNumber&' + qs, {signal: controller.signal});
       clearTimeout(timer);
       const data = await resp.json();
       if(data && typeof data.number === 'number'){
@@ -1459,7 +1498,9 @@ function bindStepEvents(stepKey){
         if(!state[prefix][qid]) state[prefix][qid] = {val:"",just:""};
         state[prefix][qid].val = val;
         const justBox = qEl.querySelector('.justif');
-        if(val==="NAO"){ justBox.classList.add('show'); } else { justBox.classList.remove('show'); }
+        const justTrigger = QUESTION_JUST_TRIGGER[prefix] || "NAO";
+        if(val===justTrigger){ justBox.classList.add('show'); } else { justBox.classList.remove('show'); }
+        qEl.classList.remove('q-error');
         saveDraft();
       };
     });
@@ -1504,7 +1545,17 @@ function bindStepEvents(stepKey){
     document.querySelectorAll('.eq-nome, .eq-doc').forEach(inp=>{
       inp.oninput = ()=>{
         const idx = parseInt(inp.closest('.team-row').getAttribute('data-idx'),10);
-        state.equipe[idx][inp.classList.contains('eq-nome')?'nome':'doc'] = inp.value;
+        if(inp.classList.contains('eq-doc')){
+          const pos = inp.selectionStart;
+          const before = inp.value.length;
+          inp.value = formatCpfRg(inp.value);
+          // mantém o cursor no fim (o jeito mais natural pra um campo assim)
+          const after = inp.value.length;
+          try{ inp.setSelectionRange(pos + (after-before), pos + (after-before)); }catch(e){}
+          state.equipe[idx].doc = inp.value;
+        } else {
+          state.equipe[idx].nome = inp.value;
+        }
         saveDraft();
       };
     });
@@ -1537,6 +1588,8 @@ function renderCurrentStep(){
 
 /* ============ VALIDAÇÃO DE CAMPOS OBRIGATÓRIOS ============ */
 const REQUIRED_BY_STEP = { ident:['f_area'], final:['f_respNome'] };
+// Etapas com perguntas Sim/Não/N.A. — nenhuma pode ficar sem resposta.
+const QUESTION_STEPS = { eletrico:'eletrico', altura:'altura', saude:'saude', instalacao:'instalacao' };
 function validateRequiredFields(ids){
   let missing = 0;
   ids.forEach(id=>{
@@ -1550,19 +1603,38 @@ function validateRequiredFields(ids){
   });
   return missing;
 }
+// Confere se toda pergunta Sim/Não/N.A. de uma etapa foi respondida, e destaca
+// visualmente (borda vermelha + aviso) as que ficaram em branco.
+function validateQuestionsStep(prefix){
+  let missing = 0;
+  document.querySelectorAll('#formSections .question[data-prefix="'+prefix+'"]').forEach(qEl=>{
+    const qid = qEl.getAttribute('data-qid');
+    const answered = !!(state[prefix][qid] && state[prefix][qid].val);
+    qEl.classList.toggle('q-error', !answered);
+    if(!answered) missing++;
+  });
+  return missing;
+}
 function validateCurrentStep(){
-  const ids = REQUIRED_BY_STEP[steps[current].key];
-  if(!ids || !ids.length) return true;
-  const missing = validateRequiredFields(ids);
+  const key = steps[current].key;
+  let missing = 0;
+  const ids = REQUIRED_BY_STEP[key];
+  if(ids && ids.length) missing += validateRequiredFields(ids);
+  if(QUESTION_STEPS[key]) missing += validateQuestionsStep(QUESTION_STEPS[key]);
   if(missing > 0){
     const btn = document.getElementById('btnNext');
     const label = current === steps.length-1 ? 'Gerar PDF e enviar' : 'Avançar';
-    btn.textContent = `${label} (${missing} campo${missing>1?'s':''} pendente${missing>1?'s':''})`;
+    btn.textContent = `${label} (${missing} ${missing>1?'pendências':'pendência'})`;
     btn.classList.add('pending');
-    toast('Preencha os campos obrigatórios em destaque.', 'err');
+    toast('Responda/preencha todos os itens em destaque antes de continuar.', 'err');
+    scrollToFirstError();
     return false;
   }
   return true;
+}
+function scrollToFirstError(){
+  const el = document.querySelector('.q-error, .input-error');
+  if(el) el.scrollIntoView({behavior:'smooth', block:'center'});
 }
 
 document.getElementById('btnBack').onclick = ()=>{ if(current>0){ current--; renderCurrentStep(); } };
@@ -1711,6 +1783,30 @@ async function hashPin(pin){
   return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
 }
 
+function peekNumeroParaEmpresa(scriptUrl, prefix, empresaNome){
+  const qs = 'action=peekNumber&prefix=' + encodeURIComponent(prefix||'') + '&empresa=' + encodeURIComponent(empresaNome||'');
+  fetch(scriptUrl + '?' + qs)
+    .then(r=>r.json())
+    .then(data=>{ if(data && typeof data.number === 'number') document.getElementById('cfgNextNumber').value = data.number; })
+    .catch(()=>{ /* mantém o valor local exibido */ });
+}
+async function populateCfgNumEmpresa(scriptUrl){
+  const sel = document.getElementById('cfgNumEmpresa');
+  sel.innerHTML = '<option value="">Selecione a empresa...</option>';
+  if(!scriptUrl) return;
+  try{
+    const creds = currentAdminCreds();
+    const url = scriptUrl + '?action=listEmpresas&adminUsername=' + encodeURIComponent(creds.adminUsername) + '&adminPasswordHash=' + encodeURIComponent(creds.adminPasswordHash);
+    const resp = await fetch(url);
+    const data = await resp.json();
+    if(data.error) return;
+    (data.empresas||[]).forEach(emp=>{
+      const opt = document.createElement('option');
+      opt.value = emp.nome; opt.textContent = emp.nome;
+      sel.appendChild(opt);
+    });
+  }catch(e){ /* mantém só a opção vazia */ }
+}
 function openSettingsModal(){
   if(!isAdmin()){ toast('Acesso restrito ao administrador.', 'err'); return; }
   const cfg = loadCfg();
@@ -1727,10 +1823,13 @@ function openSettingsModal(){
   hideAllScreens();
   document.getElementById('settingsModal').classList.add('show');
   if(cfg.scriptUrl){
-    fetch(cfg.scriptUrl + '?action=peekNumber&prefix=' + encodeURIComponent(cfg.ptPrefix||''))
-      .then(r=>r.json())
-      .then(data=>{ if(data && typeof data.number === 'number') document.getElementById('cfgNextNumber').value = data.number; })
-      .catch(()=>{ /* mantém o valor local exibido */ });
+    populateCfgNumEmpresa(cfg.scriptUrl).then(()=>{
+      const sel = document.getElementById('cfgNumEmpresa');
+      sel.onchange = ()=>{
+        if(sel.value) peekNumeroParaEmpresa(cfg.scriptUrl, cfg.ptPrefix, sel.value);
+        else document.getElementById('cfgNextNumber').value = peekNextCounter();
+      };
+    });
     fetch(cfg.scriptUrl + '?action=sheetUrl')
       .then(r=>r.json())
       .then(data=>{
@@ -1759,11 +1858,13 @@ document.getElementById('saveSettings').onclick = async ()=>{
   saveCfg(cfg);
   applyTheme(cfg);
   const nextNumTyped = parseInt(document.getElementById('cfgNextNumber').value, 10);
+  const empresaSelecionada = document.getElementById('cfgNumEmpresa').value;
   if(!isNaN(nextNumTyped) && nextNumTyped > 0){
     localStorage.setItem(PT_COUNTER_KEY, String(nextNumTyped - 1));
     if(cfg.scriptUrl){
       try{
-        await fetch(cfg.scriptUrl + '?action=setNumber&value=' + nextNumTyped + '&prefix=' + encodeURIComponent(cfg.ptPrefix||''));
+        const qs = 'value=' + nextNumTyped + '&prefix=' + encodeURIComponent(cfg.ptPrefix||'') + '&empresa=' + encodeURIComponent(empresaSelecionada);
+        await fetch(cfg.scriptUrl + '?action=setNumber&' + qs);
       }catch(err){
         toast('Não foi possível atualizar o contador central — verifique a conexão.', 'err');
       }
@@ -2112,6 +2213,14 @@ document.getElementById('btnEmpresaResetQuestions').onclick = ()=>{
   }
 };
 
+// Deixa um nome seguro pra usar em nome de arquivo (sem acento, espaço ou
+// caractere especial que possa dar problema no Windows/e-mail).
+function slugFileName(s){
+  const clean = (s||'').toString().normalize('NFD').replace(/[̀-ͯ]/g,'')
+    .replace(/[^a-zA-Z0-9]+/g,'_').replace(/^_+|_+$/g,'');
+  return clean.slice(0,60) || 'sem-nome';
+}
+
 /* ============ PDF TEMPLATE BUILD ============ */
 function ansCell(prefix,id){
   const v = (state[prefix][id]||{}).val || "";
@@ -2214,6 +2323,53 @@ function buildPrintTemplate(){
 }
 
 /* ============ GENERATE PDF + SEND ============ */
+/* ============ PAGINAÇÃO INTELIGENTE DO PDF ============
+   Em vez de cortar a imagem a cada 297mm fixos (o que corta uma linha da
+   tabela — pergunta e resposta X — no meio, bem na quebra de página), a
+   gente primeiro marca onde começa cada linha de tabela/cabeçalho
+   (enquanto o conteúdo ainda está visível na tela, antes do html2canvas
+   "congelar" tudo numa imagem única) e depois escolhe o corte de cada
+   página sempre um pouco antes dessas marcas — nunca no meio de uma linha. */
+function collectRowMarks(node, canvas){
+  const nodeRect = node.getBoundingClientRect();
+  const scaleY = canvas.height / node.offsetHeight;
+  const marks = [];
+  node.querySelectorAll('tr, .bar, .ybar').forEach(elm=>{
+    const r = elm.getBoundingClientRect();
+    marks.push((r.top - nodeRect.top) * scaleY);
+  });
+  return marks;
+}
+function paginateCanvasToPdf(pdf, canvas, marks){
+  const pageW = 210, pageH = 297, imgW = pageW;
+  const pxPerMm = canvas.width / imgW;
+  const pageHpx = pageH * pxPerMm;
+  const sorted = marks.slice().sort((a,b)=>a-b);
+
+  let cutPx = 0, first = true;
+  while(cutPx < canvas.height - 1){
+    const target = Math.min(cutPx + pageHpx, canvas.height);
+    let nextCut = target;
+    if(target < canvas.height - 1){
+      let candidate = -1;
+      for(const m of sorted){ if(m > cutPx + 2 && m <= target) candidate = m; }
+      if(candidate > cutPx + 2) nextCut = candidate; // senão (linha mais alta que uma página), mantém o corte "seco"
+    }
+    const sliceHpx = Math.max(1, Math.round(nextCut - cutPx));
+    const sub = document.createElement('canvas');
+    sub.width = canvas.width; sub.height = sliceHpx;
+    const ctx = sub.getContext('2d');
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,sub.width,sub.height);
+    ctx.drawImage(canvas, 0, cutPx, canvas.width, sliceHpx, 0, 0, canvas.width, sliceHpx);
+    const sliceData = sub.toDataURL('image/jpeg', 0.92);
+    const sliceHmm = sliceHpx / pxPerMm;
+    if(!first) pdf.addPage();
+    pdf.addImage(sliceData, 'JPEG', 0, 0, imgW, sliceHmm);
+    first = false;
+    cutPx = nextCut;
+  }
+}
+
 async function finalizeAndSend(){
   const nextBtn = document.getElementById('btnNext');
   nextBtn.disabled = true; nextBtn.textContent = 'Gerando PDF...';
@@ -2223,24 +2379,13 @@ async function finalizeAndSend(){
     node.style.left = '0px'; node.style.position='absolute'; node.style.zIndex='-1'; node.style.top='0px';
     await new Promise(r=>setTimeout(r,50));
     const canvas = await html2canvas(node, {scale:2, backgroundColor:'#ffffff'});
+    const rowMarks = collectRowMarks(node, canvas);
     node.style.left = '-9999px';
 
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF('p','mm','a4');
-    const pageW = 210, pageH = 297;
-    const imgW = pageW;
-    const imgH = canvas.height * imgW / canvas.width;
-    let heightLeft = imgH, position = 0;
-    const imgData = canvas.toDataURL('image/jpeg', 0.92);
-    pdf.addImage(imgData,'JPEG',0,position,imgW,imgH);
-    heightLeft -= pageH;
-    while(heightLeft > 0){
-      position = heightLeft - imgH;
-      pdf.addPage();
-      pdf.addImage(imgData,'JPEG',0,position,imgW,imgH);
-      heightLeft -= pageH;
-    }
-    const fileName = `PT_${state.ptNumero||'sem-numero'}_${state.data||''}.pdf`;
+    paginateCanvasToPdf(pdf, canvas, rowMarks);
+    const fileName = `PT_${slugFileName(state.respNome)}_${state.data||''}.pdf`;
     pdf.save(fileName);
 
     const cfg = loadCfg();
@@ -2432,6 +2577,18 @@ function genericQuestionRow(store, id, text, opts, badVal){
     </div>
   </div>`;
 }
+// Confere se todo item Conforme/Irregular/N.A. de um grupo (Veículo/Escada)
+// foi respondido, e destaca visualmente os que ficaram em branco.
+function validateQuestionGroup(containerSelector, store){
+  let missing = 0;
+  document.querySelectorAll(containerSelector + ' .question').forEach(qEl=>{
+    const qid = qEl.getAttribute('data-qid');
+    const answered = !!(store.itens[qid] && store.itens[qid].val);
+    qEl.classList.toggle('q-error', !answered);
+    if(!answered) missing++;
+  });
+  return missing;
+}
 function bindQuestionGroup(containerSelector, store, saveFn){
   document.querySelectorAll(containerSelector + ' .question').forEach(qEl=>{
     const qid = qEl.getAttribute('data-qid');
@@ -2445,6 +2602,7 @@ function bindQuestionGroup(containerSelector, store, saveFn){
         const justBox = qEl.querySelector('.justif');
         const badVal = qEl.getAttribute('data-badval');
         if(val===badVal){ justBox.classList.add('show'); } else { justBox.classList.remove('show'); }
+        qEl.classList.remove('q-error');
         saveFn();
       };
     });
@@ -2464,22 +2622,11 @@ async function generateAndSendDoc(opts){
     node.style.left = '0px'; node.style.position='absolute'; node.style.zIndex='-1'; node.style.top='0px';
     await new Promise(r=>setTimeout(r,50));
     const canvas = await html2canvas(node, {scale:2, backgroundColor:'#ffffff'});
+    const rowMarks = collectRowMarks(node, canvas);
     node.style.left = '-9999px';
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF('p','mm','a4');
-    const pageW = 210, pageH = 297;
-    const imgW = pageW;
-    const imgH = canvas.height * imgW / canvas.width;
-    let heightLeft = imgH, position = 0;
-    const imgData = canvas.toDataURL('image/jpeg', 0.92);
-    pdf.addImage(imgData,'JPEG',0,position,imgW,imgH);
-    heightLeft -= pageH;
-    while(heightLeft > 0){
-      position = heightLeft - imgH;
-      pdf.addPage();
-      pdf.addImage(imgData,'JPEG',0,position,imgW,imgH);
-      heightLeft -= pageH;
-    }
+    paginateCanvasToPdf(pdf, canvas, rowMarks);
     const fileName = `${opts.fileNameBase}.pdf`;
     pdf.save(fileName);
     const cfg = loadCfg();
@@ -2794,7 +2941,9 @@ function resetEscadaForm(){
 }
 
 document.getElementById('btnSendVeiculo').onclick = ()=>{
-  if(validateRequiredFields(['v_placa','v_mot1']) > 0){ toast('Preencha os campos obrigatórios em destaque.', 'err'); return; }
+  const missingFields = validateRequiredFields(['v_placa','v_mot1']);
+  const missingQ = validateQuestionGroup('#veiculoSections', vState);
+  if(missingFields > 0 || missingQ > 0){ toast('Responda/preencha todos os itens em destaque antes de continuar.', 'err'); scrollToFirstError(); return; }
   generateAndSendDoc({
     btnId:'btnSendVeiculo', buildFn:buildPrintTemplateVeiculo,
     fileNameBase:`Checklist_Veiculo_${vState.placa||'sem-placa'}_${vState.data||''}`,
@@ -2804,7 +2953,9 @@ document.getElementById('btnSendVeiculo').onclick = ()=>{
   });
 };
 document.getElementById('btnSendEscada').onclick = ()=>{
-  if(validateRequiredFields(['e_exec']) > 0){ toast('Preencha os campos obrigatórios em destaque.', 'err'); return; }
+  const missingFields = validateRequiredFields(['e_exec']);
+  const missingQ = validateQuestionGroup('#escadaSections', eState);
+  if(missingFields > 0 || missingQ > 0){ toast('Responda/preencha todos os itens em destaque antes de continuar.', 'err'); scrollToFirstError(); return; }
   generateAndSendDoc({
     btnId:'btnSendEscada', buildFn:buildPrintTemplateEscada,
     fileNameBase:`Checklist_Escada_${eState.data||''}`,
