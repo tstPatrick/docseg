@@ -584,28 +584,37 @@
   <div class="modal">
     <button class="modal-close" id="closeUsers">←</button>
     <h2>Usuários</h2>
-    <p class="desc">Cadastre um usuário para cada empresa/colaborador (perfil "Usuário de Consulta") ou para outro técnico (perfil "Administrador").</p>
+    <p class="desc">"Usuário de Consulta" é o login da empresa — compartilhado por todos os técnicos dela. "Administrador" é um login pessoal, com acesso completo.</p>
 
+    <div class="field" style="margin-bottom:10px;">
+      <input type="text" id="usersSearch" placeholder="🔍 Buscar por empresa ou usuário..." autocomplete="off">
+    </div>
     <div id="usersList" style="margin-bottom:18px;"></div>
 
     <p class="desc" style="margin-bottom:6px; border-top:1px solid var(--line); padding-top:14px;" id="userFormTitle">Novo usuário</p>
-    <div class="field"><label>Usuário</label><input type="text" id="userFormUsername" placeholder="Ex: joao.silva" autocomplete="off"></div>
-    <div class="field"><label>Senha</label><input type="password" id="userFormPassword" placeholder="Senha" autocomplete="new-password"></div>
     <div class="field"><label>Perfil</label>
       <select id="userFormRole" style="width:100%;padding:11px 12px;border:1px solid #D6D3CC;border-radius:8px;font-size:15px;background:#fff;">
         <option value="consulta">Usuário de Consulta (só preenche e envia)</option>
         <option value="admin">Administrador (acesso completo)</option>
       </select>
     </div>
-    <div class="field">
-      <label>Empresa (nome fixo que aparece nos documentos)</label>
-      <input type="text" id="userFormEmpresa" placeholder="Ex: Nome da empresa">
-      <p class="hint">Preenchida automaticamente nos formulários — quem faz login com esse usuário não escolhe nem edita a empresa.</p>
+    <div class="field" id="userFormUsernameWrap" style="display:none;">
+      <label>Usuário (login)</label>
+      <input type="text" id="userFormUsername" placeholder="Ex: joao.silva" autocomplete="off">
+      <p class="hint">Login pessoal deste administrador.</p>
     </div>
+    <div class="field" id="userFormEmpresaSelectWrap">
+      <label>Usuário (empresa)</label>
+      <select id="userFormEmpresaSelect" style="width:100%;padding:11px 12px;border:1px solid #D6D3CC;border-radius:8px;font-size:15px;background:#fff;">
+        <option value="">Selecione a empresa cadastrada...</option>
+      </select>
+      <p class="hint">Escolha entre as empresas já cadastradas em "Empresas". Esse nome vira o login compartilhado por todos os técnicos dessa empresa e também o nome (+ cor e logo) que aparece nos documentos.</p>
+    </div>
+    <div class="field"><label>Senha</label><input type="password" id="userFormPassword" placeholder="Senha" autocomplete="new-password"></div>
     <div class="field">
-      <label>Técnico de Segurança do Trabalho (nome fixo nos documentos)</label>
+      <label>Técnico de Segurança do Trabalho (sugestão padrão)</label>
       <input type="text" id="userFormTec" placeholder="Ex: Nome do técnico responsável">
-      <p class="hint">Aparece automaticamente na PT e nos checklists preenchidos por esse usuário — sem precisar digitar nem assinar toda vez.</p>
+      <p class="hint">Preenche o campo "Técnico" automaticamente ao fazer login, mas cada técnico pode alterar na hora de preencher a PT — útil quando vários técnicos usam o mesmo login da empresa.</p>
     </div>
     <div class="field">
       <label>E-mail(s) de destino desta conta</label>
@@ -624,7 +633,7 @@
   <div class="modal">
     <button class="modal-close" id="closeEmpresas">←</button>
     <h2>Empresas</h2>
-    <p class="desc">Cada empresa tem seu próprio conjunto de perguntas nos formulários. Use exatamente o mesmo nome cadastrado no campo "Empresa" dos usuários dela.</p>
+    <p class="desc">Cada empresa tem suas próprias perguntas, cor da PT, logo e aviso. O nome cadastrado aqui aparece na lista de empresas ao criar o usuário/login dela, em "Usuários".</p>
 
     <div id="empresasList" style="margin-bottom:18px;"></div>
 
@@ -632,7 +641,7 @@
     <div class="field">
       <label>Nome da empresa</label>
       <input type="text" id="empresaFormNome" placeholder="Ex: Global Seg">
-      <p class="hint">Deve ser idêntico ao nome usado no cadastro dos usuários dessa empresa (em Usuários → Empresa).</p>
+      <p class="hint">Depois de salva, essa empresa aparece na lista pra escolher ao criar o usuário/login dela, em "Usuários".</p>
     </div>
 
     <p class="desc" style="margin-bottom:6px; margin-top:14px; border-top:1px solid var(--line); padding-top:14px;">Logo da empresa</p>
@@ -646,6 +655,19 @@
         <input type="file" accept="image/*" id="empresaLogoFile" style="display:none;">
         <button type="button" class="btn btn-ghost" id="btnEmpresaLogoPick" style="width:100%;margin-bottom:6px;">Escolher imagem</button>
         <button type="button" class="btn btn-ghost" id="btnEmpresaLogoRemove" style="width:100%;">Remover logo</button>
+      </div>
+    </div>
+
+    <p class="desc" style="margin-bottom:6px; margin-top:14px; border-top:1px solid var(--line); padding-top:14px;">Cor da PT desta empresa</p>
+    <p class="hint" style="margin-top:-4px;margin-bottom:10px;">Muda a cor do app, do ícone e do PDF gerado para quem fizer login com um usuário desta empresa.</p>
+    <div class="row2">
+      <div class="field">
+        <label>Cor principal</label>
+        <input type="color" id="empresaFormColorPrimary" value="#C8272A" style="width:100%;height:42px;padding:2px;border:1.5px solid #D6D3CC;border-radius:8px;">
+      </div>
+      <div class="field">
+        <label>Cor de destaque</label>
+        <input type="color" id="empresaFormColorAccent" value="#F4B400" style="width:100%;height:42px;padding:2px;border:1.5px solid #D6D3CC;border-radius:8px;">
       </div>
     </div>
 
@@ -673,18 +695,8 @@
     <button class="modal-close" id="closeSettings">←</button>
     <h2>Configurações</h2>
 
-    <p class="desc" style="margin-bottom:6px; margin-top:14px; border-top:1px solid var(--line); padding-top:14px;">Aparência</p>
-    <div class="row2">
-      <div class="field">
-        <label>Cor principal</label>
-        <input type="color" id="cfgColorPrimary" style="width:100%;height:42px;padding:2px;border:1.5px solid #D6D3CC;border-radius:8px;">
-      </div>
-      <div class="field">
-        <label>Cor de aviso</label>
-        <input type="color" id="cfgColorAccent" style="width:100%;height:42px;padding:2px;border:1.5px solid #D6D3CC;border-radius:8px;">
-      </div>
-    </div>
-    <p class="hint" style="margin-top:-8px;margin-bottom:14px;">Muda a cor do app, do ícone e do PDF gerado — ideal para adaptar à identidade de cada empresa.</p>
+    <p class="desc" style="margin-bottom:6px; margin-top:14px;">Aparência</p>
+    <p class="hint" style="margin-top:-8px;margin-bottom:14px;">A cor da PT agora é definida no cadastro da empresa (em 🏢 Empresas) e aplicada automaticamente no login — não precisa mais configurar aqui.</p>
 
     <label style="display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600;margin-bottom:16px;">
       <input type="checkbox" id="cfgSoundEnabled" style="width:18px;height:18px;">
@@ -1023,7 +1035,8 @@ async function attemptLogin(username, password){
     return {
       username: uname, role: serverResult.role === 'admin' ? 'admin' : 'consulta', passwordHash: passHash,
       cfg: serverResult.cfg || null, perguntas: serverResult.perguntas || null,
-      empresaAviso: serverResult.empresaAviso || '', empresaLogoDataUrl: serverResult.empresaLogoDataUrl || ''
+      empresaAviso: serverResult.empresaAviso || '', empresaLogoDataUrl: serverResult.empresaLogoDataUrl || '',
+      empresaThemeColor: serverResult.empresaThemeColor || '', empresaThemeColor2: serverResult.empresaThemeColor2 || ''
     };
   }
   if(serverChecked && serverResult && serverResult.error === 'senha incorreta'){
@@ -1052,13 +1065,17 @@ document.getElementById('loginConfirm').onclick = async ()=>{
     if(!deviceCfg.scriptUrl) deviceCfg.scriptUrl = DEFAULT_SCRIPT_URL;
     if(session.cfg){
       // Aplica o e-mail/empresa cadastrados para esta conta neste aparelho,
-      // sem sobrescrever a URL do script nem as cores já configuradas aqui.
+      // sem sobrescrever a URL do script configurada aqui.
       if(session.cfg.destEmail) deviceCfg.destEmail = session.cfg.destEmail;
       if(session.cfg.empresaPadrao) deviceCfg.empresaPadrao = session.cfg.empresaPadrao;
       if(session.cfg.tecNome) deviceCfg.tecNome = session.cfg.tecNome;
     }
+    // Cor da PT definida no cadastro da empresa — aplicada automaticamente.
+    deviceCfg.themeColor = session.empresaThemeColor || '#C8272A';
+    deviceCfg.themeColor2 = session.empresaThemeColor2 || '#F4B400';
     saveCfg(deviceCfg);
     if(deviceCfg.empresaPadrao){ state.empresaNome = deviceCfg.empresaPadrao; saveDraft(); }
+    if(deviceCfg.tecNome && !state.tecNome){ state.tecNome = deviceCfg.tecNome; saveDraft(); }
     // Aplica as perguntas personalizadas da empresa deste usuário (ou volta
     // ao padrão de fábrica, se a empresa ainda não tiver personalização).
     saveCustomQuestions((session.perguntas && Object.keys(session.perguntas).length) ? session.perguntas : {});
@@ -1269,6 +1286,7 @@ function renderEquipe(){
     </div>`).join('');
   return sectionShell("Equipe autorizada","Colaboradores que executarão a atividade", `
     <div id="teamRows">${rows}</div>
+    <p class="field-err-msg" id="err_equipe" style="display:none;">⚠ Preencha nome e RG/CPF de todos os colaboradores</p>
     <button class="add-btn" id="addTeamRow">+ Adicionar colaborador</button>
   `);
 }
@@ -1354,18 +1372,23 @@ function photosPrintHtml(fotos){
 }
 
 function renderFinal(){
-  const tecFixo = loadCfg().tecNome || '';
   return sectionShell("Responsáveis e encerramento","Assinaturas e observações finais", `
     <div class="field"><label>Responsável pela atividade *</label><input type="text" id="f_respNome" value="${state.respNome}" placeholder="Nome">
       <p class="field-err-msg" id="err_f_respNome" style="display:none;">⚠ Campo obrigatório</p></div>
     <div class="field"><label>Assinatura do responsável</label>${sigCanvasHtml('sigResp','Assine aqui')}</div>
-    <div class="field"><label>Técnico de Segurança do Trabalho</label><div class="fixed-value">${tecFixo || 'Não configurado — fale com o administrador'}</div></div>
+    <div class="field"><label>Técnico de Segurança do Trabalho</label><input type="text" id="f_tecNome" value="${state.tecNome}" placeholder="Nome do técnico que está preenchendo"></div>
     ${carimboBoxHtml()}
     <div class="field"><label>Observações de não conformidades durante as atividades</label><textarea id="f_naoConf">${state.naoConformidades}</textarea></div>
     <div class="field"><label>Ações gerais</label><textarea id="f_acoes">${state.acoesGerais}</textarea></div>
     <div class="row2">
       <div class="field"><label>Hora de encerramento</label><input type="time" id="f_encHora" value="${state.encHora}"></div>
-      <div class="field"><label>Motivo</label><input type="text" id="f_encMotivo" value="${state.encMotivo}" placeholder="Ex: serviço concluído"></div>
+      <div class="field"><label>Motivo</label>
+        <select id="f_encMotivo">
+          <option value="">Selecione...</option>
+          ${['Concluído','Não concluído','Concluído com pendência','Interrompido / cancelado','Outro (ver observações)']
+            .map(opt=>`<option value="${opt}" ${state.encMotivo===opt?'selected':''}>${opt}</option>`).join('')}
+        </select>
+      </div>
     </div>
     ${photoPickerHtml(state)}
   `);
@@ -1417,8 +1440,21 @@ function bindLocationButton(){
 
 /* ============ NUMERAÇÃO AUTOMÁTICA DA PT ============ */
 const PT_COUNTER_KEY = 'pt_number_counter';
+const DEVICE_TAG_KEY = 'pt_device_tag';
 function peekNextCounter(){ return parseInt(localStorage.getItem(PT_COUNTER_KEY)||'0',10) + 1; }
 function formatPtNumber(n, cfg){ return (cfg.ptPrefix||'') + String(n).padStart(4,'0'); }
+// Identificador curto e único deste aparelho (gerado uma única vez e salvo
+// localmente). Usado só nos números de PT gerados offline, pra garantir que
+// dois aparelhos sem conexão ao mesmo tempo nunca produzam o mesmo número —
+// mesmo que o login seja o mesmo e compartilhado pela empresa inteira.
+function getDeviceTag(){
+  let t = localStorage.getItem(DEVICE_TAG_KEY);
+  if(!t){
+    t = Math.random().toString(36).slice(2,6).toUpperCase();
+    localStorage.setItem(DEVICE_TAG_KEY, t);
+  }
+  return t;
+}
 // Empresa usada para separar a numeração — vem da empresa cadastrada para o
 // usuário logado (preenchida automaticamente no login), sem precisar
 // configurar nada no aparelho.
@@ -1429,7 +1465,10 @@ function assignNextPtNumberLocal(){
   const cfg = loadCfg();
   const n = peekNextCounter();
   localStorage.setItem(PT_COUNTER_KEY, String(n));
-  return formatPtNumber(n, cfg);
+  // Marcado como offline (-OFF-<aparelho>) pra nunca colidir com o número
+  // de outro aparelho que também esteja sem conexão nesse momento, e pra
+  // ficar visualmente óbvio que foi gerado sem conexão com o servidor.
+  return formatPtNumber(n, cfg) + '-OFF-' + getDeviceTag();
 }
 async function assignNextPtNumber(){
   const cfg = loadCfg();
@@ -1537,7 +1576,7 @@ function bindStepEvents(stepKey){
     f_descricao:['descricaoAtividade'], f_ferrOutros:['ferramentasOutros'],
     f_protColetiva:['alturaProtecaoColetiva'], f_episOutros:['episOutros'],
     f_colabNome:['colaboradorNome'], f_respNome:['respNome'],
-    f_naoConf:['naoConformidades'], f_acoes:['acoesGerais'], f_encHora:['encHora'], f_encMotivo:['encMotivo'],
+    f_naoConf:['naoConformidades'], f_acoes:['acoesGerais'], f_encHora:['encHora'], f_encMotivo:['encMotivo'], f_tecNome:['tecNome'],
     f_tipoCabo:['outrasAtividades','tipoCabo']
   };
   Object.keys(bindMap).forEach(id=>{
@@ -1638,12 +1677,31 @@ function validateQuestionsStep(prefix){
   });
   return missing;
 }
+// Confere se toda linha da equipe autorizada tem nome E RG/CPF preenchidos,
+// e destaca visualmente (borda vermelha + aviso) as linhas incompletas.
+function validateEquipeStep(){
+  let missing = 0;
+  document.querySelectorAll('#teamRows .team-row').forEach(row=>{
+    const nomeInp = row.querySelector('.eq-nome');
+    const docInp = row.querySelector('.eq-doc');
+    const nomeVazio = !nomeInp.value || !nomeInp.value.trim();
+    const docVazio = !docInp.value || !docInp.value.trim();
+    nomeInp.classList.toggle('input-error', nomeVazio);
+    docInp.classList.toggle('input-error', docVazio);
+    if(nomeVazio) missing++;
+    if(docVazio) missing++;
+  });
+  const err = document.getElementById('err_equipe');
+  if(err) err.style.display = missing>0 ? 'flex' : 'none';
+  return missing;
+}
 function validateCurrentStep(){
   const key = steps[current].key;
   let missing = 0;
   const ids = REQUIRED_BY_STEP[key];
   if(ids && ids.length) missing += validateRequiredFields(ids);
   if(QUESTION_STEPS[key]) missing += validateQuestionsStep(QUESTION_STEPS[key]);
+  if(key === 'equipe') missing += validateEquipeStep();
   if(missing > 0){
     const btn = document.getElementById('btnNext');
     const label = current === steps.length-1 ? 'Gerar PDF e enviar' : 'Avançar';
@@ -1838,8 +1896,6 @@ function openSettingsModal(){
   document.getElementById('cfgEmpresaPadrao').value = cfg.empresaPadrao||'';
   document.getElementById('cfgPtPrefix').value = cfg.ptPrefix||'';
   document.getElementById('cfgNextNumber').value = peekNextCounter();
-  document.getElementById('cfgColorPrimary').value = cfg.themeColor || '#C8272A';
-  document.getElementById('cfgColorAccent').value = cfg.themeColor2 || '#F4B400';
   document.getElementById('cfgSoundEnabled').checked = cfg.soundEnabled !== false;
   bindLogoInputs();
   document.getElementById('sheetAuditBox').style.display = 'none';
@@ -1869,13 +1925,14 @@ document.getElementById('navConfig').onclick = openSettingsModal;
 document.getElementById('closeSettings').onclick = goHome;
 document.getElementById('saveSettings').onclick = async ()=>{
   if(!isAdmin()){ toast('Acesso restrito ao administrador.', 'err'); return; }
+  const prevCfg = loadCfg();
   const cfg = {
     scriptUrl: document.getElementById('cfgScriptUrl').value.trim(),
     destEmail: document.getElementById('cfgDestEmail').value.trim(),
     empresaPadrao: document.getElementById('cfgEmpresaPadrao').value.trim(),
     ptPrefix: document.getElementById('cfgPtPrefix').value.trim(),
-    themeColor: document.getElementById('cfgColorPrimary').value,
-    themeColor2: document.getElementById('cfgColorAccent').value,
+    themeColor: prevCfg.themeColor, themeColor2: prevCfg.themeColor2, // definidas no cadastro da empresa, não aqui
+    tecNome: prevCfg.tecNome,
     soundEnabled: document.getElementById('cfgSoundEnabled').checked
   };
   saveCfg(cfg);
@@ -2015,28 +2072,86 @@ function applyCfgFromUrlIfPresent(){
 }
 
 /* ============ GERENCIAMENTO DE USUÁRIOS (Administrador) ============ */
+let editingUsername = null; // null = cadastrando novo; string = editando (login não pode mudar)
+
+function updateUserFormFieldsByRole(){
+  const role = document.getElementById('userFormRole').value;
+  document.getElementById('userFormUsernameWrap').style.display = role === 'admin' ? 'block' : 'none';
+  document.getElementById('userFormEmpresaSelectWrap').style.display = role === 'admin' ? 'none' : 'block';
+}
+document.getElementById('userFormRole').onchange = updateUserFormFieldsByRole;
+
+async function populateUserFormEmpresaSelect(){
+  const sel = document.getElementById('userFormEmpresaSelect');
+  const manterValor = sel.value;
+  sel.innerHTML = '<option value="">Selecione a empresa cadastrada...</option>';
+  (lastLoadedEmpresas||[]).forEach(emp=>{
+    const opt = document.createElement('option');
+    opt.value = emp.nome; opt.textContent = emp.nome;
+    sel.appendChild(opt);
+  });
+  if(manterValor) sel.value = manterValor;
+}
+
 function resetUserForm(){
+  editingUsername = null;
   document.getElementById('userFormUsername').value = '';
   document.getElementById('userFormUsername').disabled = false;
+  document.getElementById('userFormEmpresaSelect').value = '';
+  document.getElementById('userFormEmpresaSelect').disabled = false;
   document.getElementById('userFormPassword').value = '';
   document.getElementById('userFormPassword').placeholder = 'Senha';
   document.getElementById('userFormRole').value = 'consulta';
-  document.getElementById('userFormEmpresa').value = '';
   document.getElementById('userFormTec').value = '';
   document.getElementById('userFormEmail').value = '';
   document.getElementById('userFormTitle').textContent = 'Novo usuário';
+  updateUserFormFieldsByRole();
 }
 async function openUsersModal(){
   if(!isAdmin()){ toast('Acesso restrito ao administrador.', 'err'); return; }
   resetUserForm();
+  document.getElementById('usersSearch').value = '';
   hideAllScreens();
   document.getElementById('usersModal').classList.add('show');
   await loadUsersList();
+  // empresas pode não ter sido carregada ainda (só carrega ao abrir a aba
+  // Empresas) — garante a lista pro dropdown de usuário igual
+  if(!lastLoadedEmpresas.length){
+    const cfg = loadCfg();
+    const scriptUrl = cfg.scriptUrl || DEFAULT_SCRIPT_URL;
+    if(scriptUrl){
+      try{
+        const creds = currentAdminCreds();
+        const url = scriptUrl + '?action=listEmpresas&adminUsername=' + encodeURIComponent(creds.adminUsername) + '&adminPasswordHash=' + encodeURIComponent(creds.adminPasswordHash);
+        const resp = await fetch(url);
+        const data = await resp.json();
+        if(!data.error) lastLoadedEmpresas = data.empresas || [];
+      }catch(e){ /* dropdown fica só com a opção vazia */ }
+    }
+  }
+  await populateUserFormEmpresaSelect();
 }
 document.getElementById('navUsuarios').onclick = openUsersModal;
 document.getElementById('closeUsers').onclick = goHome;
 
 let lastLoadedUsers = [];
+function renderUsersList(list){
+  const box = document.getElementById('usersList');
+  if(!list.length){ box.innerHTML = '<p class="hint">Nenhum usuário encontrado.</p>'; return; }
+  box.innerHTML = list.map(u => `
+    <div class="user-row">
+      <div>
+        <b>${u.username}</b><span class="user-role-tag ${u.role}">${u.role === 'admin' ? 'Administrador' : 'Usuário de Consulta'}</span>
+        ${u.empresa && u.empresa !== u.username ? '<div class="hint" style="margin-top:2px;">'+u.empresa+'</div>' : ''}
+      </div>
+      <div style="display:flex;gap:6px;">
+        <button type="button" class="rm-btn edit-user" data-username="${u.username}" title="Editar">✎</button>
+        <button type="button" class="rm-btn del-user" data-username="${u.username}" title="Excluir">✕</button>
+      </div>
+    </div>`).join('');
+  box.querySelectorAll('.edit-user').forEach(btn=> btn.onclick = ()=> loadUserIntoForm(btn.getAttribute('data-username')));
+  box.querySelectorAll('.del-user').forEach(btn=> btn.onclick = ()=> deleteUserByUsername(btn.getAttribute('data-username')));
+}
 async function loadUsersList(){
   if(!isAdmin()) return;
   const cfg = loadCfg();
@@ -2052,33 +2167,32 @@ async function loadUsersList(){
     if(data.error) throw new Error(data.error);
     lastLoadedUsers = data.users || [];
     if(!lastLoadedUsers.length){ box.innerHTML = '<p class="hint">Nenhum usuário cadastrado ainda — use o formulário abaixo.</p>'; return; }
-    box.innerHTML = lastLoadedUsers.map(u => `
-      <div class="user-row">
-        <div>
-          <b>${u.username}</b><span class="user-role-tag ${u.role}">${u.role === 'admin' ? 'Administrador' : 'Usuário de Consulta'}</span>
-          ${u.empresa ? '<div class="hint" style="margin-top:2px;">'+u.empresa+'</div>' : ''}
-        </div>
-        <div style="display:flex;gap:6px;">
-          <button type="button" class="rm-btn edit-user" data-username="${u.username}" title="Editar">✎</button>
-          <button type="button" class="rm-btn del-user" data-username="${u.username}" title="Excluir">✕</button>
-        </div>
-      </div>`).join('');
-    box.querySelectorAll('.edit-user').forEach(btn=> btn.onclick = ()=> loadUserIntoForm(btn.getAttribute('data-username')));
-    box.querySelectorAll('.del-user').forEach(btn=> btn.onclick = ()=> deleteUserByUsername(btn.getAttribute('data-username')));
+    renderUsersList(lastLoadedUsers);
   }catch(err){
     box.innerHTML = '<p class="hint" style="color:var(--red-dark);">Erro ao carregar: ' + (err.message||'falha de conexão') + '</p>';
   }
 }
+document.getElementById('usersSearch').oninput = ()=>{
+  const q = document.getElementById('usersSearch').value.trim().toLowerCase();
+  if(!lastLoadedUsers.length) return;
+  const filtered = !q ? lastLoadedUsers : lastLoadedUsers.filter(u=>
+    (u.username||'').toLowerCase().includes(q) || (u.empresa||'').toLowerCase().includes(q)
+  );
+  renderUsersList(filtered);
+};
 function loadUserIntoForm(username){
   if(!isAdmin()) return;
   const u = lastLoadedUsers.find(x=>x.username===username);
   if(!u) return;
-  document.getElementById('userFormUsername').value = u.username;
+  editingUsername = u.username;
+  document.getElementById('userFormRole').value = u.role;
+  updateUserFormFieldsByRole();
+  document.getElementById('userFormUsername').value = u.role === 'admin' ? u.username : '';
   document.getElementById('userFormUsername').disabled = true;
+  document.getElementById('userFormEmpresaSelect').value = u.role === 'admin' ? '' : u.username;
+  document.getElementById('userFormEmpresaSelect').disabled = true;
   document.getElementById('userFormPassword').value = '';
   document.getElementById('userFormPassword').placeholder = 'Deixe em branco para manter a senha atual';
-  document.getElementById('userFormRole').value = u.role;
-  document.getElementById('userFormEmpresa').value = u.empresa || '';
   document.getElementById('userFormTec').value = (u.cfg && u.cfg.tecNome) || '';
   document.getElementById('userFormEmail').value = (u.cfg && u.cfg.destEmail) || '';
   document.getElementById('userFormTitle').textContent = 'Editar usuário: ' + u.username;
@@ -2089,15 +2203,21 @@ document.getElementById('btnUserFormSave').onclick = async ()=>{
   const cfg = loadCfg();
   const scriptUrl = cfg.scriptUrl || DEFAULT_SCRIPT_URL;
   if(!scriptUrl){ toast('Configure a URL do Google Apps Script em Configurações primeiro.', 'err'); return; }
-  const username = document.getElementById('userFormUsername').value.trim();
-  const password = document.getElementById('userFormPassword').value;
   const role = document.getElementById('userFormRole').value;
-  const empresa = document.getElementById('userFormEmpresa').value.trim();
+  const username = role === 'admin'
+    ? document.getElementById('userFormUsername').value.trim()
+    : document.getElementById('userFormEmpresaSelect').value.trim();
+  const empresa = role === 'admin' ? '' : username;
+  const password = document.getElementById('userFormPassword').value;
   const tecNome = document.getElementById('userFormTec').value.trim();
   const destEmail = document.getElementById('userFormEmail').value.trim();
-  const isEditing = document.getElementById('userFormUsername').disabled;
-  if(!username){ toast('Digite o usuário.', 'err'); return; }
+  const isEditing = !!editingUsername;
+  if(!username){ toast(role==='admin' ? 'Digite o login do administrador.' : 'Selecione a empresa.', 'err'); return; }
   if(!isEditing && !password){ toast('Defina uma senha para o novo usuário.', 'err'); return; }
+  if(!isEditing && lastLoadedUsers.some(u=>u.username===username)){
+    toast('Já existe um usuário com esse login — use o ✎ na lista para editar, em vez de cadastrar de novo.', 'err');
+    return;
+  }
   const btn = document.getElementById('btnUserFormSave');
   btn.disabled = true; const oldTxt = btn.textContent; btn.textContent = 'Salvando...';
   try{
@@ -2149,6 +2269,8 @@ function resetEmpresaForm(){
   document.getElementById('empresaFormNome').value = '';
   document.getElementById('empresaFormAviso').value = '';
   document.getElementById('empresaFormTitle').textContent = 'Nova empresa';
+  document.getElementById('empresaFormColorPrimary').value = '#C8272A';
+  document.getElementById('empresaFormColorAccent').value = '#F4B400';
   empresaFormLogoDataUrl = null;
   setEmpresaLogoPreview('');
   initQuestionEditorFromPerguntas({});
@@ -2221,6 +2343,8 @@ function loadEmpresaIntoForm(nome){
   document.getElementById('empresaFormNome').value = emp.nome;
   document.getElementById('empresaFormAviso').value = emp.aviso || '';
   document.getElementById('empresaFormTitle').textContent = 'Editar empresa: ' + emp.nome;
+  document.getElementById('empresaFormColorPrimary').value = emp.themeColor || '#C8272A';
+  document.getElementById('empresaFormColorAccent').value = emp.themeColor2 || '#F4B400';
   empresaFormLogoDataUrl = null; // ainda não mexeu — mantém a logo já salva, a não ser que troque/remova agora
   setEmpresaLogoPreview(emp.logoDataUrl || '');
   initQuestionEditorFromPerguntas(emp.perguntas);
@@ -2241,7 +2365,9 @@ document.getElementById('btnEmpresaFormSave').onclick = async ()=>{
   const btn = document.getElementById('btnEmpresaFormSave');
   btn.disabled = true; const oldTxt = btn.textContent; btn.textContent = 'Salvando...';
   try{
-    const payload = Object.assign({action:'saveEmpresa', nome, perguntas: cleaned, aviso: aviso}, currentAdminCreds());
+    const themeColor = document.getElementById('empresaFormColorPrimary').value;
+    const themeColor2 = document.getElementById('empresaFormColorAccent').value;
+    const payload = Object.assign({action:'saveEmpresa', nome, perguntas: cleaned, aviso: aviso, themeColor, themeColor2}, currentAdminCreds());
     // só manda o campo da logo quando o admin realmente mexeu nela
     // (escolheu uma nova ou clicou em "Remover logo") — null = não mexeu.
     if(empresaFormLogoDataUrl !== null) payload.logoDataUrl = empresaFormLogoDataUrl;
@@ -2306,7 +2432,6 @@ function chk(mark){ return mark ? "☑" : "☐"; }
 
 function buildPrintTemplate(){
   const T = state;
-  const tecFixo = loadCfg().tecNome || '';
   const equipeRows = T.equipe.map(p=>`<tr><td>${p.nome||''}</td><td>${p.doc||''}</td><td></td></tr>`).join('');
   const sigImg = id => sigData[id] ? `<img src="${sigData[id]}" style="max-height:50px">` : '';
   const logos = loadLogos();
@@ -2379,7 +2504,7 @@ function buildPrintTemplate(){
     <div class="bar">ENCERRAMENTO</div>
     <table>
       <tr><td style="width:50%"><b>Responsável pela atividade:</b> ${T.respNome||''}<br>${sigImg('sigResp')}</td>
-          <td style="width:50%"><b>Técnico de Segurança do Trabalho:</b> ${tecFixo||''}<br><div style="height:90px;border:1px solid #ccc;margin-top:4px;"></div></td></tr>
+          <td style="width:50%"><b>Técnico de Segurança do Trabalho:</b> ${T.tecNome||''}<br><div style="height:90px;border:1px solid #ccc;margin-top:4px;"></div></td></tr>
       <tr><td colspan="2"><b>Observações de não conformidades:</b> ${T.naoConformidades||''}</td></tr>
       <tr><td colspan="2"><b>Ações gerais:</b> ${T.acoesGerais||''}</td></tr>
       <tr><td><b>Hora de encerramento:</b> ${T.encHora||''}</td><td><b>Motivo:</b> ${T.encMotivo||''}</td></tr>
@@ -2442,6 +2567,21 @@ async function finalizeAndSend(){
   const nextBtn = document.getElementById('btnNext');
   nextBtn.disabled = true; nextBtn.textContent = 'Gerando PDF...';
   try{
+    // Se o número desta PT foi gerado offline (marcado "-OFF-") e a conexão
+    // voltou antes de enviar, tenta trocar por um número oficial e limpo do
+    // servidor — sem isso, o número offline (único por aparelho) já evita
+    // colisão, mas o número do servidor é o ideal sempre que possível.
+    if(state.ptNumero && state.ptNumero.indexOf('-OFF-') !== -1 && navigator.onLine){
+      try{
+        const fresh = await assignNextPtNumber();
+        if(fresh && fresh.indexOf('-OFF-') === -1){
+          state.ptNumero = fresh;
+          saveDraft();
+          const badge = document.getElementById('ptNumberBadge');
+          if(badge) badge.textContent = fresh;
+        }
+      }catch(e){ /* mantém o número offline já exibido */ }
+    }
     buildPrintTemplate();
     const node = document.getElementById('printTemplate');
     node.style.left = '0px'; node.style.position='absolute'; node.style.zIndex='-1'; node.style.top='0px';
@@ -2500,6 +2640,7 @@ async function resetForNewPT(){
   const cfg = loadCfg();
   Object.assign(state, makeEmptyState());
   if(cfg.empresaPadrao) state.empresaNome = cfg.empresaPadrao;
+  if(cfg.tecNome) state.tecNome = cfg.tecNome;
   Object.keys(sigData).forEach(k => delete sigData[k]);
   current = 0;
   renderCurrentStep();
@@ -2811,7 +2952,7 @@ function renderVeiculoPage(){
 
     <div class="section active"><div class="section-head">Responsáveis e observações</div><div class="section-body">
       <div class="row2">
-        <div class="field"><label>Técnico em segurança do trabalho</label><div class="fixed-value">${loadCfg().tecNome || 'Não configurado — fale com o administrador'}</div></div>
+        <div class="field"><label>Técnico em segurança do trabalho</label><input type="text" id="v_tec" value="${vState.tecNome}" placeholder="Nome do técnico que está preenchendo"></div>
         <div class="field"><label>Encarregado</label><input type="text" id="v_enc" value="${vState.encarregadoNome}" placeholder="Nome"></div>
       </div>
       ${carimboBoxHtml()}
@@ -2827,7 +2968,7 @@ function renderVeiculoPage(){
 }
 function bindVeiculoEvents(){
   bindQuestionGroup('#veiculoSections', vState, saveVDraft);
-  const map = {v_data:'data', v_placa:'placa', v_tipo:'tipoVeiculo', v_marca:'marcaModelo', v_mot1:'motorista1', v_mot2:'motorista2', v_enc:'encarregadoNome', v_obs:'obs'};
+  const map = {v_data:'data', v_placa:'placa', v_tipo:'tipoVeiculo', v_marca:'marcaModelo', v_mot1:'motorista1', v_mot2:'motorista2', v_tec:'tecNome', v_enc:'encarregadoNome', v_obs:'obs'};
   Object.keys(map).forEach(id=>{
     const el = document.getElementById(id);
     if(el) el.oninput = ()=>{ vState[map[id]] = el.value; saveVDraft(); };
@@ -2852,7 +2993,6 @@ function bindVeiculoEvents(){
   if(addBtn) addBtn.onclick = ()=>{ vState.acoes.push({item:"",desc:"",resp:"",dataAcao:"",conclusao:""}); saveVDraft(); renderVeiculoPage(); };
 }
 function buildPrintTemplateVeiculo(){
-  const tecFixo = loadCfg().tecNome || '';
   const logos = loadLogos();
   const logoCell = src => src ? `<img src="${src}" style="max-height:55px;max-width:100px;object-fit:contain">` : '';
   const sigImg = id => sigData[id] ? `<img src="${sigData[id]}" style="max-height:50px">` : '';
@@ -2880,7 +3020,7 @@ function buildPrintTemplateVeiculo(){
     ${acoesRows ? `<div class="bar">AÇÃO REQUERIDA</div><table><tr><th>Item</th><th>Descrição</th><th>Responsável</th><th>Data</th><th>Conclusão</th></tr>${acoesRows}</table>` : ''}
     <div class="bar">RESPONSÁVEIS E OBSERVAÇÕES</div>
     <table>
-      <tr><td style="width:50%">Técnico em segurança: ${tecFixo||''}<br><div style="height:90px;border:1px solid #ccc;margin-top:4px;"></div></td><td style="width:50%">Encarregado: ${vState.encarregadoNome||''}</td></tr>
+      <tr><td style="width:50%">Técnico em segurança: ${vState.tecNome||''}<br><div style="height:90px;border:1px solid #ccc;margin-top:4px;"></div></td><td style="width:50%">Encarregado: ${vState.encarregadoNome||''}</td></tr>
       <tr><td colspan="2">Assinatura do motorista:<br>${sigImg('sigMotorista')}</td></tr>
       <tr><td colspan="2">Observações: ${vState.obs||''}</td></tr>
     </table>
@@ -2892,6 +3032,7 @@ function resetVeiculoForm(){
   Object.assign(vState, makeEmptyVState());
   vState.data = todayISO();
   vState.fotos = [];
+  const tecPadrao = loadCfg().tecNome; if(tecPadrao) vState.tecNome = tecPadrao;
   delete sigData['sigMotorista'];
   saveVDraft();
   renderVeiculoPage();
@@ -2952,7 +3093,7 @@ function renderEscadaPage(){
     </div></div>
 
     <div class="section active"><div class="section-head">Técnico de segurança do trabalho</div><div class="section-body">
-      <div class="field"><label>Técnico responsável</label><div class="fixed-value">${loadCfg().tecNome || 'Não configurado — fale com o administrador'}</div></div>
+      <div class="field"><label>Técnico responsável</label><input type="text" id="e_tec" value="${eState.tecNome}" placeholder="Nome do técnico que está preenchendo"></div>
       ${carimboBoxHtml()}
     </div></div>
   `;
@@ -2963,7 +3104,7 @@ function renderEscadaPage(){
 }
 function bindEscadaEvents(){
   bindQuestionGroup('#escadaSections', eState, saveEDraft);
-  const map = {e_data:'data', e_exec:'executanteNome', e_obs:'obs'};
+  const map = {e_data:'data', e_exec:'executanteNome', e_obs:'obs', e_tec:'tecNome'};
   Object.keys(map).forEach(id=>{
     const el = document.getElementById(id);
     if(el) el.oninput = ()=>{ eState[map[id]] = el.value; saveEDraft(); };
@@ -2972,7 +3113,6 @@ function bindEscadaEvents(){
   if(chk) chk.onclick = ()=>{ eState.ciente = !eState.ciente; chk.classList.toggle('checked', eState.ciente); saveEDraft(); };
 }
 function buildPrintTemplateEscada(){
-  const tecFixo = loadCfg().tecNome || '';
   const logos = loadLogos();
   const logoCell = src => src ? `<img src="${src}" style="max-height:55px;max-width:100px;object-fit:contain">` : '';
   const sigImg = id => sigData[id] ? `<img src="${sigData[id]}" style="max-height:50px">` : '';
@@ -2999,7 +3139,7 @@ function buildPrintTemplateEscada(){
     </table>
     <div class="bar">TÉCNICO DE SEGURANÇA DO TRABALHO</div>
     <table>
-      <tr><td>Técnico responsável: ${tecFixo||''}<br><div style="height:90px;border:1px solid #ccc;margin-top:4px;"></div></td></tr>
+      <tr><td>Técnico responsável: ${eState.tecNome||''}<br><div style="height:90px;border:1px solid #ccc;margin-top:4px;"></div></td></tr>
     </table>
     ${photosPrintHtml(eState.fotos)}
   `;
@@ -3009,6 +3149,7 @@ function resetEscadaForm(){
   Object.assign(eState, makeEmptyEState());
   eState.data = todayISO();
   eState.fotos = [];
+  const tecPadrao = loadCfg().tecNome; if(tecPadrao) eState.tecNome = tecPadrao;
   delete sigData['sigExecutante'];
   saveEDraft();
   renderEscadaPage();
@@ -3356,6 +3497,9 @@ async function initApp(){
   loadEDraft();
   applyTheme(loadCfg());
   if(!state.empresaNome){ const c=loadCfg(); if(c.empresaPadrao) state.empresaNome = c.empresaPadrao; }
+  if(!state.tecNome){ const c=loadCfg(); if(c.tecNome) state.tecNome = c.tecNome; }
+  if(!vState.tecNome){ const c=loadCfg(); if(c.tecNome) vState.tecNome = c.tecNome; }
+  if(!eState.tecNome){ const c=loadCfg(); if(c.tecNome) eState.tecNome = c.tecNome; }
   updateBrand();
   applyRoleVisibility();
   if(isLoggedIn()){ hideLoginScreen(); initPushNotifications(getSession()); goHome(); } else showLoginScreen();
