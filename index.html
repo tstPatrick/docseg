@@ -2467,11 +2467,11 @@ async function finalizeAndSend(){
     };
     if(cfg.scriptUrl && cfg.destEmail){
       nextBtn.textContent = 'Enviando e-mail...';
-      const payload = {
+      const payload = Object.assign({
         destEmail: cfg.destEmail, tipoDocumento: 'Permissão de Trabalho (PT)',
         ptNumero: state.ptNumero || 'S/N', ptData: state.data || '', ptArea: state.area || '',
         resumo: resumo, pdfBase64: base64, pdfNome: fileName
-      };
+      }, currentEmpresaUsuario());
       try{
         await sendPayload(cfg, payload);
         toast('PDF gerado e e-mail enviado com sucesso!', 'ok');
@@ -2575,6 +2575,13 @@ function enqueueDocument(item){
   q.push(item);
   saveQueue(q);
   renderOfflineBanner();
+}
+function currentEmpresaUsuario(){
+  const s = getSession();
+  return {
+    empresa: state.empresaNome || loadCfg().empresaPadrao || '',
+    usuario: loadCfg().tecNome || (s ? s.username : '') || ''
+  };
 }
 async function sendPayload(cfg, payload){
   const resp = await fetch(cfg.scriptUrl, {
@@ -2707,11 +2714,11 @@ async function generateAndSendDoc(opts){
     };
     if(cfg.scriptUrl && cfg.destEmail){
       btn.textContent = 'Enviando e-mail...';
-      const payload = {
+      const payload = Object.assign({
         destEmail: cfg.destEmail, tipoDocumento: opts.tipoDocumento || opts.subjectLabel,
         ptNumero: opts.subjectLabel, ptData: opts.subjectDate || '', ptArea: opts.subjectArea || '',
         resumo: opts.resumo || '', pdfBase64: base64, pdfNome: fileName
-      };
+      }, currentEmpresaUsuario());
       try{
         await sendPayload(cfg, payload);
         toast('PDF gerado e e-mail enviado com sucesso!', 'ok');
