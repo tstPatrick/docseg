@@ -1493,6 +1493,14 @@ async function assignNextPtNumber(){
 
 /* ============ SIGNATURE PAD ============ */
 const sigData = {}; // id -> dataURL
+const SIG_DRAFT_KEY = 'pt_sig_draft';
+// Assinaturas precisam ser salvas à parte do resto do rascunho (não cabem
+// bem dentro do "state" porque são compartilhadas entre PT/veículo/escada
+// pelo id do canvas). Sem isso, se o app for fechado em segundo plano
+// (comum no Android) ou a página recarregar, o texto volta certinho mas a
+// assinatura voltava em branco, sem nenhum aviso.
+function saveSigData(){ try{ localStorage.setItem(SIG_DRAFT_KEY, JSON.stringify(sigData)); }catch(e){} }
+function loadSigData(){ try{ const d = localStorage.getItem(SIG_DRAFT_KEY); if(d) Object.assign(sigData, JSON.parse(d)); }catch(e){} }
 function initSignaturePads(){
   document.querySelectorAll('canvas.sig').forEach(canvas=>{
     const id = canvas.id;
@@ -1512,7 +1520,7 @@ function initSignaturePads(){
     }
     function start(e){ drawing=true; const p=pos(e); ctx.beginPath(); ctx.moveTo(p.x,p.y); const ph=document.getElementById('ph_'+id); if(ph) ph.style.display='none'; e.preventDefault(); }
     function move(e){ if(!drawing) return; const p=pos(e); ctx.lineTo(p.x,p.y); ctx.stroke(); e.preventDefault(); }
-    function end(){ if(!drawing) return; drawing=false; sigData[id]=canvas.toDataURL('image/png'); }
+    function end(){ if(!drawing) return; drawing=false; sigData[id]=canvas.toDataURL('image/png'); saveSigData(); }
     canvas.addEventListener('mousedown',start); canvas.addEventListener('mousemove',move); window.addEventListener('mouseup',end);
     canvas.addEventListener('touchstart',start,{passive:false}); canvas.addEventListener('touchmove',move,{passive:false}); canvas.addEventListener('touchend',end);
   });
@@ -1520,6 +1528,7 @@ function initSignaturePads(){
     btn.onclick = ()=>{
       const id = btn.getAttribute('data-clear');
       delete sigData[id];
+      saveSigData();
       const canvas = document.getElementById(id);
       canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);
       const ph = document.getElementById('ph_'+id); if(ph) ph.style.display='block';
@@ -2627,6 +2636,7 @@ async function finalizeAndSend(){
       addHistoryEntry(Object.assign({}, histMeta, {status:'baixado'}));
     }
     await resetForNewPT();
+    goHome();
   } catch(e){
     console.error(e);
     toast('Não foi possível gerar o PDF. Tente novamente.', 'err');
@@ -2642,6 +2652,7 @@ async function resetForNewPT(){
   if(cfg.empresaPadrao) state.empresaNome = cfg.empresaPadrao;
   if(cfg.tecNome) state.tecNome = cfg.tecNome;
   Object.keys(sigData).forEach(k => delete sigData[k]);
+  saveSigData();
   current = 0;
   renderCurrentStep();
   updateBrand();
@@ -2875,6 +2886,7 @@ async function generateAndSendDoc(opts){
       addHistoryEntry(Object.assign({}, histMeta, {status:'baixado'}));
     }
     if(opts.resetFn) opts.resetFn();
+    goHome();
   } catch(e){
     console.error(e);
     toast('Não foi possível gerar o PDF. Tente novamente.', 'err');
@@ -3034,6 +3046,7 @@ function resetVeiculoForm(){
   vState.fotos = [];
   const tecPadrao = loadCfg().tecNome; if(tecPadrao) vState.tecNome = tecPadrao;
   delete sigData['sigMotorista'];
+  saveSigData();
   saveVDraft();
   renderVeiculoPage();
   setTimeout(()=> toast('Pronto para o próximo checklist de veículo.', 'ok'), 1200);
@@ -3151,6 +3164,7 @@ function resetEscadaForm(){
   eState.fotos = [];
   const tecPadrao = loadCfg().tecNome; if(tecPadrao) eState.tecNome = tecPadrao;
   delete sigData['sigExecutante'];
+  saveSigData();
   saveEDraft();
   renderEscadaPage();
   setTimeout(()=> toast('Pronto para o próximo checklist de escada.', 'ok'), 1200);
@@ -3427,7 +3441,8 @@ async function parkCurrentPtAndGoHome(){
     local: state.area || '(sem local informado)',
     empresa: state.empresaNome || '',
     savedAt: new Date().toISOString(),
-    data: snapshot
+    data: snapshot,
+    sig: sigData['sigResp'] || null // assinatura do responsável, se já feita
   });
   savePtDraftsList(list);
   await resetForNewPT();
@@ -3444,6 +3459,8 @@ function resumePtDraft(id){
   savePtDraftsList(list);
   Object.assign(state, entry.data);
   saveDraft();
+  if(entry.sig){ sigData['sigResp'] = entry.sig; } else { delete sigData['sigResp']; }
+  saveSigData();
   current = 0;
   renderCurrentStep();
   updateBrand();
@@ -3495,6 +3512,7 @@ async function initApp(){
   loadDraft();
   loadVDraft();
   loadEDraft();
+  loadSigData();
   applyTheme(loadCfg());
   if(!state.empresaNome){ const c=loadCfg(); if(c.empresaPadrao) state.empresaNome = c.empresaPadrao; }
   if(!state.tecNome){ const c=loadCfg(); if(c.tecNome) state.tecNome = c.tecNome; }
