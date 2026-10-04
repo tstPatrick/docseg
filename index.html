@@ -409,12 +409,12 @@
   .draft-actions .btn{flex:1; padding:9px; font-size:13px;}
 
   /* ============ TELAS DE ADMINISTRAÇÃO EM TELA CHEIA (sem caixinha/fundo escuro) ============ */
-  #usersModal, #empresasModal, #settingsModal{background:#fff; align-items:stretch; justify-content:stretch;}
-  #usersModal .modal, #empresasModal .modal, #settingsModal .modal{
+  #usersModal, #empresasModal, #settingsModal, #adminAccountModal{background:#fff; align-items:stretch; justify-content:stretch;}
+  #usersModal .modal, #empresasModal .modal, #settingsModal .modal, #adminAccountModal .modal{
     width:100%; max-width:none; height:100%; max-height:100%; border-radius:0;
     padding:0 16px calc(18px + env(safe-area-inset-bottom));
   }
-  #usersModal .modal-close, #empresasModal .modal-close, #settingsModal .modal-close{
+  #usersModal .modal-close, #empresasModal .modal-close, #settingsModal .modal-close, #adminAccountModal .modal-close{
     float:none; position:sticky; top:0; left:0; margin:0 -16px 14px; width:calc(100% + 32px);
     text-align:left; background:var(--ink); color:#fff; padding:16px; font-size:20px; z-index:5; border-radius:0;
   }
@@ -755,6 +755,29 @@
   </div>
 </div>
 
+<!-- ADMIN ACCOUNT MODAL (conta do Administrador — separada dos usuários técnicos) -->
+<div class="modal-bg" id="adminAccountModal">
+  <div class="modal">
+    <button class="modal-close" id="closeAdminAccount">←</button>
+    <h2>Administrador</h2>
+    <p class="hint" style="margin-top:-6px;margin-bottom:16px;">Conta própria do Administrador, separada dos usuários cadastrados em "Usuários". Use aqui só para trocar a senha de acesso do admin.</p>
+
+    <div class="field"><label>Usuário do Administrador</label>
+      <div class="fixed-value">admin</div>
+    </div>
+    <div class="field"><label>Senha atual</label>
+      <input type="password" id="adminCurPass" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <div class="field"><label>Nova senha</label>
+      <input type="password" id="adminNewPass" placeholder="Nova senha" autocomplete="new-password">
+    </div>
+    <div class="field"><label>Confirmar nova senha</label>
+      <input type="password" id="adminNewPass2" placeholder="Repita a nova senha" autocomplete="new-password">
+    </div>
+    <button type="button" class="btn btn-primary" style="width:100%" id="btnAdminPassSave">Salvar nova senha</button>
+  </div>
+</div>
+
 <!-- PRINTABLE TEMPLATE FOR PDF (filled dynamically) -->
 <div id="printTemplate"></div>
 
@@ -910,7 +933,7 @@ const DEFAULT_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzC3RubfxiP8
 // qualquer usuário ter sido cadastrado no servidor — use para o primeiro
 // acesso e, depois, cadastre os usuários de verdade em "Usuários".
 const BOOTSTRAP_ADMIN_USER = 'admin';
-const BOOTSTRAP_ADMIN_PASS = 'admin123';
+const BOOTSTRAP_ADMIN_PASS = 'admin0110';
 
 /* ============ NOTIFICAÇÕES PUSH (lembrete diário da PT) ============ */
 const firebaseConfig = {
@@ -1880,6 +1903,51 @@ document.getElementById('saveSettings').onclick = async ()=>{
   toast('Configuração salva neste aparelho.', 'ok');
 };
 
+/* ============ CONTA DO ADMINISTRADOR (separada dos usuários/técnicos) ============ */
+function openAdminAccountModal(){
+  if(!isAdmin()){ toast('Acesso restrito ao administrador.', 'err'); return; }
+  document.getElementById('adminCurPass').value = '';
+  document.getElementById('adminNewPass').value = '';
+  document.getElementById('adminNewPass2').value = '';
+  hideAllScreens();
+  document.getElementById('adminAccountModal').classList.add('show');
+}
+document.getElementById('closeAdminAccount').onclick = goHome;
+document.getElementById('btnAdminPassSave').onclick = async ()=>{
+  if(!isAdmin()){ toast('Acesso restrito ao administrador.', 'err'); return; }
+  const curPass = document.getElementById('adminCurPass').value;
+  const newPass = document.getElementById('adminNewPass').value;
+  const newPass2 = document.getElementById('adminNewPass2').value;
+  if(!curPass){ toast('Informe a senha atual.', 'err'); return; }
+  if(!newPass || newPass.length < 4){ toast('A nova senha precisa ter pelo menos 4 caracteres.', 'err'); return; }
+  if(newPass !== newPass2){ toast('A confirmação não bate com a nova senha.', 'err'); return; }
+  const cfg = loadCfg();
+  const scriptUrl = cfg.scriptUrl || DEFAULT_SCRIPT_URL;
+  if(!scriptUrl){ toast('Configure a URL do Google Apps Script em Configurações primeiro.', 'err'); return; }
+  const btn = document.getElementById('btnAdminPassSave');
+  const oldTxt = btn.textContent; btn.disabled = true; btn.textContent = 'Salvando...';
+  try{
+    const currentPasswordHash = await hashPass(curPass);
+    const newPasswordHash = await hashPass(newPass);
+    const resp = await fetch(scriptUrl, {
+      method:'POST',
+      body: JSON.stringify({ action:'changeAdminPassword', currentPasswordHash, newPasswordHash })
+    });
+    const data = await resp.json();
+    if(data.error) throw new Error(data.error);
+    // Atualiza a sessão deste aparelho pra não precisar logar de novo.
+    const s = getSession();
+    if(s && s.username === 'admin'){ s.passwordHash = newPasswordHash; localStorage.setItem(SESSION_KEY, JSON.stringify(s)); }
+    toast('Senha do Administrador atualizada com sucesso!', 'ok');
+    document.getElementById('adminCurPass').value = '';
+    document.getElementById('adminNewPass').value = '';
+    document.getElementById('adminNewPass2').value = '';
+  }catch(err){
+    toast(err.message === 'senha atual incorreta' ? 'Senha atual incorreta.' : (err.message || 'Não foi possível trocar a senha.'), 'err');
+  }finally{
+    btn.disabled = false; btn.textContent = oldTxt;
+  }
+};
 
 /* ============ EXPORTAR / IMPORTAR CONFIGURAÇÃO DO DISPOSITIVO ============ */
 document.getElementById('btnExportCfg').onclick = ()=>{
@@ -3099,6 +3167,7 @@ function hideAllScreens(){
   document.getElementById('usersModal').classList.remove('show');
   document.getElementById('empresasModal').classList.remove('show');
   document.getElementById('settingsModal').classList.remove('show');
+  document.getElementById('adminAccountModal').classList.remove('show');
 }
 
 function goHome(){
@@ -3143,6 +3212,7 @@ function renderHomeMenu(){
   let html = '';
   if(admin){
     html += homeItemHtml('users', '👤', 'Usuários');
+    html += homeItemHtml('adminAccount', '🔑', 'Administrador');
     html += homeItemHtml('empresas', '🏢', 'Empresas');
     html += homeItemHtml('settings', '⚙', 'Configurações');
   } else {
@@ -3158,6 +3228,7 @@ function renderHomeMenu(){
     btn.onclick = ()=>{
       const id = btn.getAttribute('data-home-item');
       if(id==='users') openUsersModal();
+      else if(id==='adminAccount') openAdminAccountModal();
       else if(id==='empresas') openEmpresasModal();
       else if(id==='settings') openSettingsModal();
       else if(id==='drafts') openDraftsScreen();
