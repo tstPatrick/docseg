@@ -269,6 +269,21 @@
   .hist-row{border:1px solid var(--line); border-radius:10px; padding:10px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:flex-start; gap:8px;}
   .hist-badge{padding:2px 9px; border-radius:20px; font-size:11px; white-space:nowrap; background:#EAF3DE; color:#27500A;}
 
+  /* "Meus documentos" — tela unificada (rascunhos + pendente + fila + enviados) */
+  .doc-row{display:flex; align-items:flex-start; gap:10px; padding:11px 2px; border-bottom:1px solid var(--line);}
+  .doc-row:last-child{border-bottom:none;}
+  .doc-ic{font-size:17px; flex-shrink:0; margin-top:1px;}
+  .doc-main{flex:1; min-width:0;}
+  .doc-main b{display:block; font-size:12.5px; margin-bottom:2px;}
+  .doc-main .doc-meta{font-size:10.5px; color:var(--ink-soft);}
+  .status-pill{display:inline-block; font-size:9px; font-weight:700; letter-spacing:.2px; text-transform:uppercase; padding:2px 7px; border-radius:5px; margin-top:4px;}
+  .status-pill.andamento{background:#FFF1D6; color:#8A5A00;}
+  .status-pill.pendente{background:#FDECEC; color:var(--red-dark);}
+  .status-pill.fila{background:#E3E9F5; color:#2A4A8C;}
+  .status-pill.enviado{background:#EAF3DE; color:#27500A;}
+  .doc-action{flex-shrink:0; font-size:10.5px; font-weight:600; padding:7px 11px; border-radius:7px; border:1px solid #D6D3CC; background:#fff; color:var(--ink); margin-top:1px;}
+  .doc-action.primary{background:var(--red); color:#fff; border-color:var(--red);}
+
   /* usuários */
   .user-row{border:1px solid var(--line); border-radius:10px; padding:10px 12px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; gap:8px;}
   .user-role-tag{margin-left:8px; font-size:10.5px; padding:2px 8px; border-radius:20px; font-weight:700;}
@@ -420,12 +435,12 @@
   .draft-actions .btn{flex:1; padding:9px; font-size:13px;}
 
   /* ============ TELAS DE ADMINISTRAÇÃO EM TELA CHEIA (sem caixinha/fundo escuro) ============ */
-  #usersModal, #empresasModal, #settingsModal, #adminAccountModal{background:#fff; align-items:stretch; justify-content:stretch;}
-  #usersModal .modal, #empresasModal .modal, #settingsModal .modal, #adminAccountModal .modal{
+  #usersModal, #empresasModal, #settingsModal, #adminAccountModal, #auditModal{background:#fff; align-items:stretch; justify-content:stretch;}
+  #usersModal .modal, #empresasModal .modal, #settingsModal .modal, #adminAccountModal .modal, #auditModal .modal{
     width:100%; max-width:none; height:100%; max-height:100%; border-radius:0;
     padding:0 16px calc(18px + env(safe-area-inset-bottom));
   }
-  #usersModal .modal-close, #empresasModal .modal-close, #settingsModal .modal-close, #adminAccountModal .modal-close{
+  #usersModal .modal-close, #empresasModal .modal-close, #settingsModal .modal-close, #adminAccountModal .modal-close, #auditModal .modal-close{
     float:none; position:sticky; top:0; left:0; margin:0 -16px 14px; width:calc(100% + 32px);
     text-align:left; background:var(--ink); color:#fff; padding:16px; font-size:20px; z-index:5; border-radius:0;
   }
@@ -596,6 +611,15 @@
   <div style="padding:16px;max-width:640px;margin:0 auto;" id="pendingSendList"></div>
 </div>
 
+<!-- ===================== VIEW: MEUS DOCUMENTOS (tela única: rascunhos + pendente + fila + enviados) ===================== -->
+<div id="meusDocsView" style="display:none;">
+  <div class="screen-topbar"><button type="button" id="meusDocsBack" title="Voltar ao menu">←</button><b>Meus documentos</b></div>
+  <div style="padding:16px;max-width:640px;margin:0 auto;">
+    <div class="chip-row" id="meusDocsChips" style="margin-bottom:14px;"></div>
+    <div id="meusDocsList"></div>
+  </div>
+</div>
+
   </div><!-- /main-col -->
 </div><!-- /app-shell -->
 
@@ -713,6 +737,10 @@
       <input type="text" id="empresaFormPtPrefix" placeholder="Ex: PT-">
     </div>
 
+    <p class="desc" style="margin-bottom:6px; margin-top:14px; border-top:1px solid var(--line); padding-top:14px;">Histórico de documentos (auditoria)</p>
+    <p class="hint" style="margin-top:-4px;margin-bottom:10px;">Registro de todos os documentos enviados por esta empresa (planilha de auditoria). Só o Administrador acessa esta tela — e "apagar" aqui nunca remove de vez: move para uma aba "Excluídos" na planilha, por segurança.</p>
+    <button type="button" class="btn btn-ghost" style="width:100%;margin-bottom:14px;" id="btnOpenAudit">Ver / apagar histórico desta empresa</button>
+
     <p class="desc" style="margin-bottom:6px; margin-top:14px; border-top:1px solid var(--line); padding-top:14px;">Aviso/lembrete para os técnicos</p>
     <p class="hint" style="margin-top:-4px;margin-bottom:10px;">Aparece no final do menu, só para os técnicos dessa empresa. Deixe em branco pra não mostrar nenhum aviso.</p>
     <div class="field">
@@ -728,6 +756,25 @@
       <button type="button" class="btn btn-primary" id="btnEmpresaFormSave">Salvar empresa</button>
     </div>
     <button type="button" class="btn btn-ghost" style="width:100%;margin-top:8px;" id="btnEmpresaResetQuestions">Restaurar perguntas padrão de fábrica (desta empresa)</button>
+  </div>
+</div>
+
+<!-- AUDIT MODAL (histórico de documentos por empresa — só Administrador) -->
+<div class="modal-bg" id="auditModal">
+  <div class="modal">
+    <button class="modal-close" id="closeAudit">←</button>
+    <h2 id="auditModalTitle">Histórico de documentos</h2>
+    <p class="hint" style="margin-top:-6px;margin-bottom:14px;">Apagar aqui move os documentos para uma aba "Excluídos" na planilha de auditoria — não remove de vez, já que são registros de segurança do trabalho.</p>
+    <div class="row2">
+      <div class="field"><label>De</label><input type="date" id="auditFrom"></div>
+      <div class="field"><label>Até</label><input type="date" id="auditTo"></div>
+    </div>
+    <button type="button" class="btn btn-ghost" style="width:100%;margin-bottom:14px;" id="btnAuditFilter">Filtrar</button>
+    <div id="auditList" style="margin-bottom:14px;"></div>
+    <div class="row2">
+      <button type="button" class="btn btn-ghost" id="btnAuditDeleteSelected">Apagar selecionados</button>
+      <button type="button" class="btn btn-primary" id="btnAuditDeletePeriod">Apagar período filtrado</button>
+    </div>
   </div>
 </div>
 
@@ -2439,6 +2486,82 @@ document.getElementById('btnEmpresaResetQuestions').onclick = ()=>{
   }
 };
 
+/* ============ HISTÓRICO DE DOCUMENTOS POR EMPRESA (auditoria) — só Admin ============
+   Lê/apaga linhas da planilha de auditoria (action 'listAuditoria' e
+   'deleteAuditoria' no Apps Script). "Apagar" nunca remove de vez: o
+   servidor move as linhas para uma aba "Excluídos" — são registros de
+   segurança do trabalho, que podem precisar ficar guardados por um tempo
+   mínimo conforme a norma aplicável. */
+let auditEmpresaNome = '';
+let lastLoadedAudit = [];
+function openAuditModal(){
+  if(!isAdmin()){ toast('Acesso restrito ao administrador.', 'err'); return; }
+  const nome = document.getElementById('empresaFormNome').value.trim();
+  if(!nome){ toast('Salve a empresa primeiro para ter um histórico de auditoria.', 'err'); return; }
+  auditEmpresaNome = nome;
+  document.getElementById('auditModalTitle').textContent = 'Histórico — ' + nome;
+  document.getElementById('auditFrom').value = '';
+  document.getElementById('auditTo').value = '';
+  document.getElementById('auditList').innerHTML = '<p class="hint">Toque em "Filtrar" para carregar (sem datas = tudo).</p>';
+  document.getElementById('empresasModal').classList.remove('show');
+  document.getElementById('auditModal').classList.add('show');
+}
+document.getElementById('btnOpenAudit').onclick = openAuditModal;
+document.getElementById('closeAudit').onclick = ()=>{
+  document.getElementById('auditModal').classList.remove('show');
+  document.getElementById('empresasModal').classList.add('show');
+};
+async function loadAuditList(){
+  const cfg = loadCfg();
+  const scriptUrl = cfg.scriptUrl || DEFAULT_SCRIPT_URL;
+  const box = document.getElementById('auditList');
+  const from = document.getElementById('auditFrom').value;
+  const to = document.getElementById('auditTo').value;
+  box.innerHTML = '<p class="hint">Carregando...</p>';
+  try{
+    const data = await fetchAdminAction(scriptUrl, 'listAuditoria', { empresa: auditEmpresaNome, from, to });
+    if(data.error) throw new Error(data.error);
+    lastLoadedAudit = data.rows || [];
+    if(!lastLoadedAudit.length){ box.innerHTML = '<p class="hint">Nenhum documento encontrado para este filtro.</p>'; return; }
+    box.innerHTML = lastLoadedAudit.map(r => `
+      <label class="user-row" style="cursor:pointer;align-items:flex-start;">
+        <input type="checkbox" class="audit-chk" data-id="${r.id}" style="margin:3px 10px 0 0;flex-shrink:0;">
+        <div style="flex:1;min-width:0;">
+          <b style="font-size:12.5px;">${r.tipoDocumento||''} · ${r.numero||''}</b><br>
+          <span style="font-size:11px;color:var(--ink-soft);">${r.dataEnvio||''}${r.usuario?(' · '+r.usuario):''}</span>
+        </div>
+      </label>`).join('') + `<p class="hint" style="text-align:center;">${lastLoadedAudit.length} documento${lastLoadedAudit.length>1?'s':''} no filtro</p>`;
+  }catch(err){
+    box.innerHTML = '<p class="hint" style="color:var(--red-dark);">Erro ao carregar: ' + (err.message||'falha de conexão') + '</p>';
+  }
+}
+document.getElementById('btnAuditFilter').onclick = loadAuditList;
+async function runAuditDelete(extra){
+  const cfg = loadCfg();
+  const scriptUrl = cfg.scriptUrl || DEFAULT_SCRIPT_URL;
+  try{
+    const data = await fetchAdminAction(scriptUrl, 'deleteAuditoria', Object.assign({ empresa: auditEmpresaNome }, extra));
+    if(data.error) throw new Error(data.error);
+    toast(`${data.deleted||0} documento(s) movido(s) para "Excluídos".`, 'ok');
+    loadAuditList();
+  }catch(err){
+    toast('Erro ao apagar: ' + (err.message||'falha de conexão'), 'err');
+  }
+}
+document.getElementById('btnAuditDeleteSelected').onclick = ()=>{
+  const ids = Array.from(document.querySelectorAll('.audit-chk:checked')).map(c=>c.getAttribute('data-id'));
+  if(!ids.length){ toast('Selecione ao menos um documento.', 'err'); return; }
+  if(!confirm(`Apagar ${ids.length} documento(s) selecionado(s)? Eles serão movidos para a aba "Excluídos" na planilha — não é apagado de vez.`)) return;
+  runAuditDelete({ mode:'rows', ids });
+};
+document.getElementById('btnAuditDeletePeriod').onclick = ()=>{
+  const from = document.getElementById('auditFrom').value;
+  const to = document.getElementById('auditTo').value;
+  if(!from && !to){ toast('Informe pelo menos uma data (De ou Até) para apagar por período.', 'err'); return; }
+  if(!confirm(`Apagar TODOS os documentos de "${auditEmpresaNome}" no período informado? Eles serão movidos para a aba "Excluídos" na planilha — não é apagado de vez.`)) return;
+  runAuditDelete({ mode:'period', from, to });
+};
+
 // Deixa um nome seguro pra usar em nome de arquivo (sem acento, espaço ou
 // caractere especial que possa dar problema no Windows/e-mail).
 function slugFileName(s){
@@ -2648,7 +2771,7 @@ async function finalizeAndSend(){
       const choice = await askSendChoice('Permissão de Trabalho (PT)');
       if(choice === 'later' && queuePendingSend(payload, histMeta)){
         addHistoryEntry(Object.assign({}, histMeta, {status:'pendente'}));
-        toast('PDF gerado! Documento guardado para enviar junto com outros — veja em "📨 Envio pendente".', 'ok');
+        toast('PDF gerado! Documento guardado para enviar junto com outros — veja em "📁 Meus documentos".', 'ok');
       } else {
         nextBtn.textContent = 'Enviando e-mail...';
         try{
@@ -2947,6 +3070,123 @@ function openPendingSendScreen(){
   document.getElementById('pendingSendView').style.display = 'block';
   window.scrollTo(0,0);
 }
+
+/* ============ "MEUS DOCUMENTOS" — tela única (rascunhos + pendente + fila + enviados) ============
+   Junta as 4 "gavetas" que já existiam (listPtDrafts, loadPendingSend,
+   loadQueue, loadHistory) numa lista só, com chips de filtro por status.
+   Não duplica lógica de envio/reenvio — cada ação de linha chama a mesma
+   função que já existia (resumePtDraft, sendPendingBatch, retryQueue). */
+const DOC_TYPE_ICON = { pt:'📋', veiculo:'🚗', escada:'🪜' };
+function meusDocsTitle(tipo, tipoLabel, numero){
+  if(tipo === 'pt') return `${tipoLabel||'Permissão de Trabalho'} — Nº ${numero||'S/N'}`;
+  return tipoLabel || 'Documento';
+}
+function buildMeusDocsRows(){
+  const rows = [];
+  listPtDrafts().forEach(d=>{
+    rows.push({
+      status:'andamento', icon:'📋',
+      title: `Permissão de Trabalho — PT ${d.ptNumero||'S/N'}`,
+      meta: `Salva em ${new Date(d.savedAt).toLocaleString('pt-BR')} · não finalizada`,
+      ts: d.savedAt, actionLabel:'Continuar',
+      action: ()=>{ resumePtDraft(d.id); },
+      removeAction: ()=>{ deletePtDraft(d.id); renderMeusDocsScreen(); }
+    });
+  });
+  loadPendingSend().forEach((it,idx)=>{
+    const m = it.meta || {};
+    rows.push({
+      status:'pendente', icon: DOC_TYPE_ICON[m.tipo] || '📄',
+      title: meusDocsTitle(m.tipo, m.tipoLabel, m.numero),
+      meta: `Concluído em ${m.ts ? new Date(m.ts).toLocaleString('pt-BR') : ''}`,
+      ts: m.ts, actionLabel:'Enviar',
+      action: (btn)=>{ sendPendingBatch({btn}); },
+      removeAction: ()=>{ deletePendingSend(idx); renderMeusDocsScreen(); }
+    });
+  });
+  loadQueue().forEach(it=>{
+    const m = it.meta || {};
+    rows.push({
+      status:'fila', icon: DOC_TYPE_ICON[m.tipo] || '📄',
+      title: meusDocsTitle(m.tipo, m.tipoLabel, m.numero),
+      meta: navigator.onLine ? 'Tentando reenviar...' : 'Tentando reenviar — sem conexão',
+      ts: m.ts, actionLabel:'Tentar agora',
+      action: ()=>{ retryQueue(); }
+    });
+  });
+  loadHistory().filter(h => h.status==='enviado' || h.status==='gerado' || h.status==='baixado').forEach(h=>{
+    rows.push({
+      status:'enviado', icon: DOC_TYPE_ICON[h.tipo] || '📄',
+      title: meusDocsTitle(h.tipo, h.tipoLabel, h.numero),
+      meta: (h.status==='enviado' ? 'Enviada' : 'Gerada') + ' em ' + (h.ts ? new Date(h.ts).toLocaleString('pt-BR') : ''),
+      ts: h.ts, actionLabel:'Ver PDF',
+      action: ()=>{
+        if(h.pdfDataUrl){ const w = window.open(); if(w) w.location = h.pdfDataUrl; else toast('Permita pop-ups para reabrir o PDF.', 'err'); }
+        else toast('PDF não está mais disponível neste aparelho.', 'err');
+      }
+    });
+  });
+  rows.sort((a,b)=> new Date(b.ts||0) - new Date(a.ts||0));
+  return rows;
+}
+let meusDocsFilter = 'todos';
+const MEUS_DOCS_STATUS_LABEL = { andamento:'Em andamento', pendente:'Aguardando envio', fila:'Na fila', enviado:'Enviado' };
+function renderMeusDocsScreen(){
+  const chipsBox = document.getElementById('meusDocsChips');
+  const box = document.getElementById('meusDocsList');
+  if(!box) return;
+  const all = buildMeusDocsRows();
+  const counts = { todos: all.length, andamento:0, pendente:0, fila:0, enviado:0 };
+  all.forEach(r=> counts[r.status] = (counts[r.status]||0) + 1);
+  const chips = [['todos','Todos'], ['andamento','📝 Em andamento'], ['pendente','📨 Aguardando'], ['fila','🔄 Na fila'], ['enviado','✓ Enviados']];
+  if(chipsBox){
+    chipsBox.innerHTML = chips.map(([key,label]) =>
+      `<button type="button" class="chip-sm${meusDocsFilter===key?' active':''}" data-filter="${key}">${label} · ${counts[key]||0}</button>`
+    ).join('');
+    chipsBox.querySelectorAll('[data-filter]').forEach(btn=>{
+      btn.onclick = ()=>{ meusDocsFilter = btn.getAttribute('data-filter'); renderMeusDocsScreen(); };
+    });
+  }
+  const list = meusDocsFilter==='todos' ? all : all.filter(r=>r.status===meusDocsFilter);
+  if(!list.length){
+    box.innerHTML = '<p class="hint" style="text-align:center;padding:20px 0;">Nenhum documento aqui.</p>';
+    return;
+  }
+  box.innerHTML = list.map((r,i) => `
+    <div class="doc-row">
+      <div class="doc-ic">${r.icon}</div>
+      <div class="doc-main">
+        <b>${r.title}</b>
+        <div class="doc-meta">${r.meta}</div>
+        <span class="status-pill ${r.status}">${MEUS_DOCS_STATUS_LABEL[r.status]}</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px;align-items:stretch;">
+        <button type="button" class="doc-action${r.status==='pendente'?' primary':''}" data-docrow="${i}">${r.actionLabel}</button>
+        ${r.removeAction ? `<button type="button" class="rm-btn" data-docrm="${i}" title="Remover" style="align-self:center;">✕</button>` : ''}
+      </div>
+    </div>`).join('')
+    + (meusDocsFilter==='enviado' || meusDocsFilter==='todos' ? '<button type="button" class="btn btn-ghost" style="width:100%;margin-top:14px;" id="btnMeusDocsAvancado">Ver enviados com filtros avançados</button>' : '');
+  list.forEach((r,i)=>{
+    const btn = box.querySelector(`[data-docrow="${i}"]`);
+    if(btn) btn.onclick = ()=> r.action(btn);
+    const rmBtn = box.querySelector(`[data-docrm="${i}"]`);
+    if(rmBtn && r.removeAction) rmBtn.onclick = ()=> r.removeAction();
+  });
+  const advBtn = document.getElementById('btnMeusDocsAvancado');
+  if(advBtn) advBtn.onclick = ()=>{
+    hideAllScreens();
+    renderHistoricoPage();
+    document.getElementById('historicoView').style.display = 'block';
+    window.scrollTo(0,0);
+  };
+}
+function openMeusDocsScreen(){
+  meusDocsFilter = 'todos';
+  hideAllScreens();
+  renderMeusDocsScreen();
+  document.getElementById('meusDocsView').style.display = 'block';
+  window.scrollTo(0,0);
+}
 // Rede de segurança: nenhum documento deve ficar esquecido na fila. Se
 // sobrou algo de um dia anterior (técnico escolheu "aguardar" e não voltou
 // para enviar), tenta mandar sozinho ao abrir o app de novo.
@@ -3044,7 +3284,7 @@ async function generateAndSendDoc(opts){
       const choice = await askSendChoice(opts.tipoDocumento || opts.subjectLabel);
       if(choice === 'later' && queuePendingSend(payload, histMeta)){
         addHistoryEntry(Object.assign({}, histMeta, {status:'pendente'}));
-        toast('PDF gerado! Documento guardado para enviar junto com outros — veja em "📨 Envio pendente".', 'ok');
+        toast('PDF gerado! Documento guardado para enviar junto com outros — veja em "📁 Meus documentos".', 'ok');
       } else {
         btn.textContent = 'Enviando e-mail...';
         try{
@@ -3507,11 +3747,13 @@ function hideAllScreens(){
   document.getElementById('historicoView').style.display = 'none';
   document.getElementById('draftsView').style.display = 'none';
   document.getElementById('pendingSendView').style.display = 'none';
+  document.getElementById('meusDocsView').style.display = 'none';
   document.getElementById('usersModal').classList.remove('show');
   document.getElementById('empresasModal').classList.remove('show');
   document.getElementById('settingsModal').classList.remove('show');
   document.getElementById('adminAccountModal').classList.remove('show');
   document.getElementById('sendChoiceModal').classList.remove('show');
+  document.getElementById('auditModal').classList.remove('show');
 }
 
 function goHome(){
@@ -3563,14 +3805,11 @@ function renderHomeMenu(){
     html += homeItemHtml('pt', '📋', 'Permissão de Trabalho');
     html += homeItemHtml('veiculo', '🚗', 'Checklist de Veículo');
     html += homeItemHtml('escada', '🪜', 'Checklist de Escada');
-    html += homeItemHtml('historico', '🕘', 'Histórico');
-    const n = listPtDrafts().length;
-    html += homeItemHtml('drafts', '📝', 'PTs em andamento', n>0 ? String(n) : '');
-    // Só aparece quando há algo esperando para ser enviado em lote (ver
-    // bloco "ENVIO EM LOTE" mais abaixo) — nenhum documento some ou fica
-    // escondido: ou está aqui, ou já foi enviado.
-    const nPend = loadPendingSend().length;
-    if(nPend > 0) html += homeItemHtml('pendingSend', '📨', 'Envio pendente', String(nPend));
+    // "Meus documentos" junta rascunhos (PTs em andamento), envio pendente e
+    // a fila offline numa tela só — o badge conta só o que precisa de ação
+    // (enviados não contam, já estão resolvidos).
+    const nAction = listPtDrafts().length + loadPendingSend().length + loadQueue().length;
+    html += homeItemHtml('meusDocs', '📁', 'Meus documentos', nAction>0 ? String(nAction) : '');
   }
   box.innerHTML = html;
   box.querySelectorAll('[data-home-item]').forEach(btn=>{
@@ -3580,8 +3819,7 @@ function renderHomeMenu(){
       else if(id==='adminAccount') openAdminAccountModal();
       else if(id==='empresas') openEmpresasModal();
       else if(id==='settings') openSettingsModal();
-      else if(id==='drafts') openDraftsScreen();
-      else if(id==='pendingSend') openPendingSendScreen();
+      else if(id==='meusDocs') openMeusDocsScreen();
       else openDocScreen(id);
     };
   });
@@ -3606,6 +3844,7 @@ document.getElementById('escadaBack').onclick = goHome;
 document.getElementById('historicoBack').onclick = goHome;
 document.getElementById('draftsBack').onclick = goHome;
 document.getElementById('pendingSendBack').onclick = goHome;
+document.getElementById('meusDocsBack').onclick = goHome;
 
 /* ============ PTs EM ANDAMENTO (rascunhos "estacionados") ============
    A PT que está sendo preenchida agora continua salva como antes (chave
@@ -3635,7 +3874,7 @@ async function parkCurrentPtAndGoHome(){
   });
   savePtDraftsList(list);
   await resetForNewPT();
-  toast('PT salva. Continue depois em "PTs em andamento".', 'ok');
+  toast('PT salva. Continue depois em "📁 Meus documentos".', 'ok');
   goHome();
 }
 
