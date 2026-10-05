@@ -2643,11 +2643,11 @@ async function finalizeAndSend(){
         resumo: resumo, pdfBase64: base64, pdfNome: fileName
       }, currentEmpresaUsuario());
       const choice = await askSendChoice('Permissão de Trabalho (PT)');
-      if(choice === 'later'){
-        queuePendingSend(payload, histMeta);
+      if(choice === 'later' && queuePendingSend(payload, histMeta)){
         addHistoryEntry(Object.assign({}, histMeta, {status:'pendente'}));
         toast('PDF gerado! Documento guardado para enviar junto com outros — veja em "📨 Envio pendente".', 'ok');
       } else {
+        if(choice === 'later') toast('Armazenamento do aparelho cheio para guardar e enviar depois — enviando este agora.', 'err');
         nextBtn.textContent = 'Enviando e-mail...';
         try{
           await sendPayload(cfg, payload);
@@ -3031,11 +3031,11 @@ async function generateAndSendDoc(opts){
         resumo: opts.resumo || '', pdfBase64: base64, pdfNome: fileName
       }, currentEmpresaUsuario());
       const choice = await askSendChoice(opts.tipoDocumento || opts.subjectLabel);
-      if(choice === 'later'){
-        queuePendingSend(payload, histMeta);
+      if(choice === 'later' && queuePendingSend(payload, histMeta)){
         addHistoryEntry(Object.assign({}, histMeta, {status:'pendente'}));
         toast('PDF gerado! Documento guardado para enviar junto com outros — veja em "📨 Envio pendente".', 'ok');
       } else {
+        if(choice === 'later') toast('Armazenamento do aparelho cheio para guardar e enviar depois — enviando este agora.', 'err');
         btn.textContent = 'Enviando e-mail...';
         try{
           await sendPayload(cfg, payload);
