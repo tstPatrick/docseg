@@ -2770,7 +2770,7 @@ async function finalizeAndSend(){
       }, currentEmpresaUsuario());
       const choice = await askSendChoice('Permissão de Trabalho (PT)');
       if(choice === 'later' && queuePendingSend(payload, histMeta)){
-        addHistoryEntry(Object.assign({}, histMeta, {status:'pendente'}));
+        addHistoryEntry(Object.assign({}, stripPdfFromMeta(histMeta), {status:'pendente'}));
         toast('PDF gerado! Documento guardado para enviar junto com outros — veja em "📁 Meus documentos".', 'ok');
       } else {
         nextBtn.textContent = 'Enviando e-mail...';
@@ -2980,6 +2980,13 @@ function savePendingSend(list){
   try{ localStorage.setItem(PENDING_SEND_KEY, JSON.stringify(list)); return true; }
   catch(e){ return false; /* armazenamento cheio */ }
 }
+function stripPdfFromMeta(meta){ const c = Object.assign({}, meta); delete c.pdfDataUrl; return c; }
+function freeHistorySpace(){
+  try{
+    const stripped = loadHistory().map(stripPdfFromMeta);
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(stripped));
+  }catch(e){ /* ignora */ }
+}
 function queuePendingSend(payload, meta){
   const list = loadPendingSend();
   if(list.length >= PENDING_SEND_MAX){
@@ -2987,8 +2994,15 @@ function queuePendingSend(payload, meta){
     refreshHomeMenuIfVisible();
     return false;
   }
-  list.push({ payload, meta, queuedAt: new Date().toISOString() });
-  const ok = savePendingSend(list);
+  list.push({ payload, meta: stripPdfFromMeta(meta), queuedAt: new Date().toISOString() });
+  let ok = savePendingSend(list);
+  if(!ok){
+    // Causa mais comum: o Histórico já ocupa o localStorage com PDFs antigos.
+    // Libera espaço tirando os PDFs guardados no Histórico (o registro fica,
+    // só perde o botão "Ver PDF" dos documentos antigos) e tenta de novo.
+    freeHistorySpace();
+    ok = savePendingSend(list);
+  }
   if(!ok) toast('Armazenamento do aparelho cheio — não foi possível guardar este documento para envio em lote. Enviando este agora.', 'err');
   refreshHomeMenuIfVisible();
   return ok;
@@ -3283,7 +3297,7 @@ async function generateAndSendDoc(opts){
       }, currentEmpresaUsuario());
       const choice = await askSendChoice(opts.tipoDocumento || opts.subjectLabel);
       if(choice === 'later' && queuePendingSend(payload, histMeta)){
-        addHistoryEntry(Object.assign({}, histMeta, {status:'pendente'}));
+        addHistoryEntry(Object.assign({}, stripPdfFromMeta(histMeta), {status:'pendente'}));
         toast('PDF gerado! Documento guardado para enviar junto com outros — veja em "📁 Meus documentos".', 'ok');
       } else {
         btn.textContent = 'Enviando e-mail...';
