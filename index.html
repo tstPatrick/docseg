@@ -118,6 +118,9 @@
     width:100%; padding:11px 12px; border:1px solid #E4E1D9; border-radius:8px;
     font-size:15px; background:#F4F2ED; color:var(--ink-soft); font-weight:600;
   }
+  .fixed-value-missing{
+    background:#FDECEC; border-color:#E24B4A; color:#A32D2D; font-weight:500; font-size:13px;
+  }
   input[type="text"], input[type="date"], input[type="time"], input[type="email"], textarea{
     width:100%; padding:11px 12px; border:1px solid #D6D3CC; border-radius:8px;
     font-size:15px; background:#fff; color:var(--ink); font-family:inherit;
@@ -2647,7 +2650,6 @@ async function finalizeAndSend(){
         addHistoryEntry(Object.assign({}, histMeta, {status:'pendente'}));
         toast('PDF gerado! Documento guardado para enviar junto com outros — veja em "📨 Envio pendente".', 'ok');
       } else {
-        if(choice === 'later') toast('Armazenamento do aparelho cheio para guardar e enviar depois — enviando este agora.', 'err');
         nextBtn.textContent = 'Enviando e-mail...';
         try{
           await sendPayload(cfg, payload);
@@ -2846,6 +2848,10 @@ function askSendChoice(tipoLabel){
    falharam o envio, o técnico só pediu para mandar mais tarde, junto com
    outros, em um e-mail só (action 'sendBatch' no Apps Script). */
 const PENDING_SEND_KEY = 'pt_pending_send';
+// Teto da fila — sem isso, um técnico que esquece de enviar vai acumulando
+// PDFs em base64 no localStorage sem limite, até lotar o armazenamento do
+// aparelho (que é compartilhado com o Histórico e a fila offline).
+const PENDING_SEND_MAX = 10;
 function loadPendingSend(){ try{ return JSON.parse(localStorage.getItem(PENDING_SEND_KEY)||'[]'); }catch(e){ return []; } }
 function savePendingSend(list){
   try{ localStorage.setItem(PENDING_SEND_KEY, JSON.stringify(list)); return true; }
@@ -2853,9 +2859,14 @@ function savePendingSend(list){
 }
 function queuePendingSend(payload, meta){
   const list = loadPendingSend();
+  if(list.length >= PENDING_SEND_MAX){
+    toast(`Limite de ${PENDING_SEND_MAX} documentos aguardando envio atingido — envie os pendentes (📨 no menu) antes de guardar mais. Enviando este agora.`, 'err');
+    refreshHomeMenuIfVisible();
+    return false;
+  }
   list.push({ payload, meta, queuedAt: new Date().toISOString() });
   const ok = savePendingSend(list);
-  if(!ok) toast('Armazenamento do aparelho cheio — não foi possível guardar este documento para envio em lote. Envie os próximos direto ("Enviar agora").', 'err');
+  if(!ok) toast('Armazenamento do aparelho cheio — não foi possível guardar este documento para envio em lote. Enviando este agora.', 'err');
   refreshHomeMenuIfVisible();
   return ok;
 }
@@ -3035,7 +3046,6 @@ async function generateAndSendDoc(opts){
         addHistoryEntry(Object.assign({}, histMeta, {status:'pendente'}));
         toast('PDF gerado! Documento guardado para enviar junto com outros — veja em "📨 Envio pendente".', 'ok');
       } else {
-        if(choice === 'later') toast('Armazenamento do aparelho cheio para guardar e enviar depois — enviando este agora.', 'err');
         btn.textContent = 'Enviando e-mail...';
         try{
           await sendPayload(cfg, payload);
@@ -3131,7 +3141,7 @@ function renderVeiculoPage(){
 
     <div class="section active"><div class="section-head">Responsáveis e observações</div><div class="section-body">
       <div class="field"><label>Técnico em segurança do trabalho</label>
-        <div class="fixed-value">${vState.tecNome || '(definido pelo Administrador em Usuários)'}</div>
+        <div class="fixed-value${vState.tecNome?'':' fixed-value-missing'}">${vState.tecNome || '⚠ Não configurado — peça ao Administrador para cadastrar seu nome em "Usuários"'}</div>
       </div>
       ${carimboBoxHtml()}
       <div class="field"><label>Assinatura do motorista</label>${sigCanvasHtml('sigMotorista','Assine aqui')}</div>
@@ -3273,7 +3283,7 @@ function renderEscadaPage(){
 
     <div class="section active"><div class="section-head">Técnico de segurança do trabalho</div><div class="section-body">
       <div class="field"><label>Técnico responsável</label>
-        <div class="fixed-value">${eState.tecNome || '(definido pelo Administrador em Usuários)'}</div>
+        <div class="fixed-value${eState.tecNome?'':' fixed-value-missing'}">${eState.tecNome || '⚠ Não configurado — peça ao Administrador para cadastrar seu nome em "Usuários"'}</div>
       </div>
       ${carimboBoxHtml()}
     </div></div>
@@ -3342,6 +3352,7 @@ document.getElementById('btnSendVeiculo').onclick = ()=>{
   const missingFields = validateRequiredFields(['v_placa','v_mot1']);
   const missingQ = validateQuestionGroup('#veiculoSections', vState);
   if(missingFields > 0 || missingQ > 0){ toast('Responda/preencha todos os itens em destaque antes de continuar.', 'err'); scrollToFirstError(); return; }
+  if(!vState.tecNome){ toast('Técnico de segurança não configurado — peça ao Administrador para cadastrar seu nome em "Usuários" antes de enviar.', 'err'); return; }
   generateAndSendDoc({
     btnId:'btnSendVeiculo', buildFn:buildPrintTemplateVeiculo,
     fileNameBase:`Checklist_Veiculo_${vState.placa||'sem-placa'}_${vState.data||''}`,
@@ -3354,6 +3365,7 @@ document.getElementById('btnSendEscada').onclick = ()=>{
   const missingFields = validateRequiredFields(['e_exec']);
   const missingQ = validateQuestionGroup('#escadaSections', eState);
   if(missingFields > 0 || missingQ > 0){ toast('Responda/preencha todos os itens em destaque antes de continuar.', 'err'); scrollToFirstError(); return; }
+  if(!eState.tecNome){ toast('Técnico de segurança não configurado — peça ao Administrador para cadastrar seu nome em "Usuários" antes de enviar.', 'err'); return; }
   generateAndSendDoc({
     btnId:'btnSendEscada', buildFn:buildPrintTemplateEscada,
     fileNameBase:`Checklist_Escada_${eState.data||''}`,
