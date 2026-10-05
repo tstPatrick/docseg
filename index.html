@@ -1280,7 +1280,8 @@ function renderEpis(){
 function renderSaude(){
   const body = getQ('saude').map(([id,txt])=>questionRow("saude",id,txt,false)).join('') + `
     <div class="warn-box" style="margin-top:12px">Qualquer resposta "sim" — o avaliado deve ser encaminhado, pelo responsável, ao serviço médico.</div>
-    <div class="field"><label>Nome do colaborador avaliado</label><input type="text" id="f_colabNome" value="${state.colaboradorNome}" placeholder="Nome completo"></div>
+    <div class="field"><label>Nome do colaborador avaliado *</label><input type="text" id="f_colabNome" value="${state.colaboradorNome}" placeholder="Nome completo">
+      <p class="field-err-msg" id="err_f_colabNome" style="display:none;">⚠ Campo obrigatório</p></div>
   `;
   return sectionShell("Questionário de saúde","Antes de iniciar a atividade", body);
 }
@@ -1308,7 +1309,6 @@ function renderEquipe(){
   const rows = state.equipe.map((p,i)=>`
     <div class="team-row" data-idx="${i}">
       <input type="text" class="eq-nome" placeholder="Nome" value="${p.nome}">
-      <input type="text" class="eq-doc" inputmode="numeric" maxlength="14" placeholder="RG/CPF (opcional)" value="${p.doc}">
       <button class="rm-btn" data-rm="${i}">✕</button>
     </div>`).join('');
   return sectionShell("Equipe autorizada","Colaboradores que executarão a atividade", `
@@ -1645,20 +1645,10 @@ function bindStepEvents(stepKey){
 
   // equipe (team) rows
   if(stepKey==="equipe"){
-    document.querySelectorAll('.eq-nome, .eq-doc').forEach(inp=>{
+    document.querySelectorAll('.eq-nome').forEach(inp=>{
       inp.oninput = ()=>{
         const idx = parseInt(inp.closest('.team-row').getAttribute('data-idx'),10);
-        if(inp.classList.contains('eq-doc')){
-          const pos = inp.selectionStart;
-          const before = inp.value.length;
-          inp.value = formatCpfRg(inp.value);
-          // mantém o cursor no fim (o jeito mais natural pra um campo assim)
-          const after = inp.value.length;
-          try{ inp.setSelectionRange(pos + (after-before), pos + (after-before)); }catch(e){}
-          state.equipe[idx].doc = inp.value;
-        } else {
-          state.equipe[idx].nome = inp.value;
-        }
+        state.equipe[idx].nome = inp.value;
         saveDraft();
       };
     });
@@ -1669,7 +1659,7 @@ function bindStepEvents(stepKey){
       };
     });
     const addBtn = document.getElementById('addTeamRow');
-    if(addBtn) addBtn.onclick = ()=>{ state.equipe.push({nome:"",doc:""}); renderCurrentStep(); };
+    if(addBtn) addBtn.onclick = ()=>{ state.equipe.push({nome:""}); renderCurrentStep(); };
   }
 
   if(stepKey==="final"){ initSignaturePads(); bindPhotoPicker(state, saveDraft, renderCurrentStep); }
@@ -1690,7 +1680,7 @@ function renderCurrentStep(){
 }
 
 /* ============ VALIDAÇÃO DE CAMPOS OBRIGATÓRIOS ============ */
-const REQUIRED_BY_STEP = { ident:['f_area'], final:['f_respNome'] };
+const REQUIRED_BY_STEP = { ident:['f_area'], saude:['f_colabNome'], final:['f_respNome'] };
 // Etapas com perguntas Sim/Não/N.A. — nenhuma pode ficar sem resposta.
 const QUESTION_STEPS = { eletrico:'eletrico', altura:'altura', saude:'saude', instalacao:'instalacao' };
 function validateRequiredFields(ids){
@@ -1718,17 +1708,14 @@ function validateQuestionsStep(prefix){
   });
   return missing;
 }
-// Confere se toda linha da equipe autorizada tem nome preenchido — RG/CPF
-// fica opcional (não há obrigação legal de coletar esse dado na PT, então
-// não vale a pena travar o preenchimento por causa dele).
+// Confere se toda linha da equipe autorizada tem nome preenchido — não há
+// mais coleta de RG/CPF aqui (sem base legal para exigir esse dado na PT).
 function validateEquipeStep(){
   let missing = 0;
   document.querySelectorAll('#teamRows .team-row').forEach(row=>{
     const nomeInp = row.querySelector('.eq-nome');
-    const docInp = row.querySelector('.eq-doc');
     const nomeVazio = !nomeInp.value || !nomeInp.value.trim();
     nomeInp.classList.toggle('input-error', nomeVazio);
-    if(docInp) docInp.classList.remove('input-error');
     if(nomeVazio) missing++;
   });
   const err = document.getElementById('err_equipe');
@@ -2461,7 +2448,7 @@ function chk(mark){ return mark ? "☑" : "☐"; }
 
 function buildPrintTemplate(){
   const T = state;
-  const equipeRows = T.equipe.map(p=>`<tr><td>${p.nome||''}</td><td>${p.doc||''}</td><td></td></tr>`).join('');
+  const equipeRows = T.equipe.map(p=>`<tr><td>${p.nome||''}</td><td></td></tr>`).join('');
   const sigImg = id => sigData[id] ? `<img src="${sigData[id]}" style="max-height:50px">` : '';
   const logos = currentPdfLogos();
   const logoCell = src => src ? `<img src="${src}" style="max-height:55px;max-width:100px;object-fit:contain">` : '';
@@ -2528,7 +2515,7 @@ function buildPrintTemplate(){
     </table>
 
     <div class="bar">EQUIPE AUTORIZADA A EXECUTAR A ATIVIDADE</div>
-    <table><tr><th>NOME</th><th>RG/CPF</th><th>ASS.</th></tr>${equipeRows}</table>
+    <table><tr><th>NOME</th><th>ASS.</th></tr>${equipeRows}</table>
 
     <div class="bar">ENCERRAMENTO</div>
     <table>
@@ -3079,7 +3066,7 @@ const VEICULO_MANUT_DEFAULT = [
 ];
 function makeEmptyVState(){
   return { data:"", tipoVeiculo:"", marcaModelo:"", placa:"", motorista1:"", motorista2:"",
-    itens:{}, obs:"", acoes:[{item:"",desc:"",resp:"",dataAcao:"",conclusao:""}], tecNome:"", tecCarimbo:"", encarregadoNome:"", fotos:[] };
+    itens:{}, obs:"", acoes:[{item:"",desc:"",resp:"",dataAcao:"",conclusao:""}], tecNome:"", tecCarimbo:"", fotos:[] };
 }
 let vState = makeEmptyVState();
 function saveVDraft(){ try{ localStorage.setItem('veiculo_draft', JSON.stringify(vState)); }catch(e){} }
@@ -3130,9 +3117,8 @@ function renderVeiculoPage(){
     </div></div>
 
     <div class="section active"><div class="section-head">Responsáveis e observações</div><div class="section-body">
-      <div class="row2">
-        <div class="field"><label>Técnico em segurança do trabalho</label><input type="text" id="v_tec" value="${vState.tecNome}" placeholder="Nome do técnico que está preenchendo"></div>
-        <div class="field"><label>Encarregado</label><input type="text" id="v_enc" value="${vState.encarregadoNome}" placeholder="Nome"></div>
+      <div class="field"><label>Técnico em segurança do trabalho</label>
+        <div class="fixed-value">${vState.tecNome || '(definido pelo Administrador em Usuários)'}</div>
       </div>
       ${carimboBoxHtml()}
       <div class="field"><label>Assinatura do motorista</label>${sigCanvasHtml('sigMotorista','Assine aqui')}</div>
@@ -3147,7 +3133,7 @@ function renderVeiculoPage(){
 }
 function bindVeiculoEvents(){
   bindQuestionGroup('#veiculoSections', vState, saveVDraft);
-  const map = {v_data:'data', v_placa:'placa', v_tipo:'tipoVeiculo', v_marca:'marcaModelo', v_mot1:'motorista1', v_mot2:'motorista2', v_tec:'tecNome', v_enc:'encarregadoNome', v_obs:'obs'};
+  const map = {v_data:'data', v_placa:'placa', v_tipo:'tipoVeiculo', v_marca:'marcaModelo', v_mot1:'motorista1', v_mot2:'motorista2', v_obs:'obs'};
   Object.keys(map).forEach(id=>{
     const el = document.getElementById(id);
     if(el) el.oninput = ()=>{ vState[map[id]] = el.value; saveVDraft(); };
@@ -3199,7 +3185,7 @@ function buildPrintTemplateVeiculo(){
     ${acoesRows ? `<div class="bar">AÇÃO REQUERIDA</div><table><tr><th>Item</th><th>Descrição</th><th>Responsável</th><th>Data</th><th>Conclusão</th></tr>${acoesRows}</table>` : ''}
     <div class="bar">RESPONSÁVEIS E OBSERVAÇÕES</div>
     <table>
-      <tr><td style="width:50%">Técnico em segurança: ${vState.tecNome||''}<br><div style="height:90px;border:1px solid #ccc;margin-top:4px;"></div></td><td style="width:50%">Encarregado: ${vState.encarregadoNome||''}</td></tr>
+      <tr><td colspan="2">Técnico em segurança: ${vState.tecNome||''}<br><div style="height:90px;border:1px solid #ccc;margin-top:4px;"></div></td></tr>
       <tr><td colspan="2">Assinatura do motorista:<br>${sigImg('sigMotorista')}</td></tr>
       <tr><td colspan="2">Observações: ${vState.obs||''}</td></tr>
     </table>
@@ -3273,7 +3259,9 @@ function renderEscadaPage(){
     </div></div>
 
     <div class="section active"><div class="section-head">Técnico de segurança do trabalho</div><div class="section-body">
-      <div class="field"><label>Técnico responsável</label><input type="text" id="e_tec" value="${eState.tecNome}" placeholder="Nome do técnico que está preenchendo"></div>
+      <div class="field"><label>Técnico responsável</label>
+        <div class="fixed-value">${eState.tecNome || '(definido pelo Administrador em Usuários)'}</div>
+      </div>
       ${carimboBoxHtml()}
     </div></div>
   `;
@@ -3284,7 +3272,7 @@ function renderEscadaPage(){
 }
 function bindEscadaEvents(){
   bindQuestionGroup('#escadaSections', eState, saveEDraft);
-  const map = {e_data:'data', e_exec:'executanteNome', e_obs:'obs', e_tec:'tecNome'};
+  const map = {e_data:'data', e_exec:'executanteNome', e_obs:'obs'};
   Object.keys(map).forEach(id=>{
     const el = document.getElementById(id);
     if(el) el.oninput = ()=>{ eState[map[id]] = el.value; saveEDraft(); };
