@@ -574,6 +574,12 @@
   <div style="padding:16px;max-width:640px;margin:0 auto;" id="draftsList"></div>
 </div>
 
+<!-- ===================== VIEW: ENVIO PENDENTE (documentos aguardando envio em lote) ===================== -->
+<div id="pendingSendView" style="display:none;">
+  <div class="screen-topbar"><button type="button" id="pendingSendBack" title="Voltar ao menu">←</button><b>Envio pendente</b></div>
+  <div style="padding:16px;max-width:640px;margin:0 auto;" id="pendingSendList"></div>
+</div>
+
   </div><!-- /main-col -->
 </div><!-- /app-shell -->
 
@@ -764,6 +770,16 @@
       <button type="button" class="btn btn-ghost" id="btnImportCfg">⭱ Importar configuração</button>
     </div>
     <input type="file" accept="application/json" id="importCfgFile" style="display:none;">
+  </div>
+</div>
+
+<!-- SEND CHOICE MODAL (ao concluir um documento: enviar agora x aguardar e enviar junto depois) -->
+<div class="modal-bg" id="sendChoiceModal">
+  <div class="modal">
+    <h2 id="sendChoiceTitle">✅ Documento concluído</h2>
+    <p class="hint" style="margin-top:-6px;margin-bottom:16px;">Você pode enviar por e-mail agora, ou aguardar e enviar este documento junto com outros mais tarde, em um único e-mail (economiza envios).</p>
+    <button type="button" class="btn btn-primary" style="width:100%;margin-bottom:10px;" id="btnSendNow">Enviar agora</button>
+    <button type="button" class="btn btn-ghost" style="width:100%;" id="btnSendLater">Aguardar e enviar junto depois</button>
   </div>
 </div>
 
@@ -996,6 +1012,13 @@ function currentAdminCreds(){
   const s = getSession();
   return { adminUsername: s ? s.username : '', adminPasswordHash: s ? s.passwordHash : '' };
 }
+// Chamadas de admin (listEmpresas/listUsers) via POST — evita credencial
+// (usuário/hash da senha do admin) exposta em URL/log, igual ao login.
+async function fetchAdminAction(scriptUrl, action, extra){
+  const payload = Object.assign({action}, currentAdminCreds(), extra||{});
+  const resp = await fetch(scriptUrl, {method:'POST', body: JSON.stringify(payload)});
+  return resp.json();
+}
 async function hashPass(pwd){
   const enc = new TextEncoder().encode('docseg-user:' + pwd);
   const buf = await crypto.subtle.digest('SHA-256', enc);
@@ -1025,7 +1048,9 @@ async function attemptLogin(username, password){
     try{
       const controller = new AbortController();
       const timer = setTimeout(()=>controller.abort(), 12000);
-      const resp = await fetch(scriptUrl + '?action=login&username=' + encodeURIComponent(uname) + '&passwordHash=' + encodeURIComponent(passHash), {signal:controller.signal});
+      // POST (não GET): assim usuário/hash da senha não ficam numa URL —
+      // não vão parar em log de acesso nem em histórico do navegador.
+      const resp = await fetch(scriptUrl, {method:'POST', body: JSON.stringify({action:'login', username: uname, passwordHash: passHash}), signal:controller.signal});
       clearTimeout(timer);
       serverResult = await resp.json();
       serverChecked = true;
@@ -1283,12 +1308,12 @@ function renderEquipe(){
   const rows = state.equipe.map((p,i)=>`
     <div class="team-row" data-idx="${i}">
       <input type="text" class="eq-nome" placeholder="Nome" value="${p.nome}">
-      <input type="text" class="eq-doc" inputmode="numeric" maxlength="14" placeholder="RG/CPF" value="${p.doc}">
+      <input type="text" class="eq-doc" inputmode="numeric" maxlength="14" placeholder="RG/CPF (opcional)" value="${p.doc}">
       <button class="rm-btn" data-rm="${i}">✕</button>
     </div>`).join('');
   return sectionShell("Equipe autorizada","Colaboradores que executarão a atividade", `
     <div id="teamRows">${rows}</div>
-    <p class="field-err-msg" id="err_equipe" style="display:none;">⚠ Preencha nome e RG/CPF de todos os colaboradores</p>
+    <p class="field-err-msg" id="err_equipe" style="display:none;">⚠ Preencha o nome de todos os colaboradores</p>
     <button class="add-btn" id="addTeamRow">+ Adicionar colaborador</button>
   `);
 }
@@ -1693,19 +1718,18 @@ function validateQuestionsStep(prefix){
   });
   return missing;
 }
-// Confere se toda linha da equipe autorizada tem nome E RG/CPF preenchidos,
-// e destaca visualmente (borda vermelha + aviso) as linhas incompletas.
+// Confere se toda linha da equipe autorizada tem nome preenchido — RG/CPF
+// fica opcional (não há obrigação legal de coletar esse dado na PT, então
+// não vale a pena travar o preenchimento por causa dele).
 function validateEquipeStep(){
   let missing = 0;
   document.querySelectorAll('#teamRows .team-row').forEach(row=>{
     const nomeInp = row.querySelector('.eq-nome');
     const docInp = row.querySelector('.eq-doc');
     const nomeVazio = !nomeInp.value || !nomeInp.value.trim();
-    const docVazio = !docInp.value || !docInp.value.trim();
     nomeInp.classList.toggle('input-error', nomeVazio);
-    docInp.classList.toggle('input-error', docVazio);
+    if(docInp) docInp.classList.remove('input-error');
     if(nomeVazio) missing++;
-    if(docVazio) missing++;
   });
   const err = document.getElementById('err_equipe');
   if(err) err.style.display = missing>0 ? 'flex' : 'none';
@@ -1864,10 +1888,7 @@ async function populateCfgNumEmpresa(scriptUrl){
   sel.innerHTML = '<option value="">Selecione a empresa...</option>';
   if(!scriptUrl) return;
   try{
-    const creds = currentAdminCreds();
-    const url = scriptUrl + '?action=listEmpresas&adminUsername=' + encodeURIComponent(creds.adminUsername) + '&adminPasswordHash=' + encodeURIComponent(creds.adminPasswordHash);
-    const resp = await fetch(url);
-    const data = await resp.json();
+    const data = await fetchAdminAction(scriptUrl, 'listEmpresas');
     if(data.error) return;
     (data.empresas||[]).forEach(emp=>{
       const opt = document.createElement('option');
@@ -2105,10 +2126,7 @@ async function openUsersModal(){
     const scriptUrl = cfg.scriptUrl || DEFAULT_SCRIPT_URL;
     if(scriptUrl){
       try{
-        const creds = currentAdminCreds();
-        const url = scriptUrl + '?action=listEmpresas&adminUsername=' + encodeURIComponent(creds.adminUsername) + '&adminPasswordHash=' + encodeURIComponent(creds.adminPasswordHash);
-        const resp = await fetch(url);
-        const data = await resp.json();
+        const data = await fetchAdminAction(scriptUrl, 'listEmpresas');
         if(!data.error) lastLoadedEmpresas = data.empresas || [];
       }catch(e){ /* dropdown fica só com a opção vazia */ }
     }
@@ -2144,10 +2162,7 @@ async function loadUsersList(){
   if(!scriptUrl){ box.innerHTML = '<p class="hint">Configure a URL do Google Apps Script em Configurações primeiro.</p>'; return; }
   box.innerHTML = '<p class="hint">Carregando...</p>';
   try{
-    const creds = currentAdminCreds();
-    const url = scriptUrl + '?action=listUsers&adminUsername=' + encodeURIComponent(creds.adminUsername) + '&adminPasswordHash=' + encodeURIComponent(creds.adminPasswordHash);
-    const resp = await fetch(url);
-    const data = await resp.json();
+    const data = await fetchAdminAction(scriptUrl, 'listUsers');
     if(data.error) throw new Error(data.error);
     lastLoadedUsers = data.users || [];
     if(!lastLoadedUsers.length){ box.innerHTML = '<p class="hint">Nenhum usuário cadastrado ainda — use o formulário abaixo.</p>'; return; }
@@ -2327,10 +2342,7 @@ async function loadEmpresasList(){
   if(!scriptUrl){ box.innerHTML = '<p class="hint">Configure a URL do Google Apps Script em Configurações primeiro.</p>'; return; }
   box.innerHTML = '<p class="hint">Carregando...</p>';
   try{
-    const creds = currentAdminCreds();
-    const url = scriptUrl + '?action=listEmpresas&adminUsername=' + encodeURIComponent(creds.adminUsername) + '&adminPasswordHash=' + encodeURIComponent(creds.adminPasswordHash);
-    const resp = await fetch(url);
-    const data = await resp.json();
+    const data = await fetchAdminAction(scriptUrl, 'listEmpresas');
     if(data.error) throw new Error(data.error);
     lastLoadedEmpresas = data.empresas || [];
     if(!lastLoadedEmpresas.length){ box.innerHTML = '<p class="hint">Nenhuma empresa com perguntas personalizadas ainda — use o formulário abaixo para criar.</p>'; return; }
@@ -2625,21 +2637,28 @@ async function finalizeAndSend(){
       ts: new Date().toISOString(), pdfDataUrl: pdfDataUri, fileName
     };
     if(cfg.scriptUrl && cfg.destEmail){
-      nextBtn.textContent = 'Enviando e-mail...';
       const payload = Object.assign({
         destEmail: cfg.destEmail, tipoDocumento: 'Permissão de Trabalho (PT)',
         ptNumero: state.ptNumero || 'S/N', ptData: state.data || '', ptArea: state.area || '',
         resumo: resumo, pdfBase64: base64, pdfNome: fileName
       }, currentEmpresaUsuario());
-      try{
-        await sendPayload(cfg, payload);
-        toast('PDF gerado e e-mail enviado com sucesso!', 'ok');
-        playSuccessSound();
-        addHistoryEntry(Object.assign({}, histMeta, {status:'enviado'}));
-      }catch(err){
-        console.error(err);
-        enqueueDocument({payload, meta: histMeta});
-        toast('Sem conexão — documento salvo na fila e será reenviado automaticamente.', 'err');
+      const choice = await askSendChoice('Permissão de Trabalho (PT)');
+      if(choice === 'later'){
+        queuePendingSend(payload, histMeta);
+        addHistoryEntry(Object.assign({}, histMeta, {status:'pendente'}));
+        toast('PDF gerado! Documento guardado para enviar junto com outros — veja em "📨 Envio pendente".', 'ok');
+      } else {
+        nextBtn.textContent = 'Enviando e-mail...';
+        try{
+          await sendPayload(cfg, payload);
+          toast('PDF gerado e e-mail enviado com sucesso!', 'ok');
+          playSuccessSound();
+          addHistoryEntry(Object.assign({}, histMeta, {status:'enviado'}));
+        }catch(err){
+          console.error(err);
+          enqueueDocument({payload, meta: histMeta});
+          toast('Sem conexão — documento salvo na fila e será reenviado automaticamente.', 'err');
+        }
       }
     } else {
       toast('PDF gerado! Veja em 🕘 Histórico. Configure o envio automático em ⚙ para mandar por e-mail também.', 'ok');
@@ -2776,6 +2795,8 @@ async function retryQueue(){
 }
 window.addEventListener('online', retryQueue);
 setInterval(()=>{ if(navigator.onLine) retryQueue(); }, 45000);
+window.addEventListener('online', autoFlushPendingIfStale);
+setInterval(()=>{ if(navigator.onLine) autoFlushPendingIfStale(); }, 45000);
 
 /* ============ HISTÓRICO LOCAL ============ */
 const HISTORY_KEY = 'pt_history';
@@ -2795,6 +2816,135 @@ function addHistoryEntry(entry){
   list.unshift(entry);
   if(list.length > HISTORY_MAX) list = list.slice(0, HISTORY_MAX);
   saveHistoryList(list);
+}
+function updateHistoryStatus(id, status){
+  const list = loadHistory();
+  const idx = list.findIndex(h=>h.id===id);
+  if(idx !== -1){ list[idx].status = status; saveHistoryList(list); }
+}
+
+/* ============ ESCOLHA: ENVIAR AGORA x AGUARDAR (ao concluir um documento) ============
+   Pergunta obrigatória ao final de cada PT/checklist gerado, só quando o
+   envio por e-mail está configurado (⚙ scriptUrl + destEmail). Resolve
+   com 'now' ou 'later' — ver uso em finalizeAndSend()/generateAndSendDoc(). */
+function askSendChoice(tipoLabel){
+  return new Promise(resolve=>{
+    const modal = document.getElementById('sendChoiceModal');
+    const title = document.getElementById('sendChoiceTitle');
+    if(title) title.textContent = '✅ ' + (tipoLabel || 'Documento') + ' concluído(a)';
+    const btnNow = document.getElementById('btnSendNow');
+    const btnLater = document.getElementById('btnSendLater');
+    modal.classList.add('show');
+    btnNow.onclick = ()=>{ modal.classList.remove('show'); resolve('now'); };
+    btnLater.onclick = ()=>{ modal.classList.remove('show'); resolve('later'); };
+  });
+}
+
+/* ============ ENVIO EM LOTE (documentos que o técnico escolheu "aguardar
+   e enviar junto depois") ============
+   Fila separada da fila offline (QUEUE_KEY) — aqui os documentos NÃO
+   falharam o envio, o técnico só pediu para mandar mais tarde, junto com
+   outros, em um e-mail só (action 'sendBatch' no Apps Script). */
+const PENDING_SEND_KEY = 'pt_pending_send';
+function loadPendingSend(){ try{ return JSON.parse(localStorage.getItem(PENDING_SEND_KEY)||'[]'); }catch(e){ return []; } }
+function savePendingSend(list){
+  try{ localStorage.setItem(PENDING_SEND_KEY, JSON.stringify(list)); return true; }
+  catch(e){ return false; /* armazenamento cheio */ }
+}
+function queuePendingSend(payload, meta){
+  const list = loadPendingSend();
+  list.push({ payload, meta, queuedAt: new Date().toISOString() });
+  const ok = savePendingSend(list);
+  if(!ok) toast('Armazenamento do aparelho cheio — não foi possível guardar este documento para envio em lote. Envie os próximos direto ("Enviar agora").', 'err');
+  refreshHomeMenuIfVisible();
+  return ok;
+}
+function refreshHomeMenuIfVisible(){
+  const home = document.getElementById('homeMenu');
+  if(home && home.style.display !== 'none') renderHomeMenu();
+}
+async function sendPendingBatch(opts){
+  opts = opts || {};
+  const list = loadPendingSend();
+  if(!list.length) return;
+  const cfg = loadCfg();
+  if(!cfg.scriptUrl || !cfg.destEmail){
+    if(!opts.silent) toast('Configure o envio automático em ⚙ para enviar os documentos pendentes.', 'err');
+    return;
+  }
+  if(!navigator.onLine){
+    if(!opts.silent) toast('Sem conexão — os documentos pendentes serão enviados quando a internet voltar.', 'err');
+    return;
+  }
+  const btn = opts.btn;
+  const originalText = btn ? btn.textContent : '';
+  if(btn){ btn.disabled = true; btn.textContent = 'Enviando...'; }
+  try{
+    const first = (list[0] && list[0].payload) || {};
+    const batchPayload = {
+      action: 'sendBatch', destEmail: cfg.destEmail,
+      empresa: first.empresa || '', usuario: first.usuario || '',
+      items: list.map(it=>it.payload)
+    };
+    await sendPayload(cfg, batchPayload);
+    list.forEach(it=> updateHistoryStatus(it.meta.id, 'enviado'));
+    savePendingSend([]);
+    playSuccessSound();
+    if(!opts.silent) toast(list.length>1 ? list.length+' documentos enviados em 1 e-mail!' : 'Documento enviado!', 'ok');
+    renderPendingSendScreen();
+    refreshHomeMenuIfVisible();
+  }catch(err){
+    console.error(err);
+    if(!opts.silent) toast('Não foi possível enviar agora. Tente de novo mais tarde.', 'err');
+  } finally {
+    if(btn){ btn.disabled = false; btn.textContent = originalText || 'Enviar'; }
+  }
+}
+function deletePendingSend(idx){
+  if(!confirm('Remover este documento da fila de envio em lote? Ele não será enviado por e-mail (mas continua salvo no Histórico).')) return;
+  const list = loadPendingSend();
+  list.splice(idx,1);
+  savePendingSend(list);
+  renderPendingSendScreen();
+  refreshHomeMenuIfVisible();
+}
+function renderPendingSendScreen(){
+  const box = document.getElementById('pendingSendList');
+  if(!box) return;
+  const list = loadPendingSend();
+  if(!list.length){
+    box.innerHTML = '<p class="hint">Nenhum documento aguardando envio. Ao concluir uma PT ou checklist, escolha "Aguardar e enviar junto depois" para ele aparecer aqui.</p>';
+    return;
+  }
+  box.innerHTML = list.map((it,i) => `
+    <div class="draft-card">
+      <b>${it.meta.tipoLabel || 'Documento'}</b>
+      <span>Nº ${it.meta.numero || 'S/N'}${it.meta.area ? ' · ' + it.meta.area : ''}</span>
+      <span class="draft-date">Concluído em ${new Date(it.meta.ts).toLocaleString('pt-BR')}</span>
+      <div class="draft-actions">
+        <button type="button" class="btn btn-ghost" data-rmpending="${i}">Remover</button>
+      </div>
+    </div>`).join('')
+    + `<button type="button" class="btn btn-primary" style="width:100%;margin-top:14px;" id="btnSendPendingBatch">Enviar ${list.length} documento${list.length>1?'s':''} (1 e-mail)</button>`;
+  box.querySelectorAll('[data-rmpending]').forEach(b=>{ b.onclick = ()=> deletePendingSend(parseInt(b.getAttribute('data-rmpending'),10)); });
+  const sendBtn = document.getElementById('btnSendPendingBatch');
+  if(sendBtn) sendBtn.onclick = ()=> sendPendingBatch({btn: sendBtn});
+}
+function openPendingSendScreen(){
+  hideAllScreens();
+  renderPendingSendScreen();
+  document.getElementById('pendingSendView').style.display = 'block';
+  window.scrollTo(0,0);
+}
+// Rede de segurança: nenhum documento deve ficar esquecido na fila. Se
+// sobrou algo de um dia anterior (técnico escolheu "aguardar" e não voltou
+// para enviar), tenta mandar sozinho ao abrir o app de novo.
+function autoFlushPendingIfStale(){
+  const list = loadPendingSend();
+  if(!list.length) return;
+  const today = todayISO();
+  const hasStale = list.some(it => (it.queuedAt||'').slice(0,10) !== today);
+  if(hasStale && navigator.onLine) sendPendingBatch({silent:true});
 }
 
 /* ============ UTIL ============ */
@@ -2875,21 +3025,28 @@ async function generateAndSendDoc(opts){
       ts: new Date().toISOString(), pdfDataUrl: pdfDataUri, fileName
     };
     if(cfg.scriptUrl && cfg.destEmail){
-      btn.textContent = 'Enviando e-mail...';
       const payload = Object.assign({
         destEmail: cfg.destEmail, tipoDocumento: opts.tipoDocumento || opts.subjectLabel,
         ptNumero: opts.subjectLabel, ptData: opts.subjectDate || '', ptArea: opts.subjectArea || '',
         resumo: opts.resumo || '', pdfBase64: base64, pdfNome: fileName
       }, currentEmpresaUsuario());
-      try{
-        await sendPayload(cfg, payload);
-        toast('PDF gerado e e-mail enviado com sucesso!', 'ok');
-        playSuccessSound();
-        addHistoryEntry(Object.assign({}, histMeta, {status:'enviado'}));
-      }catch(err){
-        console.error(err);
-        enqueueDocument({payload, meta: histMeta});
-        toast('Sem conexão — documento salvo na fila e será reenviado automaticamente.', 'err');
+      const choice = await askSendChoice(opts.tipoDocumento || opts.subjectLabel);
+      if(choice === 'later'){
+        queuePendingSend(payload, histMeta);
+        addHistoryEntry(Object.assign({}, histMeta, {status:'pendente'}));
+        toast('PDF gerado! Documento guardado para enviar junto com outros — veja em "📨 Envio pendente".', 'ok');
+      } else {
+        btn.textContent = 'Enviando e-mail...';
+        try{
+          await sendPayload(cfg, payload);
+          toast('PDF gerado e e-mail enviado com sucesso!', 'ok');
+          playSuccessSound();
+          addHistoryEntry(Object.assign({}, histMeta, {status:'enviado'}));
+        }catch(err){
+          console.error(err);
+          enqueueDocument({payload, meta: histMeta});
+          toast('Sem conexão — documento salvo na fila e será reenviado automaticamente.', 'err');
+        }
       }
     } else {
       toast('PDF gerado! Veja em 🕘 Histórico. Configure o envio automático em ⚙ para mandar por e-mail também.', 'ok');
@@ -3273,7 +3430,7 @@ function renderHistoricoResults(){
   box.innerHTML = items.map(h=>{
     const dt = h.ts ? new Date(h.ts) : null;
     const dtStr = dt ? (dt.toLocaleDateString('pt-BR') + ', ' + dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})) : '';
-    const statusLabel = h.status==='enviado' ? '✓ enviado' : ((h.status==='gerado'||h.status==='baixado') ? '📄 gerado' : (h.status||''));
+    const statusLabel = h.status==='enviado' ? '✓ enviado' : (h.status==='pendente' ? '⏳ aguardando envio' : ((h.status==='gerado'||h.status==='baixado') ? '📄 gerado' : (h.status||'')));
     return `<div class="hist-row">
       <div>
         <b style="font-size:12.5px;">${h.tipoLabel||''} · ${h.numero||''}</b><br>
@@ -3336,10 +3493,12 @@ function hideAllScreens(){
   document.getElementById('escadaView').style.display = 'none';
   document.getElementById('historicoView').style.display = 'none';
   document.getElementById('draftsView').style.display = 'none';
+  document.getElementById('pendingSendView').style.display = 'none';
   document.getElementById('usersModal').classList.remove('show');
   document.getElementById('empresasModal').classList.remove('show');
   document.getElementById('settingsModal').classList.remove('show');
   document.getElementById('adminAccountModal').classList.remove('show');
+  document.getElementById('sendChoiceModal').classList.remove('show');
 }
 
 function goHome(){
@@ -3394,6 +3553,11 @@ function renderHomeMenu(){
     html += homeItemHtml('historico', '🕘', 'Histórico');
     const n = listPtDrafts().length;
     html += homeItemHtml('drafts', '📝', 'PTs em andamento', n>0 ? String(n) : '');
+    // Só aparece quando há algo esperando para ser enviado em lote (ver
+    // bloco "ENVIO EM LOTE" mais abaixo) — nenhum documento some ou fica
+    // escondido: ou está aqui, ou já foi enviado.
+    const nPend = loadPendingSend().length;
+    if(nPend > 0) html += homeItemHtml('pendingSend', '📨', 'Envio pendente', String(nPend));
   }
   box.innerHTML = html;
   box.querySelectorAll('[data-home-item]').forEach(btn=>{
@@ -3404,6 +3568,7 @@ function renderHomeMenu(){
       else if(id==='empresas') openEmpresasModal();
       else if(id==='settings') openSettingsModal();
       else if(id==='drafts') openDraftsScreen();
+      else if(id==='pendingSend') openPendingSendScreen();
       else openDocScreen(id);
     };
   });
@@ -3427,6 +3592,7 @@ document.getElementById('veiculoBack').onclick = goHome;
 document.getElementById('escadaBack').onclick = goHome;
 document.getElementById('historicoBack').onclick = goHome;
 document.getElementById('draftsBack').onclick = goHome;
+document.getElementById('pendingSendBack').onclick = goHome;
 
 /* ============ PTs EM ANDAMENTO (rascunhos "estacionados") ============
    A PT que está sendo preenchida agora continua salva como antes (chave
@@ -3534,7 +3700,7 @@ async function initApp(){
   renderCurrentStep();
   if(cfgApplied) toast('Configuração da empresa aplicada automaticamente neste aparelho!', 'ok');
   renderOfflineBanner();
-  if(navigator.onLine) retryQueue();
+  if(navigator.onLine){ retryQueue(); autoFlushPendingIfStale(); }
   if(!state.ptNumero){
     state.ptNumero = await assignNextPtNumber();
     saveDraft();

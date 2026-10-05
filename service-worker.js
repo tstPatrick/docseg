@@ -44,7 +44,7 @@ self.addEventListener('notificationclick', (event) => {
   );
 });
 
-const CACHE_NAME = 'docseg-shell-v7';
+const CACHE_NAME = 'docseg-shell-v9';
 const APP_SHELL = [
   './',
   './index.html',
