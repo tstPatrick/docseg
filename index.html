@@ -8,7 +8,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" id="metaAppTitle" content="PT">
+<meta name="apple-mobile-web-app-title" id="metaAppTitle" content="DocSeg Digital">
 <link rel="apple-touch-icon" id="appleTouchIcon" href="">
 <link rel="icon" id="favicon" href="">
 <link rel="manifest" id="manifestLink" href="manifest.json">
@@ -1899,7 +1899,7 @@ function buildIconDataUrl(nome, logoSrc, cb){
 }
 
 function updateAppIcon(nome, logoSrc){
-  document.getElementById('metaAppTitle').setAttribute('content', nome ? nome.slice(0,26) : 'DocSeg');
+  document.getElementById('metaAppTitle').setAttribute('content', nome ? nome.slice(0,26) : 'DocSeg Digital');
   document.title = (nome ? nome + ' - ' : '') + 'DocSeg Digital';
   // O ícone da aba do navegador (favicon/apple-touch-icon) pode continuar sendo
   // gerado na hora, por empresa. O manifest.json, porém, fica como arquivo
