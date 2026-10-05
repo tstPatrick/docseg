@@ -2603,7 +2603,9 @@ async function finalizeAndSend(){
     const pdf = new jsPDF('p','mm','a4');
     paginateCanvasToPdf(pdf, canvas, rowMarks);
     const fileName = `PT_${slugFileName(state.respNome)}_${state.data||''}.pdf`;
-    pdf.save(fileName);
+    // Não baixa mais automaticamente no aparelho a cada PT enviada — o PDF
+    // fica salvo no Histórico, de onde dá pra abrir (e baixar, se quiser)
+    // sob demanda, sem lotar o armazenamento do celular à toa.
 
     const cfg = loadCfg();
     const pdfDataUri = pdf.output('datauristring');
@@ -2632,8 +2634,8 @@ async function finalizeAndSend(){
         toast('Sem conexão — documento salvo na fila e será reenviado automaticamente.', 'err');
       }
     } else {
-      toast('PDF gerado e baixado. Configure o envio automático em ⚙ para enviar por e-mail.', 'ok');
-      addHistoryEntry(Object.assign({}, histMeta, {status:'baixado'}));
+      toast('PDF gerado! Veja em 🕘 Histórico. Configure o envio automático em ⚙ para mandar por e-mail também.', 'ok');
+      addHistoryEntry(Object.assign({}, histMeta, {status:'gerado'}));
     }
     await resetForNewPT();
     goHome();
@@ -2855,7 +2857,7 @@ async function generateAndSendDoc(opts){
     const pdf = new jsPDF('p','mm','a4');
     paginateCanvasToPdf(pdf, canvas, rowMarks);
     const fileName = `${opts.fileNameBase}.pdf`;
-    pdf.save(fileName);
+    // Idem PT: não baixa mais automático — fica disponível no Histórico.
     const cfg = loadCfg();
     const pdfDataUri = pdf.output('datauristring');
     const base64 = pdfDataUri.split(',')[1];
@@ -2882,8 +2884,8 @@ async function generateAndSendDoc(opts){
         toast('Sem conexão — documento salvo na fila e será reenviado automaticamente.', 'err');
       }
     } else {
-      toast('PDF gerado e baixado. Configure o envio automático em ⚙ para enviar por e-mail.', 'ok');
-      addHistoryEntry(Object.assign({}, histMeta, {status:'baixado'}));
+      toast('PDF gerado! Veja em 🕘 Histórico. Configure o envio automático em ⚙ para mandar por e-mail também.', 'ok');
+      addHistoryEntry(Object.assign({}, histMeta, {status:'gerado'}));
     }
     if(opts.resetFn) opts.resetFn();
     goHome();
@@ -3263,7 +3265,7 @@ function renderHistoricoResults(){
   box.innerHTML = items.map(h=>{
     const dt = h.ts ? new Date(h.ts) : null;
     const dtStr = dt ? (dt.toLocaleDateString('pt-BR') + ', ' + dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})) : '';
-    const statusLabel = h.status==='enviado' ? '✓ enviado' : (h.status==='baixado' ? '⭳ baixado' : (h.status||''));
+    const statusLabel = h.status==='enviado' ? '✓ enviado' : ((h.status==='gerado'||h.status==='baixado') ? '📄 gerado' : (h.status||''));
     return `<div class="hist-row">
       <div>
         <b style="font-size:12.5px;">${h.tipoLabel||''} · ${h.numero||''}</b><br>
