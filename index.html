@@ -685,6 +685,12 @@
       </div>
     </div>
 
+    <p class="desc" style="margin-bottom:6px; margin-top:14px; border-top:1px solid var(--line); padding-top:14px;">Prefixo do número da PT (opcional)</p>
+    <p class="hint" style="margin-top:-4px;margin-bottom:10px;">Texto que aparece antes do número nos documentos desta empresa (ex: "TN-" vira TN-0001). A contagem em si é sempre por empresa, independente do prefixo — veja em ⚙ Configurações.</p>
+    <div class="field">
+      <input type="text" id="empresaFormPtPrefix" placeholder="Ex: PT-">
+    </div>
+
     <p class="desc" style="margin-bottom:6px; margin-top:14px; border-top:1px solid var(--line); padding-top:14px;">Aviso/lembrete para os técnicos</p>
     <p class="hint" style="margin-top:-4px;margin-bottom:10px;">Aparece no final do menu, só para os técnicos dessa empresa. Deixe em branco pra não mostrar nenhum aviso.</p>
     <div class="field">
@@ -717,17 +723,8 @@
       Tocar som ao concluir o envio da PT
     </label>
 
-    <p class="desc" style="margin-bottom:6px; margin-top:14px; border-top:1px solid var(--line); padding-top:14px;">Dados gerais</p>
-    <div class="field">
-      <label>Nome padrão da empresa (deste aparelho)</label>
-      <input type="text" id="cfgEmpresaPadrao" placeholder="Ex: Nome da empresa">
-      <p class="hint">Usado como empresa fixa nos documentos quando o usuário logado não tiver uma empresa definida no cadastro.</p>
-    </div>
-    <div class="field">
-      <label>Prefixo do número da PT (opcional)</label>
-      <input type="text" id="cfgPtPrefix" placeholder="Ex: PT-">
-      <p class="hint">É só o texto que aparece antes do número (ex: TN-0001). A contagem em si é sempre separada automaticamente por empresa — veja abaixo.</p>
-    </div>
+    <p class="desc" style="margin-bottom:6px; margin-top:14px; border-top:1px solid var(--line); padding-top:14px;">Numeração da PT</p>
+    <p class="hint" style="margin-top:-8px;margin-bottom:10px;">A empresa e o prefixo do número agora são definidos no cadastro da empresa (em 🏢 Empresas) — aqui dá só pra consultar ou corrigir a contagem.</p>
     <div class="field">
       <label>Numeração da PT — empresa</label>
       <select id="cfgNumEmpresa"><option value="">Selecione a empresa...</option></select>
@@ -1040,7 +1037,8 @@ async function attemptLogin(username, password){
       cfg: serverResult.cfg || null, perguntas: serverResult.perguntas || null,
       empresaAviso: serverResult.empresaAviso || '', empresaLogoDataUrl: serverResult.empresaLogoDataUrl || '',
       empresaLogoDataUrl2: serverResult.empresaLogoDataUrl2 || '',
-      empresaThemeColor: serverResult.empresaThemeColor || '', empresaThemeColor2: serverResult.empresaThemeColor2 || ''
+      empresaThemeColor: serverResult.empresaThemeColor || '', empresaThemeColor2: serverResult.empresaThemeColor2 || '',
+      empresaPtPrefix: serverResult.empresaPtPrefix || ''
     };
   }
   if(serverChecked && serverResult && serverResult.error === 'senha incorreta'){
@@ -1446,7 +1444,13 @@ function bindLocationButton(){
 const PT_COUNTER_KEY = 'pt_number_counter';
 const DEVICE_TAG_KEY = 'pt_device_tag';
 function peekNextCounter(){ return parseInt(localStorage.getItem(PT_COUNTER_KEY)||'0',10) + 1; }
-function formatPtNumber(n, cfg){ return (cfg.ptPrefix||'') + String(n).padStart(4,'0'); }
+function formatPtNumber(n, prefix){ return (prefix||'') + String(n).padStart(4,'0'); }
+// Prefixo do número da PT — definido no cadastro da empresa (em 🏢 Empresas)
+// e sincronizado pra sessão no login, igual à cor e às logos do PDF.
+function currentPtPrefix(){
+  const s = getSession();
+  return (s && s.empresaPtPrefix) || '';
+}
 // Identificador curto e único deste aparelho (gerado uma única vez e salvo
 // localmente). Usado só nos números de PT gerados offline, pra garantir que
 // dois aparelhos sem conexão ao mesmo tempo nunca produzam o mesmo número —
@@ -1466,13 +1470,12 @@ function empresaParaNumeracao(){
   return (state.empresaNome || loadCfg().empresaPadrao || '').trim();
 }
 function assignNextPtNumberLocal(){
-  const cfg = loadCfg();
   const n = peekNextCounter();
   localStorage.setItem(PT_COUNTER_KEY, String(n));
   // Marcado como offline (-OFF-<aparelho>) pra nunca colidir com o número
   // de outro aparelho que também esteja sem conexão nesse momento, e pra
   // ficar visualmente óbvio que foi gerado sem conexão com o servidor.
-  return formatPtNumber(n, cfg) + '-OFF-' + getDeviceTag();
+  return formatPtNumber(n, currentPtPrefix()) + '-OFF-' + getDeviceTag();
 }
 async function assignNextPtNumber(){
   const cfg = loadCfg();
@@ -1480,12 +1483,12 @@ async function assignNextPtNumber(){
     try{
       const controller = new AbortController();
       const timer = setTimeout(()=>controller.abort(), 7000);
-      const qs = 'prefix=' + encodeURIComponent(cfg.ptPrefix||'') + '&empresa=' + encodeURIComponent(empresaParaNumeracao());
+      const qs = 'prefix=' + encodeURIComponent(currentPtPrefix()) + '&empresa=' + encodeURIComponent(empresaParaNumeracao());
       const resp = await fetch(cfg.scriptUrl + '?action=nextNumber&' + qs, {signal: controller.signal});
       clearTimeout(timer);
       const data = await resp.json();
       if(data && typeof data.number === 'number'){
-        return formatPtNumber(data.number, cfg);
+        return formatPtNumber(data.number, currentPtPrefix());
       }
     }catch(err){
       console.error('Falha ao buscar número central da PT, usando contador local:', err);
@@ -1849,8 +1852,8 @@ async function hashPin(pin){
   return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
 }
 
-function peekNumeroParaEmpresa(scriptUrl, prefix, empresaNome){
-  const qs = 'action=peekNumber&prefix=' + encodeURIComponent(prefix||'') + '&empresa=' + encodeURIComponent(empresaNome||'');
+function peekNumeroParaEmpresa(scriptUrl, empresaNome){
+  const qs = 'action=peekNumber&empresa=' + encodeURIComponent(empresaNome||'');
   fetch(scriptUrl + '?' + qs)
     .then(r=>r.json())
     .then(data=>{ if(data && typeof data.number === 'number') document.getElementById('cfgNextNumber').value = data.number; })
@@ -1878,8 +1881,6 @@ function openSettingsModal(){
   const cfg = loadCfg();
   document.getElementById('cfgScriptUrl').value = cfg.scriptUrl||'';
   document.getElementById('cfgDestEmail').value = cfg.destEmail||'';
-  document.getElementById('cfgEmpresaPadrao').value = cfg.empresaPadrao||'';
-  document.getElementById('cfgPtPrefix').value = cfg.ptPrefix||'';
   document.getElementById('cfgNextNumber').value = peekNextCounter();
   document.getElementById('cfgSoundEnabled').checked = cfg.soundEnabled !== false;
   document.getElementById('sheetAuditBox').style.display = 'none';
@@ -1889,7 +1890,7 @@ function openSettingsModal(){
     populateCfgNumEmpresa(cfg.scriptUrl).then(()=>{
       const sel = document.getElementById('cfgNumEmpresa');
       sel.onchange = ()=>{
-        if(sel.value) peekNumeroParaEmpresa(cfg.scriptUrl, cfg.ptPrefix, sel.value);
+        if(sel.value) peekNumeroParaEmpresa(cfg.scriptUrl, sel.value);
         else document.getElementById('cfgNextNumber').value = peekNextCounter();
       };
     });
@@ -1913,8 +1914,7 @@ document.getElementById('saveSettings').onclick = async ()=>{
   const cfg = {
     scriptUrl: document.getElementById('cfgScriptUrl').value.trim(),
     destEmail: document.getElementById('cfgDestEmail').value.trim(),
-    empresaPadrao: document.getElementById('cfgEmpresaPadrao').value.trim(),
-    ptPrefix: document.getElementById('cfgPtPrefix').value.trim(),
+    empresaPadrao: prevCfg.empresaPadrao, // vem automático do login (empresa = usuário), não editável aqui
     themeColor: prevCfg.themeColor, themeColor2: prevCfg.themeColor2, // definidas no cadastro da empresa, não aqui
     tecNome: prevCfg.tecNome,
     soundEnabled: document.getElementById('cfgSoundEnabled').checked
@@ -1927,7 +1927,7 @@ document.getElementById('saveSettings').onclick = async ()=>{
     localStorage.setItem(PT_COUNTER_KEY, String(nextNumTyped - 1));
     if(cfg.scriptUrl){
       try{
-        const qs = 'value=' + nextNumTyped + '&prefix=' + encodeURIComponent(cfg.ptPrefix||'') + '&empresa=' + encodeURIComponent(empresaSelecionada);
+        const qs = 'value=' + nextNumTyped + '&empresa=' + encodeURIComponent(empresaSelecionada);
         await fetch(cfg.scriptUrl + '?action=setNumber&' + qs);
       }catch(err){
         toast('Não foi possível atualizar o contador central — verifique a conexão.', 'err');
@@ -2262,6 +2262,7 @@ function resetEmpresaForm(){
   document.getElementById('empresaFormTitle').textContent = 'Nova empresa';
   document.getElementById('empresaFormColorPrimary').value = '#C8272A';
   document.getElementById('empresaFormColorAccent').value = '#F4B400';
+  document.getElementById('empresaFormPtPrefix').value = '';
   empresaFormLogoDataUrl = null;
   empresaFormLogoDataUrl2 = null;
   setEmpresaLogoPreview('');
@@ -2356,6 +2357,7 @@ function loadEmpresaIntoForm(nome){
   document.getElementById('empresaFormTitle').textContent = 'Editar empresa: ' + emp.nome;
   document.getElementById('empresaFormColorPrimary').value = emp.themeColor || '#C8272A';
   document.getElementById('empresaFormColorAccent').value = emp.themeColor2 || '#F4B400';
+  document.getElementById('empresaFormPtPrefix').value = emp.ptPrefix || '';
   empresaFormLogoDataUrl = null; // ainda não mexeu — mantém a logo já salva, a não ser que troque/remova agora
   empresaFormLogoDataUrl2 = null;
   setEmpresaLogoPreview(emp.logoDataUrl || '');
@@ -2380,7 +2382,8 @@ document.getElementById('btnEmpresaFormSave').onclick = async ()=>{
   try{
     const themeColor = document.getElementById('empresaFormColorPrimary').value;
     const themeColor2 = document.getElementById('empresaFormColorAccent').value;
-    const payload = Object.assign({action:'saveEmpresa', nome, perguntas: cleaned, aviso: aviso, themeColor, themeColor2}, currentAdminCreds());
+    const ptPrefix = document.getElementById('empresaFormPtPrefix').value.trim();
+    const payload = Object.assign({action:'saveEmpresa', nome, perguntas: cleaned, aviso: aviso, themeColor, themeColor2, ptPrefix}, currentAdminCreds());
     // só manda o campo da logo quando o admin realmente mexeu nela
     // (escolheu uma nova ou clicou em "Remover logo") — null = não mexeu.
     if(empresaFormLogoDataUrl !== null) payload.logoDataUrl = empresaFormLogoDataUrl;
