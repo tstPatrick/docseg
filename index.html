@@ -444,27 +444,224 @@
     float:none; position:sticky; top:0; left:0; margin:0 -16px 14px; width:calc(100% + 32px);
     text-align:left; background:var(--ink); color:#fff; padding:16px; font-size:20px; z-index:5; border-radius:0;
   }
+
+  /* =====================================================================
+     DESIGN NOVO (login, menu, painel, perfil) — identidade DocSeg Digital
+     ===================================================================== */
+  .ds, .ds button, .ds input, .ds select, .ds textarea{font-family:'DM Sans',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .ds{
+    --n9:#0A1428; --n8:#12254B; --n7:#1D3A6F; --gr:#4C9A2A; --grd:#1F6B2A;
+    --bg:#F2F5FA; --ln:#E1E7F1; --tx:#0F1B33; --mu:#566179; --rd:#C8272A;
+  }
+  .ds h1,.ds h2,.ds h3,.ds .ds-title{font-family:'Poppins','DM Sans',-apple-system,"Segoe UI",Roboto,sans-serif;}
+
+  /* ---- Login ---- */
+  #loginScreen{background:linear-gradient(160deg,#1D3A6F 0%,#12254B 55%,#0A1428 100%); overflow:auto;}
+  .login-card{border-radius:22px; padding:30px 24px 22px; max-width:400px;}
+  .login-card .login-logo{max-width:230px; max-height:190px; margin:0 auto 6px;}
+  .login-card p.login-sub{margin:0 0 22px; font-size:13.5px; color:var(--mu,#566179);}
+  .login-card label{font-size:13px; font-weight:600; color:#0F1B33;}
+  .login-card input{height:52px; border:1.5px solid #D5DCE9; border-radius:12px; font-size:16px; padding:0 14px; color:#0F1B33; background:#fff;}
+  .login-card input:focus{outline:2px solid #1D3A6F; outline-offset:1px; border-color:#1D3A6F;}
+  .login-card .btn-primary{height:54px; border-radius:14px; background:#12254B; font-size:15.5px; font-weight:700; border:none;}
+  .login-card .btn-primary:active{background:#0A1428;}
+  .login-card .btn-primary:disabled{opacity:.7;}
+  .pw-wrap{position:relative;}
+  .pw-wrap input{padding-right:52px;}
+  .pw-toggle{position:absolute; right:4px; top:4px; width:44px; height:44px; border:none; background:none; color:#566179; font-size:13px; font-weight:700; cursor:pointer; border-radius:10px;}
+  .login-hint{font-size:12px; color:#566179; line-height:1.5; margin-top:16px;}
+  .login-server{display:block; margin:10px auto 0; border:none; background:none; color:#8A94A8; font-size:11.5px; text-decoration:underline; cursor:pointer; min-height:36px;}
+  #loginErr{font-size:13px; color:#A32D2D; font-weight:600; margin:-4px 0 14px; line-height:1.4;}
+  .sr-only{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap;}
+
+  /* ---- Telas cheias de passagem (trocar senha, termos) ---- */
+  .ds-overlay{position:fixed; inset:0; z-index:310; display:flex; align-items:center; justify-content:center; padding:20px; overflow:auto;
+    background:linear-gradient(160deg,#1D3A6F 0%,#12254B 55%,#0A1428 100%);}
+  .ds-overlay .login-card h2{margin:0 0 6px; font-size:20px; color:#0F1B33; text-align:center;}
+  .terms-card{width:100%; max-width:520px; background:#fff; border-radius:22px; padding:24px 20px 20px; box-shadow:0 20px 60px rgba(0,0,0,.35); max-height:calc(100vh - 40px); display:flex; flex-direction:column;}
+  .terms-card h2{margin:0 0 4px; font-size:20px; color:#0F1B33; text-align:center;}
+  .terms-body{flex:1; min-height:140px; overflow:auto; border:1.5px solid #E1E7F1; border-radius:14px; padding:14px 14px 4px; background:#F8FAFD; font-size:13.5px; line-height:1.55; color:#26324A; margin-bottom:12px; -webkit-overflow-scrolling:touch;}
+  .terms-body h4{margin:14px 0 4px; font-size:13.5px; color:#12254B;}
+  .terms-body h4:first-child{margin-top:0;}
+  .terms-body p, .terms-body li{margin:0 0 8px;}
+  .terms-body ul{padding-left:18px; margin:0 0 8px;}
+  .terms-check{display:flex; gap:10px; align-items:flex-start; font-size:13.5px; line-height:1.45; margin-bottom:12px; color:#0F1B33; font-weight:600;}
+  .terms-check input{width:22px; height:22px; flex-shrink:0; margin-top:1px;}
+  .terms-card .btn{width:100%; height:52px; border-radius:14px; font-size:15px; font-weight:700;}
+  .terms-card .btn-primary{background:#12254B; border:none;}
+  .terms-card .btn-primary:disabled{background:#B5BECF; color:#fff;}
+  .terms-card .btn-ghost{margin-top:8px;}
+  #termsErr,#pwErr{font-size:13px; color:#A32D2D; font-weight:600; display:none; margin:0 0 10px;}
+
+  /* ---- Avatar ---- */
+  .av{border-radius:50%; background:#4C9A2A; color:#fff; display:inline-flex; align-items:center; justify-content:center; font-family:'Poppins','DM Sans',sans-serif; font-weight:700; overflow:hidden; flex-shrink:0; object-fit:cover;}
+  .av img{width:100%; height:100%; object-fit:cover; display:block;}
+
+  /* ---- Menu inicial ---- */
+  #homeMenu.ds{background:var(--bg); color:var(--tx); min-height:100vh; padding-bottom:96px;}
+  .ds-hero{background:linear-gradient(160deg,#1D3A6F 0%,#12254B 55%,#0A1428 100%); padding:20px 20px 64px; color:#fff; display:flex; flex-direction:column; gap:18px;}
+  .ds-hero-top{display:flex; align-items:center; gap:10px;}
+  .ds-hero-top img{width:34px; height:34px; border-radius:9px; object-fit:contain; background:transparent; flex-shrink:0;}
+  .ds-hero-top b{flex:1; font-family:'Poppins',sans-serif; font-weight:600; font-size:14px; letter-spacing:.4px; color:#DCE5F6; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .ds-ghost-btn{height:40px; padding:0 14px; border-radius:11px; border:1px solid rgba(255,255,255,.25); background:rgba(255,255,255,.08); color:#fff; font-size:13px; font-weight:700; cursor:pointer;}
+  .ds-hero-user{display:flex; align-items:center; gap:14px;}
+  .ds-hero-user .av{width:58px; height:58px; font-size:20px; border:2px solid rgba(255,255,255,.55); cursor:pointer; padding:0;}
+  .ds-hero-user .who{display:flex; flex-direction:column; gap:2px; min-width:0;}
+  .ds-hero-user .who b{font-family:'Poppins',sans-serif; font-weight:600; font-size:21px; line-height:1.2; color:#fff;}
+  .ds-hero-user .who span{font-size:13px; color:#B8C6E4;}
+  .ds-statcard{margin:-44px 16px 0; background:#fff; border-radius:18px; box-shadow:0 8px 24px rgba(15,27,51,.12); padding:14px 16px; display:flex; align-items:center; gap:12px; position:relative; max-width:520px;}
+  .ds-statcard .ic{width:42px; height:42px; border-radius:12px; background:#E3F4E6; color:#1F6B2A; display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+  .ds-statcard .ic.warn{background:#FFF1D6; color:#8A4B00;}
+  .ds-statcard b{display:block; font-size:14.5px;}
+  .ds-statcard span{font-size:12.5px; color:#566179;}
+  .ds-body{padding:20px 16px 0; max-width:520px; margin:0 auto;}
+  .ds-sec{font-size:12px; font-weight:700; letter-spacing:.6px; text-transform:uppercase; color:#566179; padding:0 2px; margin:18px 0 10px;}
+  .ds-sec:first-child{margin-top:0;}
+  .ds-sec-row{display:flex; align-items:center; justify-content:space-between;}
+  .ds-sec-row button{border:none; background:none; color:#1D3A6F; font-size:13px; font-weight:700; min-height:36px; cursor:pointer;}
+  .ds-grid{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px;}
+  .tile{position:relative; background:#fff; border:1px solid #E1E7F1; border-radius:18px; padding:14px; display:flex; flex-direction:column; align-items:flex-start; gap:12px; min-height:112px; text-align:left; box-shadow:0 1px 2px rgba(15,27,51,.04); cursor:pointer; color:#0F1B33;}
+  .tile:active{background:#F5F8FD;}
+  .tile b{font-size:14.5px; line-height:1.25; font-weight:700;}
+  .tile .ic{width:44px; height:44px; border-radius:13px; display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+  .tile .badge{position:absolute; top:12px; right:12px; font-size:11px; font-weight:700; padding:3px 9px; border-radius:999px; background:#C8272A; color:#fff;}
+  .tile.wide{grid-column:1 / -1; flex-direction:row; align-items:center; min-height:0;}
+  .tile.wide span.t{display:flex; flex-direction:column; gap:2px;}
+  .tile.wide span.t small{font-size:12.5px; color:#566179; font-weight:400;}
+  .ds-row{background:#fff; border:1px solid #E1E7F1; border-radius:16px; padding:13px 14px; display:flex; align-items:center; gap:12px; margin-bottom:10px;}
+  .ds-row .m{flex:1; min-width:0; display:flex; flex-direction:column; gap:2px;}
+  .ds-row .m b{font-size:14.5px;}
+  .ds-row .m span{font-size:12.5px; color:#566179;}
+  .pill{font-size:11.5px; font-weight:700; padding:4px 10px; border-radius:999px; white-space:nowrap;}
+  .pill.ok{background:#E3F4E6; color:#1F6B2A;}
+  .pill.wait{background:#FFF1D6; color:#8A4B00;}
+  .pill.gray{background:#E8ECF2; color:#3B475E;}
+  .pill.blue{background:#E6ECF8; color:#1D3A6F;}
+  .ds-tabbar{position:fixed; left:0; right:0; bottom:0; height:74px; background:#fff; border-top:1px solid #E1E7F1; display:flex; align-items:flex-start; justify-content:space-around; padding-top:8px; z-index:60;}
+  .ds-tabbar button{border:none; background:none; display:flex; flex-direction:column; align-items:center; gap:3px; color:#566179; font-size:11px; font-weight:500; min-width:64px; min-height:48px; position:relative; cursor:pointer;}
+  .ds-tabbar button.on{color:#12254B; font-weight:700;}
+  .ds-tabbar .nb{position:absolute; top:0; right:6px; background:#C8272A; color:#fff; border-radius:999px; font-size:10px; font-weight:700; min-width:18px; height:18px; display:flex; align-items:center; justify-content:center;}
+  #homeMenu .home-notice{margin:18px 0 0;}
+
+  /* ---- Painel ---- */
+  #painelView.ds{background:var(--bg); min-height:100vh; padding-bottom:30px;}
+  .painel-wrap{padding:16px; max-width:760px; margin:0 auto;}
+  .seg{display:flex; background:#E6EBF3; border-radius:12px; padding:4px; gap:4px; margin-bottom:14px;}
+  .seg button{flex:1; height:40px; border:none; border-radius:9px; background:transparent; color:#33405A; font-size:13.5px; font-weight:600; cursor:pointer;}
+  .seg button.on{background:#12254B; color:#fff; font-weight:700;}
+  .painel-stats{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-bottom:6px;}
+  .stat{background:#fff; border:1px solid #E1E7F1; border-radius:16px; padding:12px; display:flex; flex-direction:column; gap:2px;}
+  .stat b{font-family:'Poppins',sans-serif; font-size:24px; font-weight:700; color:#12254B; line-height:1.1;}
+  .stat span{font-size:11.5px; color:#566179; line-height:1.3;}
+  .stat.alert b{color:#C8272A;}
+  .ds-h{font-size:12px; font-weight:700; letter-spacing:.6px; text-transform:uppercase; color:#566179; margin:20px 2px 10px;}
+  .tec-row{background:#fff; border:1px solid #E1E7F1; border-radius:16px; padding:11px 12px; display:flex; align-items:center; gap:12px; margin-bottom:8px; width:100%; text-align:left; cursor:pointer; color:#0F1B33;}
+  .tec-row.sel{border-color:#12254B; box-shadow:0 0 0 2px rgba(18,37,75,.12);}
+  .tec-row .av{width:44px; height:44px; font-size:15px;}
+  .tec-row .m{flex:1; min-width:0; display:flex; flex-direction:column; gap:2px;}
+  .tec-row .m b{font-size:14.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .tec-row .m span{font-size:12.5px; color:#566179;}
+  .tec-row .m span.fresh{color:#1F6B2A; font-weight:700;}
+  .tec-row .m span.none{color:#9AA3B5;}
+  .tec-row .n{font-size:12px; color:#566179; text-align:right; white-space:nowrap;}
+  .tec-row .n b{display:block; font-family:'Poppins',sans-serif; font-size:17px; color:#12254B;}
+  .painel-filters{display:flex; gap:8px; margin-bottom:10px;}
+  .painel-filters select{flex:1; min-width:0; height:46px; border:1.5px solid #D5DCE9; border-radius:12px; background:#fff; font-size:14px; padding:0 10px; color:#0F1B33;}
+  .pdoc{background:#fff; border:1px solid #E1E7F1; border-radius:16px; padding:12px 14px; display:flex; align-items:center; gap:12px; margin-bottom:8px;}
+  .pdoc .m{flex:1; min-width:0; display:flex; flex-direction:column; gap:3px;}
+  .pdoc .m b{font-size:14px;}
+  .pdoc .m span{font-size:12.5px; color:#566179;}
+  .pdoc .when{text-align:right; font-size:12px; color:#566179; white-space:nowrap;}
+  .pdoc .when b{display:block; font-size:13.5px; color:#12254B;}
+  .pdoc .dl{height:40px; padding:0 14px; border-radius:11px; border:1.5px solid #12254B; background:#fff; color:#12254B; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap;}
+  .pdoc .dl:disabled{border-color:#C9D0DE; color:#9AA3B5; cursor:default;}
+  .empty{text-align:center; color:#7B8599; font-size:13.5px; padding:22px 8px;}
+
+  /* ---- Perfil / Usuários (telas cheias) ---- */
+  #profileModal{background:#fff; align-items:stretch; justify-content:stretch;}
+  #profileModal .modal{width:100%; max-width:none; height:100%; max-height:100%; border-radius:0; padding:0 16px calc(18px + env(safe-area-inset-bottom));}
+  #profileModal .modal-close{float:none; position:sticky; top:0; left:0; margin:0 -16px 14px; width:calc(100% + 32px); text-align:left; background:var(--ink); color:#fff; padding:16px; font-size:20px; z-index:5; border-radius:0;}
+  .prof-photo{display:flex; flex-direction:column; align-items:center; gap:10px; margin:6px 0 18px;}
+  .prof-photo .av{width:104px; height:104px; font-size:34px;}
+  .prof-photo .btns{display:flex; gap:8px;}
+  .prof-photo .btns .btn{padding:9px 14px; font-size:13px;}
+  .prof-info{background:#F7F9FC; border:1px solid #E1E7F1; border-radius:14px; padding:12px 14px; margin-bottom:16px; font-size:13.5px; line-height:1.7;}
+  .prof-info span{color:#566179;}
+  .urow{display:flex; align-items:center; gap:12px; padding:11px 0; border-bottom:1px solid var(--line);}
+  .urow .av{width:40px; height:40px; font-size:14px;}
+  .urow .m{flex:1; min-width:0;}
+  .urow .m b{display:block; font-size:14.5px;}
+  .urow .m span{font-size:12px; color:var(--ink-soft);}
+  .user-role-tag.gestor{background:#E6ECF8; color:#1D3A6F;}
+  .user-role-tag.tecnico{background:#E3F4E6; color:#1F6B2A;}
+  .user-role-tag.consulta{background:#FDECEB; color:#A32D2D;}
+  .photo-field{display:flex; align-items:center; gap:14px;}
+  .photo-field .av{width:64px; height:64px; font-size:20px; background:#C9D0DE;}
+  #profileModal.show, #usersModal.show{display:flex;}
+  .chk-line{display:flex; align-items:center; gap:10px; font-size:14px; font-weight:600; margin:6px 0 10px;}
+  .chk-line input{width:20px; height:20px;}
+
+  input[type="password"]{width:100%; padding:11px 12px; border:1px solid #D6D3CC; border-radius:8px; font-size:15px; background:#fff; color:var(--ink); font-family:inherit;}
+  input[type="password"]:focus{outline:2px solid var(--red); outline-offset:1px; border-color:var(--red);}
 </style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
 <!-- TELA DE LOGIN -->
-<div id="loginScreen">
+<div id="loginScreen" class="ds">
   <div class="login-card">
-    <img id="loginLogo" class="login-logo" alt="Logo" style="display:none;">
-    <h1>DocSeg Digital</h1>
-    <p class="login-sub">Entre com seu usuário e senha para continuar</p>
+    <h1 class="sr-only">DocSeg Digital</h1>
+    <img id="loginLogo" class="login-logo" alt="DocSeg Digital" style="display:none;">
+    <p class="login-sub" style="text-align:center;">Entre com o seu login pessoal</p>
     <div class="field">
-      <label>Usuário ou empresa</label>
-      <input type="text" id="loginUser" placeholder="Digite seu usuário" autocomplete="username">
+      <label for="loginUser">Usuário</label>
+      <input type="text" id="loginUser" placeholder="ex: marcos.silva" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false">
     </div>
     <div class="field">
-      <label>Senha</label>
-      <input type="password" id="loginPass" placeholder="Sua senha" autocomplete="current-password">
+      <label for="loginPass">Senha</label>
+      <div class="pw-wrap">
+        <input type="password" id="loginPass" placeholder="Sua senha" autocomplete="current-password">
+        <button type="button" class="pw-toggle" id="loginTogglePw" aria-label="Mostrar ou ocultar a senha">Ver</button>
+      </div>
     </div>
     <p id="loginErr" style="display:none;"></p>
     <button type="button" class="btn btn-primary" id="loginConfirm">Entrar</button>
-    <p class="login-hint">Peça seu usuário e senha ao técnico de segurança do trabalho responsável.</p>
+    <p class="login-hint" style="text-align:center;">O login é pessoal e é criado pelo técnico de segurança responsável da sua empresa. Não compartilhe a sua senha.</p>
+    <button type="button" class="login-server" id="loginServer">Endereço do servidor</button>
+  </div>
+</div>
+
+<!-- TROCA DE SENHA NO PRIMEIRO ACESSO -->
+<div id="pwScreen" class="ds ds-overlay" style="display:none;">
+  <div class="login-card">
+    <h2>Crie a sua senha</h2>
+    <p class="login-sub" style="text-align:center;">Você entrou com uma senha provisória. Por segurança, escolha uma senha só sua (mínimo de 6 caracteres).</p>
+    <div class="field">
+      <label for="pwNew">Nova senha</label>
+      <input type="password" id="pwNew" placeholder="Nova senha" autocomplete="new-password">
+    </div>
+    <div class="field">
+      <label for="pwNew2">Repita a nova senha</label>
+      <input type="password" id="pwNew2" placeholder="Repita a nova senha" autocomplete="new-password">
+    </div>
+    <p id="pwErr"></p>
+    <button type="button" class="btn btn-primary" id="pwSave">Salvar e continuar</button>
+  </div>
+</div>
+
+<!-- TERMOS DE USO E PRIVACIDADE (aceite no primeiro acesso) -->
+<div id="termsScreen" class="ds ds-overlay" style="display:none;">
+  <div class="terms-card">
+    <h2>Termos de Uso e Privacidade</h2>
+    <p class="login-sub" style="text-align:center; margin:0 0 12px; font-size:12.5px; color:#566179;">DocSeg Digital · versão <span id="termsVer"></span>. Leia com atenção.</p>
+    <div class="terms-body" id="termsBody"></div>
+    <label class="terms-check"><input type="checkbox" id="termsCheck"> Li e concordo com os Termos de Uso e a Política de Privacidade do DocSeg Digital.</label>
+    <p id="termsErr"></p>
+    <button type="button" class="btn btn-primary" id="termsAccept" disabled>Aceitar e continuar</button>
+    <button type="button" class="btn btn-ghost" id="termsDecline">Não aceito (sair)</button>
+    <button type="button" class="btn btn-primary" id="termsClose" style="display:none;">Fechar</button>
   </div>
 </div>
 
@@ -506,27 +703,67 @@
     </div>
 
 <!-- ===================== TELA: MENU (inicial, após o login) ===================== -->
-<div id="homeMenu" style="display:none;">
-  <div class="home-header">
-    <img id="homeLogo" alt="Logo" style="display:none;">
-    <b id="homeBrand">DocSeg Digital</b>
+<div id="homeMenu" class="ds" style="display:none;">
+  <div class="ds-hero">
+    <div class="ds-hero-top">
+      <img id="homeLogo" alt="" style="display:none;">
+      <b id="homeBrand">DocSeg Digital</b>
+      <button type="button" class="ds-ghost-btn" id="btnLogout">Sair</button>
+    </div>
+    <div class="ds-hero-user">
+      <button type="button" class="av" id="homeAvatar" aria-label="Abrir o meu perfil"></button>
+      <div class="who">
+        <b id="homeGreeting">Olá</b>
+        <span id="homeUserRole">—</span>
+      </div>
+    </div>
   </div>
-  <div class="home-main">
+  <div class="ds-statcard" id="homeStat" style="display:none;">
+    <div class="ic" id="homeStatIc"></div>
+    <div><b id="homeStatTitle"></b><span id="homeStatSub"></span></div>
+  </div>
+  <div class="ds-body">
     <div class="home-company-logo" id="homeCompanyLogo" style="display:none;">
       <img id="homeCompanyLogoImg" alt="Logo da empresa">
     </div>
-    <div class="home-items" id="homeMenuItems"></div>
+    <div id="homeMenuItems"></div>
+    <div id="homeRecent"></div>
     <div class="home-notice" id="homeNotice" style="display:none;">
       <b>📌 Aviso da empresa</b>
       <p id="homeNoticeText"></p>
     </div>
   </div>
-  <div class="home-footer">
-    <div class="hf-info">
-      <b id="homeUserName">—</b>
-      <span id="homeUserRole">—</span>
+  <nav class="ds-tabbar" id="homeTabbar" aria-label="Navegação principal"></nav>
+</div>
+
+<!-- ===================== TELA: PAINEL (gestor / administrador) ===================== -->
+<div id="painelView" class="ds" style="display:none;">
+  <div class="screen-topbar"><button type="button" id="painelBack" title="Voltar ao menu">←</button><b id="painelTitle">Painel</b><button type="button" id="painelRefresh" title="Atualizar" style="margin-left:auto;">↻</button></div>
+  <div class="painel-wrap">
+    <div class="field" id="painelEmpresaRow" style="display:none;">
+      <label for="painelEmpresa" style="font-weight:600;font-size:13px;">Empresa</label>
+      <select id="painelEmpresa" style="width:100%;height:48px;border:1.5px solid #D5DCE9;border-radius:12px;background:#fff;font-size:15px;padding:0 12px;"></select>
     </div>
-    <button type="button" class="btn-sair" id="btnLogout">Sair</button>
+    <div class="seg" id="painelPeriodo">
+      <button type="button" data-d="1" class="on">Hoje</button>
+      <button type="button" data-d="7">7 dias</button>
+      <button type="button" data-d="30">30 dias</button>
+    </div>
+    <div class="painel-stats" id="painelStats"></div>
+    <div class="ds-h">Técnicos</div>
+    <div id="painelTecnicos"></div>
+    <div class="ds-h">Documentos enviados</div>
+    <div class="painel-filters">
+      <select id="painelFiltroTec" aria-label="Filtrar por técnico"></select>
+      <select id="painelFiltroTipo" aria-label="Filtrar por tipo">
+        <option value="">Todos os tipos</option>
+        <option value="pt">Permissão de Trabalho</option>
+        <option value="veiculo">Checklist de Veículo</option>
+        <option value="escada">Checklist de Escada</option>
+      </select>
+    </div>
+    <div id="painelDocs"></div>
+    <p class="hint" id="painelAtualizado" style="text-align:center;margin-top:14px;"></p>
   </div>
 </div>
 
@@ -545,7 +782,7 @@
   <div class="screen-topbar"><button type="button" id="ptBack" title="Voltar ao menu">←</button><b>Permissão de Trabalho</b></div>
   <div class="hero">
     <h1>Nova Permissão de Trabalho</h1>
-    <p>Preencha em campo, gere o PDF e envie automaticamente por e-mail.</p>
+    <p>Preencha em campo, gere o PDF e envie para o painel da empresa.</p>
     <div class="pt-badge">Nº PT <b id="ptNumberBadge">—</b></div>
   </div>
 
@@ -625,47 +862,61 @@
 
 <div id="toast"></div>
 
-<!-- USERS MODAL (Administrador) -->
+<!-- USERS MODAL (Administrador e Gestor) -->
 <div class="modal-bg" id="usersModal">
   <div class="modal">
     <button class="modal-close" id="closeUsers">←</button>
-    <h2>Usuários</h2>
-    <p class="desc">"Usuário de Consulta" é o login da empresa — compartilhado por todos os técnicos dela. "Administrador" é um login pessoal, com acesso completo.</p>
+    <h2 id="usersTitle">Usuários</h2>
+    <p class="desc" id="usersDesc">Cada pessoa tem o seu login. O técnico entra com o login e a senha provisória que você definir aqui e troca a senha no primeiro acesso.</p>
 
     <div class="field" style="margin-bottom:10px;">
-      <input type="text" id="usersSearch" placeholder="🔍 Buscar por empresa ou usuário..." autocomplete="off">
+      <input type="text" id="usersSearch" placeholder="🔍 Buscar por nome, login ou empresa..." autocomplete="off">
     </div>
     <div id="usersList" style="margin-bottom:18px;"></div>
 
     <p class="desc" style="margin-bottom:6px; border-top:1px solid var(--line); padding-top:14px;" id="userFormTitle">Novo usuário</p>
-    <div class="field"><label>Perfil</label>
+    <div class="field" id="userFormRoleWrap"><label>Perfil</label>
       <select id="userFormRole" style="width:100%;padding:11px 12px;border:1px solid #D6D3CC;border-radius:8px;font-size:15px;background:#fff;">
-        <option value="consulta">Usuário de Consulta (só preenche e envia)</option>
+        <option value="tecnico">Técnico (preenche e envia documentos)</option>
+        <option value="gestor">Gestor (acompanha o painel da empresa)</option>
         <option value="admin">Administrador (acesso completo)</option>
       </select>
     </div>
-    <div class="field" id="userFormUsernameWrap" style="display:none;">
-      <label>Usuário (login)</label>
-      <input type="text" id="userFormUsername" placeholder="Ex: joao.silva" autocomplete="off">
-      <p class="hint">Login pessoal deste administrador.</p>
+    <div class="field">
+      <label>Nome completo</label>
+      <input type="text" id="userFormNome" placeholder="Ex: Marcos Silva" autocomplete="off">
+      <p class="hint">Aparece no painel e como "Técnico de Segurança" nos documentos.</p>
+    </div>
+    <div class="field" id="userFormUsernameWrap">
+      <label>Login</label>
+      <input type="text" id="userFormUsername" placeholder="Ex: marcos.silva" autocomplete="off" autocapitalize="none" spellcheck="false">
+      <p class="hint">Sem espaços. Se deixar em branco, sugerimos a partir do nome. Depois de criado, o login não muda.</p>
     </div>
     <div class="field" id="userFormEmpresaSelectWrap">
-      <label>Usuário (empresa)</label>
+      <label>Empresa</label>
       <select id="userFormEmpresaSelect" style="width:100%;padding:11px 12px;border:1px solid #D6D3CC;border-radius:8px;font-size:15px;background:#fff;">
         <option value="">Selecione a empresa cadastrada...</option>
       </select>
-      <p class="hint">Escolha entre as empresas já cadastradas em "Empresas". Esse nome vira o login compartilhado por todos os técnicos dessa empresa e também o nome (+ cor e logo) que aparece nos documentos.</p>
+      <p class="hint">Define a empresa do técnico: logo, cor, perguntas, numeração e painel.</p>
     </div>
-    <div class="field"><label>Senha</label><input type="password" id="userFormPassword" placeholder="Senha" autocomplete="new-password"></div>
-    <div class="field">
-      <label>Técnico de Segurança do Trabalho (sugestão padrão)</label>
-      <input type="text" id="userFormTec" placeholder="Ex: Nome do técnico responsável">
-      <p class="hint">Preenche o campo "Técnico" automaticamente ao fazer login, mas cada técnico pode alterar na hora de preencher a PT — útil quando vários técnicos usam o mesmo login da empresa.</p>
+    <div class="field"><label id="userFormPassLabel">Senha provisória</label><input type="password" id="userFormPassword" placeholder="Mínimo de 6 caracteres" autocomplete="new-password">
+      <p class="hint">Passe esta senha ao técnico. No primeiro acesso o app pede para ele criar uma senha só dele.</p>
     </div>
     <div class="field">
-      <label>E-mail(s) de destino desta conta</label>
-      <input type="text" id="userFormEmail" placeholder="seguranca@empresa.com, gestor@empresa.com">
-      <p class="hint">Aplicado automaticamente quando essa pessoa fizer login em qualquer aparelho — é para onde os PDFs preenchidos por ela serão enviados.</p>
+      <label>E-mail pessoal (opcional)</label>
+      <input type="email" id="userFormEmail" placeholder="nome@email.com" autocomplete="off">
+      <p class="hint">Só para contato e recuperação de acesso. Os documentos não são enviados para ele.</p>
+    </div>
+    <div class="field" id="userFormFotoWrap">
+      <label>Foto (opcional)</label>
+      <div class="photo-field">
+        <span class="av" id="userFormFotoPrev"></span>
+        <div style="flex:1;min-width:0;">
+          <input type="file" accept="image/*" id="userFormFotoFile" style="display:none;">
+          <button type="button" class="btn btn-ghost" id="btnUserFotoPick" style="width:100%;margin-bottom:6px;">Escolher foto</button>
+          <button type="button" class="btn btn-ghost" id="btnUserFotoRemove" style="width:100%;">Remover foto</button>
+        </div>
+      </div>
     </div>
     <div class="row2">
       <button type="button" class="btn btn-ghost" id="btnUserFormCancel">Cancelar edição</button>
@@ -674,12 +925,36 @@
   </div>
 </div>
 
+<!-- PERFIL (foto, dados e troca de senha) -->
+<div class="modal-bg ds" id="profileModal">
+  <div class="modal">
+    <button class="modal-close" id="closeProfile">←</button>
+    <h2 style="font-family:'Poppins',sans-serif;">Meu perfil</h2>
+    <div class="prof-photo">
+      <span class="av" id="profAvatar"></span>
+      <div class="btns">
+        <input type="file" accept="image/*" id="profFotoFile" style="display:none;">
+        <button type="button" class="btn btn-ghost" id="btnProfFotoPick">Trocar foto</button>
+        <button type="button" class="btn btn-ghost" id="btnProfFotoRemove">Remover</button>
+      </div>
+      <p class="hint" id="profFotoMsg" style="margin:0;text-align:center;"></p>
+    </div>
+    <div class="prof-info" id="profInfo"></div>
+    <p class="desc" style="margin-bottom:6px;border-top:1px solid var(--line);padding-top:14px;">Trocar senha</p>
+    <div class="field"><label>Senha atual</label><input type="password" id="profPassCur" autocomplete="current-password" placeholder="Senha atual"></div>
+    <div class="field"><label>Nova senha</label><input type="password" id="profPassNew" autocomplete="new-password" placeholder="Mínimo de 6 caracteres"></div>
+    <div class="field"><label>Repita a nova senha</label><input type="password" id="profPassNew2" autocomplete="new-password" placeholder="Repita a nova senha"></div>
+    <button type="button" class="btn btn-primary" style="width:100%;" id="btnProfPassSave">Salvar nova senha</button>
+    <button type="button" class="btn btn-ghost" style="width:100%;margin-top:12px;" id="btnProfTerms">Ler os Termos de Uso</button>
+  </div>
+</div>
+
 <!-- EMPRESAS MODAL (Administrador) -->
 <div class="modal-bg" id="empresasModal">
   <div class="modal">
     <button class="modal-close" id="closeEmpresas">←</button>
     <h2>Empresas</h2>
-    <p class="desc">Cada empresa tem suas próprias perguntas, cor da PT, logo e aviso. O nome cadastrado aqui aparece na lista de empresas ao criar o usuário/login dela, em "Usuários".</p>
+    <p class="desc">Cada empresa tem suas próprias perguntas, cor da PT, logo, aviso e a opção de envio por e-mail. Cadastre a empresa aqui primeiro; depois crie os técnicos e o gestor dela em "Usuários".</p>
 
     <div id="empresasList" style="margin-bottom:18px;"></div>
 
@@ -687,11 +962,11 @@
     <div class="field">
       <label>Nome da empresa</label>
       <input type="text" id="empresaFormNome" placeholder="Ex: Global Seg">
-      <p class="hint">Depois de salva, essa empresa aparece na lista pra escolher ao criar o usuário/login dela, em "Usuários".</p>
+      <p class="hint">Depois de salva, essa empresa aparece na lista para escolher ao cadastrar técnicos e gestores, em "Usuários".</p>
     </div>
 
     <p class="desc" style="margin-bottom:6px; margin-top:14px; border-top:1px solid var(--line); padding-top:14px;">Logo esquerda</p>
-    <p class="hint" style="margin-top:-4px;margin-bottom:10px;">Aparece no menu inicial dos técnicos dessa empresa (acima dos botões) e no canto esquerdo do cabeçalho do PDF gerado. Imagem pequena (ex: o símbolo da empresa).</p>
+    <p class="hint" style="margin-top:-4px;margin-bottom:10px;">Aparece no menu inicial dos usuários dessa empresa (acima dos botões) e no canto esquerdo do cabeçalho do PDF gerado. Imagem pequena (ex: o símbolo da empresa).</p>
     <div class="field" style="display:flex;align-items:center;gap:14px;">
       <div id="empresaLogoPreviewBox" style="width:64px;height:64px;border-radius:12px;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;overflow:hidden;background:#fafafa;flex-shrink:0;">
         <span id="empresaLogoPreviewEmpty" style="font-size:11px;color:var(--ink-soft);text-align:center;">sem logo</span>
@@ -719,7 +994,7 @@
     </div>
 
     <p class="desc" style="margin-bottom:6px; margin-top:14px; border-top:1px solid var(--line); padding-top:14px;">Cor da PT desta empresa</p>
-    <p class="hint" style="margin-top:-4px;margin-bottom:10px;">Muda a cor do app, do ícone e do PDF gerado para quem fizer login com um usuário desta empresa.</p>
+    <p class="hint" style="margin-top:-4px;margin-bottom:10px;">Muda a cor do app, do ícone e do PDF gerado para quem fizer login como técnico ou gestor desta empresa.</p>
     <div class="row2">
       <div class="field">
         <label>Cor principal</label>
@@ -740,6 +1015,14 @@
     <p class="desc" style="margin-bottom:6px; margin-top:14px; border-top:1px solid var(--line); padding-top:14px;">Histórico de documentos (auditoria)</p>
     <p class="hint" style="margin-top:-4px;margin-bottom:10px;">Registro de todos os documentos enviados por esta empresa (planilha de auditoria). Só o Administrador acessa esta tela — e "apagar" aqui nunca remove de vez: move para uma aba "Excluídos" na planilha, por segurança.</p>
     <button type="button" class="btn btn-ghost" style="width:100%;margin-bottom:14px;" id="btnOpenAudit">Ver / apagar histórico desta empresa</button>
+
+    <p class="desc" style="margin-bottom:6px; margin-top:14px; border-top:1px solid var(--line); padding-top:14px;">Envio por e-mail (opcional)</p>
+    <p class="hint" style="margin-top:-4px;margin-bottom:10px;">Por padrão os documentos NÃO são enviados por e-mail: eles vão para o painel do gestor, onde o PDF pode ser baixado. Se esta empresa quiser também receber cada documento por e-mail, ligue aqui.</p>
+    <label class="chk-line"><input type="checkbox" id="empresaFormEmailAtivo"> Enviar também por e-mail</label>
+    <div class="field">
+      <input type="text" id="empresaFormEmailDestino" placeholder="seguranca@empresa.com, gestor@empresa.com">
+      <p class="hint">Um ou mais e-mails, separados por vírgula.</p>
+    </div>
 
     <p class="desc" style="margin-bottom:6px; margin-top:14px; border-top:1px solid var(--line); padding-top:14px;">Aviso/lembrete para os técnicos</p>
     <p class="hint" style="margin-top:-4px;margin-bottom:10px;">Aparece no final do menu, só para os técnicos dessa empresa. Deixe em branco pra não mostrar nenhum aviso.</p>
@@ -804,21 +1087,20 @@
       <input type="text" id="cfgNextNumber" inputmode="numeric" placeholder="Ex: 1">
       <p class="hint">Ajuste aqui se precisar corrigir a sequência dessa empresa (ex: recomeçar do 50).</p>
     </div>
-    <p class="desc" style="margin-bottom:6px; margin-top:18px; border-top:1px solid var(--line); padding-top:14px;">Envio automático por e-mail</p>
+    <p class="desc" style="margin-bottom:6px; margin-top:18px; border-top:1px solid var(--line); padding-top:14px;">Servidor (Google Apps Script)</p>
     <div class="warn-box">
-      1. Crie o Google Apps Script (passo a passo que o Claude te enviou) e implante como "App da Web".<br>
+      1. Crie o Google Apps Script na conta do DocSeg Digital e implante como "App da Web".<br>
       2. Cole aqui embaixo a URL gerada pelo Google (termina em <b>/exec</b>).<br>
-      3. Informe o(s) e-mail(s) que devem receber a PT preenchida.
+      3. O envio por e-mail é opcional e se liga por empresa, em 🏢 Empresas.
     </div>
     <div class="field"><label>URL do Google Apps Script</label><input type="text" id="cfgScriptUrl" placeholder="https://script.google.com/macros/s/AKfycb.../exec"></div>
-    <div class="field"><label>E-mail(s) de destino</label><input type="text" id="cfgDestEmail" placeholder="seguranca@empresa.com, gestor@empresa.com"></div>
 
     <div id="sheetAuditBox" style="display:none; border:1px solid var(--line); border-radius:8px; padding:10px 12px; margin-bottom:14px;">
       <div style="display:flex; gap:8px; align-items:flex-start;">
         <span style="font-size:18px;">📊</span>
         <div>
           <b style="font-size:12.5px;">Registro central ativo</b>
-          <p class="hint" style="margin:2px 0 0;">Toda PT/checklist enviado vira uma linha na planilha da empresa.</p>
+          <p class="hint" style="margin:2px 0 0;">Todo documento enviado vira uma linha na planilha, com o PDF guardado no Drive.</p>
         </div>
       </div>
       <a href="#" id="openSheetLink" target="_blank" style="font-size:12px; color:var(--red); display:inline-block; margin-top:6px;">Abrir planilha de registros ↗</a>
@@ -840,9 +1122,9 @@
 <div class="modal-bg" id="sendChoiceModal">
   <div class="modal">
     <h2 id="sendChoiceTitle">✅ Documento concluído</h2>
-    <p class="hint" style="margin-top:-6px;margin-bottom:16px;">Você pode enviar por e-mail agora, ou aguardar e enviar este documento junto com outros mais tarde, em um único e-mail (economiza envios).</p>
+    <p class="hint" style="margin-top:-6px;margin-bottom:16px;">Você pode enviar agora para o painel da empresa, ou guardar este documento e enviar junto com outros mais tarde.</p>
     <button type="button" class="btn btn-primary" style="width:100%;margin-bottom:10px;" id="btnSendNow">Enviar agora</button>
-    <button type="button" class="btn btn-ghost" style="width:100%;" id="btnSendLater">Aguardar e enviar junto depois</button>
+    <button type="button" class="btn btn-ghost" style="width:100%;" id="btnSendLater">Guardar e enviar junto depois</button>
   </div>
 </div>
 
@@ -1016,7 +1298,7 @@ function paintQuestionEditor(){
   });
 }
 
-/* ============ LOGIN / PERFIS (Administrador x Usuário de Consulta) ============ */
+/* ============ LOGIN INDIVIDUAL / PERFIS (Administrador, Gestor, Técnico) ============ */
 // Coloque aqui a URL fixa do SEU Google Apps Script (termina em /exec).
 // É nela que ficam guardados os usuários cadastrados (login e senha).
 const DEFAULT_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzC3RubfxiP8MeDJe1du1Gebn5Hu5vrW1VgRekWS872b3KomXgMZKX7MXW8n_G3jX3V/exec";
@@ -1067,19 +1349,44 @@ async function initPushNotifications(session){
 }
 
 const SESSION_KEY = 'docseg_session';
+const SERVER_GEN = '2'; // muda quando o servidor (Apps Script) é trocado — ver migração em initApp()
+function $(id){ return document.getElementById(id); }
 function getSession(){ try{ return JSON.parse(localStorage.getItem(SESSION_KEY)||'null'); }catch(e){ return null; } }
+function saveSession(s){ try{ localStorage.setItem(SESSION_KEY, JSON.stringify(s)); }catch(e){ /* sem espaço */ } }
 function isLoggedIn(){ return !!getSession(); }
 function getRole(){ const s = getSession(); return s ? s.role : null; }
 function isAdmin(){ return getRole() === 'admin'; }
+function isGestor(){ return getRole() === 'gestor'; }
+function isManager(){ const r = getRole(); return r === 'admin' || r === 'gestor'; }
+function getScriptUrl(){ return (loadCfg().scriptUrl) || DEFAULT_SCRIPT_URL; }
+function roleLabel(r){ return r === 'admin' ? 'Administrador' : (r === 'gestor' ? 'Gestor' : 'Técnico'); }
+function escHtml(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function initialsOf(nome){
+  const p = (nome||'').trim().split(/\s+/).filter(Boolean);
+  if(!p.length) return '?';
+  return ((p[0][0]||'') + (p.length > 1 ? p[p.length-1][0] : '')).toUpperCase();
+}
+// Bolinha com a foto da pessoa (ou as iniciais, quando não há foto)
+function avatarHtml(nome, foto, size){
+  const st = size ? ` style="width:${size}px;height:${size}px;font-size:${Math.round(size*0.34)}px;"` : '';
+  return `<span class="av"${st}>${foto ? `<img src="${foto}" alt="">` : escHtml(initialsOf(nome))}</span>`;
+}
 function currentAdminCreds(){
   const s = getSession();
   return { adminUsername: s ? s.username : '', adminPasswordHash: s ? s.passwordHash : '' };
 }
-// Chamadas de admin (listEmpresas/listUsers) via POST — evita credencial
-// (usuário/hash da senha do admin) exposta em URL/log, igual ao login.
+// Chamadas de gestão (listUsers/listEmpresas/listPainel/getPdf...) via POST —
+// evita credencial exposta em URL/log, igual ao login.
 async function fetchAdminAction(scriptUrl, action, extra){
   const payload = Object.assign({action}, currentAdminCreds(), extra||{});
   const resp = await fetch(scriptUrl, {method:'POST', body: JSON.stringify(payload)});
+  return resp.json();
+}
+// Chamada genérica autenticada com o login da pessoa que está usando o app
+async function api(action, extra){
+  const s = getSession();
+  const creds = s ? { username:s.username, passwordHash:s.passwordHash, adminUsername:s.username, adminPasswordHash:s.passwordHash } : {};
+  const resp = await fetch(getScriptUrl(), {method:'POST', body: JSON.stringify(Object.assign({action}, creds, extra||{}))});
   return resp.json();
 }
 async function hashPass(pwd){
@@ -1091,93 +1398,226 @@ async function hashPass(pwd){
 function applyRoleVisibility(){
   document.body.classList.toggle('is-admin', isAdmin());
   const s = getSession();
-  const nameEl = document.getElementById('sbUserName');
-  const roleEl = document.getElementById('sbUserRole');
-  if(nameEl) nameEl.textContent = s ? s.username : '—';
-  if(roleEl) roleEl.textContent = s ? (s.role === 'admin' ? 'Administrador' : 'Usuário de Consulta') : '—';
-  const homeNameEl = document.getElementById('homeUserName');
-  const homeRoleEl = document.getElementById('homeUserRole');
-  if(homeNameEl) homeNameEl.textContent = s ? s.username : '—';
-  if(homeRoleEl) homeRoleEl.textContent = s ? (s.role === 'admin' ? 'Administrador' : 'Usuário de Consulta') : '—';
+  const nameEl = $('sbUserName');
+  const roleEl = $('sbUserRole');
+  if(nameEl) nameEl.textContent = s ? (s.nome || s.username) : '—';
+  if(roleEl) roleEl.textContent = s ? roleLabel(s.role) : '—';
+}
+
+/* Transforma a resposta do servidor na "sessão" guardada no aparelho */
+function sessionFromServer(uname, passHash, r){
+  const role = (r.role === 'admin' || r.role === 'gestor' || r.role === 'tecnico') ? r.role : 'tecnico';
+  return {
+    username: r.username || uname, nome: r.nome || '', role, empresa: r.empresa || '', foto: r.foto || '',
+    passwordHash: passHash, mustChange: !!r.mustChange, termsOk: r.termsOk !== false, termsVersion: r.termsVersion || '',
+    cfg: r.cfg || null, perguntas: r.perguntas || null,
+    empresaAviso: r.empresaAviso || '', empresaLogoDataUrl: r.empresaLogoDataUrl || '',
+    empresaLogoDataUrl2: r.empresaLogoDataUrl2 || '',
+    empresaThemeColor: r.empresaThemeColor || '', empresaThemeColor2: r.empresaThemeColor2 || '',
+    empresaPtPrefix: r.empresaPtPrefix || ''
+  };
 }
 
 async function attemptLogin(username, password){
-  const uname = username.trim();
+  const uname = username.trim().toLowerCase();
   if(!uname || !password) throw new Error('Preencha usuário e senha.');
   const passHash = await hashPass(password);
-  const scriptUrl = (loadCfg().scriptUrl) || DEFAULT_SCRIPT_URL;
+  const scriptUrl = getScriptUrl();
   let serverChecked = false, serverResult = null;
   if(scriptUrl){
     try{
       const controller = new AbortController();
-      const timer = setTimeout(()=>controller.abort(), 12000);
+      const timer = setTimeout(()=>controller.abort(), 15000);
       // POST (não GET): assim usuário/hash da senha não ficam numa URL —
       // não vão parar em log de acesso nem em histórico do navegador.
       const resp = await fetch(scriptUrl, {method:'POST', body: JSON.stringify({action:'login', username: uname, passwordHash: passHash}), signal:controller.signal});
       clearTimeout(timer);
       serverResult = await resp.json();
       serverChecked = true;
-    }catch(e){ /* sem conexão — tenta o login padrão de fábrica abaixo */ }
+    }catch(e){ /* sem conexão — tenta o login de fábrica do administrador abaixo */ }
   }
   if(serverChecked && serverResult && serverResult.ok){
-    return {
-      username: uname, role: serverResult.role === 'admin' ? 'admin' : 'consulta', passwordHash: passHash,
-      cfg: serverResult.cfg || null, perguntas: serverResult.perguntas || null,
-      empresaAviso: serverResult.empresaAviso || '', empresaLogoDataUrl: serverResult.empresaLogoDataUrl || '',
-      empresaLogoDataUrl2: serverResult.empresaLogoDataUrl2 || '',
-      empresaThemeColor: serverResult.empresaThemeColor || '', empresaThemeColor2: serverResult.empresaThemeColor2 || '',
-      empresaPtPrefix: serverResult.empresaPtPrefix || ''
-    };
+    return sessionFromServer(uname, passHash, serverResult);
   }
-  if(serverChecked && serverResult && serverResult.error === 'senha incorreta'){
+  if(serverChecked && serverResult && serverResult.error){
+    if(/desativado/i.test(serverResult.error)) throw new Error(serverResult.error);
     throw new Error('Usuário ou senha inválidos.');
   }
-  if(uname.toLowerCase() === BOOTSTRAP_ADMIN_USER && password === BOOTSTRAP_ADMIN_PASS){
-    return { username: BOOTSTRAP_ADMIN_USER, role: 'admin', passwordHash: passHash };
+  if(uname === BOOTSTRAP_ADMIN_USER && password === BOOTSTRAP_ADMIN_PASS){
+    return { username: BOOTSTRAP_ADMIN_USER, nome: 'Administrador', role: 'admin', passwordHash: passHash, termsOk: true, mustChange: false };
   }
+  if(!serverChecked) throw new Error('Não foi possível conectar ao servidor. Verifique a internet e tente de novo.');
   throw new Error('Usuário ou senha inválidos.');
 }
 
-function showLoginScreen(){ document.getElementById('loginScreen').style.display = 'flex'; }
-function hideLoginScreen(){ document.getElementById('loginScreen').style.display = 'none'; }
+function showLoginScreen(){ $('loginScreen').style.display = 'flex'; }
+function hideLoginScreen(){ $('loginScreen').style.display = 'none'; }
 
-document.getElementById('loginConfirm').onclick = async ()=>{
-  const uname = document.getElementById('loginUser').value;
-  const pass = document.getElementById('loginPass').value;
-  const errEl = document.getElementById('loginErr');
+/* ============ TERMOS DE USO E PRIVACIDADE ============ */
+const TERMS_HTML = `
+<h4>1. O que é o DocSeg Digital</h4>
+<p>Aplicativo para preencher e enviar documentos de segurança do trabalho (Permissão de Trabalho, Checklist de Veículo e Checklist de Escada). Os documentos enviados ficam registrados e disponíveis para o gestor da sua empresa.</p>
+<h4>2. O seu login é pessoal</h4>
+<p>Você entra com um login e uma senha só seus. Não compartilhe a senha com ninguém. Tudo o que for feito com o seu login será atribuído a você. Se suspeitar que alguém usou o seu acesso, avise o responsável da sua empresa imediatamente.</p>
+<h4>3. Responsabilidade pelas informações</h4>
+<ul>
+<li>Preencha os documentos somente com informações verdadeiras, conferidas no local.</li>
+<li>Assinaturas, fotos e localização devem ser reais e de quem de fato participou da atividade.</li>
+<li>O aplicativo é uma ferramenta de apoio. Ele não substitui a análise de risco, a avaliação técnica e a responsabilidade profissional de quem emite o documento.</li>
+</ul>
+<h4>4. Dados que o aplicativo trata</h4>
+<ul>
+<li>Cadastro: nome, login, empresa, foto (opcional) e e-mail (opcional).</li>
+<li>Uso: data e hora do aceite destes termos e dos envios de documentos.</li>
+<li>Conteúdo dos documentos: respostas dos formulários (inclusive o questionário de saúde da Permissão de Trabalho, que é dado pessoal sensível), nomes da equipe, assinaturas, fotos anexadas e localização, quando informada.</li>
+</ul>
+<h4>5. Para que os dados são usados</h4>
+<p>Para operar o aplicativo, registrar e comprovar os documentos de segurança do trabalho, permitir o acompanhamento pelo gestor da empresa, cumprir obrigações legais e normativas e manter a segurança do sistema. Os dados não são vendidos nem usados para publicidade.</p>
+<h4>6. Quem pode ver</h4>
+<p>Você, o gestor da sua empresa (que acompanha quem enviou cada documento e quando, e pode baixar o PDF) e o administrador do DocSeg Digital, para suporte e auditoria.</p>
+<h4>7. Onde ficam e por quanto tempo</h4>
+<p>Os PDFs ficam guardados em armazenamento do serviço por 24 meses e depois são apagados. O registro do envio (quem, quando e qual documento) pode ser mantido para fins de auditoria. Os dados de cadastro ficam enquanto o seu acesso estiver ativo.</p>
+<h4>8. Seus direitos</h4>
+<p>Nos termos da Lei Geral de Proteção de Dados (Lei 13.709/2018), você pode pedir a confirmação do tratamento, o acesso, a correção e, quando cabível, a eliminação dos seus dados, além de informações sobre compartilhamento. Faça o pedido ao administrador do DocSeg Digital, pelo contato informado pela sua empresa.</p>
+<h4>9. Segurança</h4>
+<p>A senha não é guardada em texto aberto e o acesso exige login. Mesmo assim, nenhum sistema é totalmente livre de riscos: use somente aparelhos de confiança e saia do aplicativo em aparelhos compartilhados.</p>
+<h4>10. Uso indevido e fim do acesso</h4>
+<p>O acesso pode ser suspenso em caso de uso indevido, informação falsa ou quando terminar o seu vínculo com a empresa.</p>
+<h4>11. Mudanças</h4>
+<p>Estes termos podem ser atualizados. Quando isso acontecer, o aplicativo pedirá um novo aceite.</p>
+`;
+
+/* ============ TELAS DE PASSAGEM: TROCA DE SENHA E TERMOS ============ */
+function gatesPending(s){
+  return !!s && (!!s.mustChange || (s.role !== 'admin' && s.termsOk === false));
+}
+function forcePasswordChange(){
+  return new Promise(resolve=>{
+    hideLoginScreen();
+    const scr = $('pwScreen');
+    scr.style.display = 'flex';
+    $('pwNew').value = ''; $('pwNew2').value = ''; $('pwErr').style.display = 'none';
+    $('pwSave').onclick = async ()=>{
+      const a = $('pwNew').value, b = $('pwNew2').value, err = $('pwErr'), btn = $('pwSave');
+      err.style.display = 'none';
+      const fail = (m)=>{ err.textContent = m; err.style.display = 'block'; };
+      if(a.length < 6) return fail('A senha precisa ter pelo menos 6 caracteres.');
+      if(a !== b) return fail('As duas senhas não são iguais.');
+      const s = getSession();
+      btn.disabled = true; const old = btn.textContent; btn.textContent = 'Salvando...';
+      try{
+        const newHash = await hashPass(a);
+        if(newHash === s.passwordHash) return fail('Escolha uma senha diferente da provisória.');
+        const r = await api('changePassword', { username: s.username, currentPasswordHash: s.passwordHash, newPasswordHash: newHash });
+        if(r.error) throw new Error(r.error);
+        s.passwordHash = newHash; s.mustChange = false; saveSession(s);
+        scr.style.display = 'none';
+        resolve();
+      }catch(e){
+        fail(e.message || 'Não foi possível salvar. Verifique a internet e tente de novo.');
+      }finally{
+        btn.disabled = false; btn.textContent = old;
+      }
+    };
+  });
+}
+function termsGate(){
+  return new Promise(resolve=>{
+    hideLoginScreen();
+    const s = getSession();
+    $('termsVer').textContent = (s && s.termsVersion) || '';
+    $('termsBody').innerHTML = TERMS_HTML; $('termsBody').scrollTop = 0;
+    $('termsCheck').checked = false; $('termsCheck').parentElement.style.display = '';
+    $('termsAccept').disabled = true; $('termsAccept').style.display = ''; $('termsDecline').style.display = '';
+    $('termsClose').style.display = 'none'; $('termsErr').style.display = 'none';
+    $('termsScreen').style.display = 'flex';
+    $('termsCheck').onchange = ()=>{ $('termsAccept').disabled = !$('termsCheck').checked; };
+    $('termsAccept').onclick = async ()=>{
+      const err = $('termsErr'), btn = $('termsAccept');
+      err.style.display = 'none';
+      btn.disabled = true; const old = btn.textContent; btn.textContent = 'Registrando...';
+      try{
+        const r = await api('acceptTerms');
+        if(r.error) throw new Error(r.error);
+        const cur = getSession(); cur.termsOk = true; saveSession(cur);
+        $('termsScreen').style.display = 'none';
+        resolve();
+      }catch(e){
+        err.textContent = e.message || 'Não foi possível registrar o aceite. Verifique a internet.'; err.style.display = 'block';
+        btn.disabled = false;
+      }finally{ btn.textContent = old; }
+    };
+    $('termsDecline').onclick = ()=>{ logout(); };
+  });
+}
+// Só leitura (a partir do perfil)
+function openTermsReader(){
+  const s = getSession();
+  $('termsVer').textContent = (s && s.termsVersion) || '';
+  $('termsBody').innerHTML = TERMS_HTML; $('termsBody').scrollTop = 0;
+  $('termsCheck').parentElement.style.display = 'none';
+  $('termsAccept').style.display = 'none'; $('termsDecline').style.display = 'none';
+  $('termsErr').style.display = 'none';
+  $('termsClose').style.display = 'block';
+  $('termsClose').onclick = ()=>{ $('termsScreen').style.display = 'none'; };
+  $('termsScreen').style.display = 'flex';
+}
+async function runGates(){
+  let s = getSession();
+  if(s && s.mustChange) await forcePasswordChange();
+  s = getSession();
+  if(s && s.role !== 'admin' && s.termsOk === false) await termsGate();
+}
+
+/* Aplica no aparelho o que vem da conta (empresa, cores, perguntas, nome do técnico) */
+function applySessionToDevice(session){
+  const deviceCfg = loadCfg();
+  if(!deviceCfg.scriptUrl) deviceCfg.scriptUrl = DEFAULT_SCRIPT_URL;
+  if(session.cfg){
+    if(session.cfg.empresaPadrao) deviceCfg.empresaPadrao = session.cfg.empresaPadrao;
+    if(session.cfg.tecNome) deviceCfg.tecNome = session.cfg.tecNome;
+  }
+  // Cor da PT definida no cadastro da empresa — aplicada automaticamente.
+  deviceCfg.themeColor = session.empresaThemeColor || '#C8272A';
+  deviceCfg.themeColor2 = session.empresaThemeColor2 || '#F4B400';
+  saveCfg(deviceCfg);
+  if(deviceCfg.empresaPadrao){ state.empresaNome = deviceCfg.empresaPadrao; }
+  // Cada pessoa tem o próprio nome: ao entrar, ele vira o "Técnico" dos documentos.
+  if(session.cfg && session.cfg.tecNome){
+    state.tecNome = session.cfg.tecNome; vState.tecNome = session.cfg.tecNome; eState.tecNome = session.cfg.tecNome;
+    saveVDraft(); saveEDraft();
+  }
+  saveDraft();
+  // Perguntas personalizadas da empresa (ou padrão de fábrica, se não houver)
+  saveCustomQuestions((session.perguntas && Object.keys(session.perguntas).length) ? session.perguntas : {});
+  applyTheme(loadCfg());
+}
+
+function finishLogin(session){
+  applySessionToDevice(session);
+  hideLoginScreen();
+  applyRoleVisibility();
+  updateBrand();
+  renderCurrentStep();
+  const primeiro = ((session.nome || session.username) + '').split(' ')[0];
+  toast('Bem-vindo, ' + primeiro + '!', 'ok');
+  initPushNotifications(session);
+  goHome();
+}
+
+$('loginConfirm').onclick = async ()=>{
+  const uname = $('loginUser').value;
+  const pass = $('loginPass').value;
+  const errEl = $('loginErr');
   errEl.style.display = 'none';
-  const btn = document.getElementById('loginConfirm');
+  const btn = $('loginConfirm');
   btn.disabled = true; const oldTxt = btn.textContent; btn.textContent = 'Entrando...';
   try{
     const session = await attemptLogin(uname, pass);
-    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-    const deviceCfg = loadCfg();
-    if(!deviceCfg.scriptUrl) deviceCfg.scriptUrl = DEFAULT_SCRIPT_URL;
-    if(session.cfg){
-      // Aplica o e-mail/empresa cadastrados para esta conta neste aparelho,
-      // sem sobrescrever a URL do script configurada aqui.
-      if(session.cfg.destEmail) deviceCfg.destEmail = session.cfg.destEmail;
-      if(session.cfg.empresaPadrao) deviceCfg.empresaPadrao = session.cfg.empresaPadrao;
-      if(session.cfg.tecNome) deviceCfg.tecNome = session.cfg.tecNome;
-    }
-    // Cor da PT definida no cadastro da empresa — aplicada automaticamente.
-    deviceCfg.themeColor = session.empresaThemeColor || '#C8272A';
-    deviceCfg.themeColor2 = session.empresaThemeColor2 || '#F4B400';
-    saveCfg(deviceCfg);
-    if(deviceCfg.empresaPadrao){ state.empresaNome = deviceCfg.empresaPadrao; saveDraft(); }
-    if(deviceCfg.tecNome && !state.tecNome){ state.tecNome = deviceCfg.tecNome; saveDraft(); }
-    // Aplica as perguntas personalizadas da empresa deste usuário (ou volta
-    // ao padrão de fábrica, se a empresa ainda não tiver personalização).
-    saveCustomQuestions((session.perguntas && Object.keys(session.perguntas).length) ? session.perguntas : {});
-    hideLoginScreen();
-    applyRoleVisibility();
-    applyTheme(loadCfg());
-    updateBrand();
-    renderCurrentStep();
-    document.getElementById('loginPass').value = '';
-    toast('Bem-vindo, ' + session.username + '!', 'ok');
-    initPushNotifications(session);
-    goHome();
+    saveSession(session);
+    $('loginPass').value = '';
+    await runGates();           // senha provisória → termos de uso
+    finishLogin(getSession());
   }catch(err){
     errEl.textContent = err.message || 'Não foi possível entrar.';
     errEl.style.display = 'block';
@@ -1185,15 +1625,136 @@ document.getElementById('loginConfirm').onclick = async ()=>{
     btn.disabled = false; btn.textContent = oldTxt;
   }
 };
-document.getElementById('loginPass').addEventListener('keydown', (e)=>{ if(e.key==='Enter') document.getElementById('loginConfirm').click(); });
-document.getElementById('loginUser').addEventListener('keydown', (e)=>{ if(e.key==='Enter') document.getElementById('loginPass').focus(); });
+$('loginPass').addEventListener('keydown', (e)=>{ if(e.key==='Enter') $('loginConfirm').click(); });
+$('loginUser').addEventListener('keydown', (e)=>{ if(e.key==='Enter') $('loginPass').focus(); });
+$('loginTogglePw').onclick = ()=>{
+  const inp = $('loginPass'), show = inp.type === 'password';
+  inp.type = show ? 'text' : 'password';
+  $('loginTogglePw').textContent = show ? 'Ocultar' : 'Ver';
+};
+$('loginServer').onclick = ()=>{
+  const v = prompt('Endereço do servidor (Google Apps Script, termina em /exec):', getScriptUrl());
+  if(v === null) return;
+  const url = v.trim();
+  if(url && !/^https:\/\/script\.google\.com\/.+\/exec$/.test(url)){ toast('Endereço inválido. Ele começa com https://script.google.com e termina em /exec.', 'err'); return; }
+  const c = loadCfg(); c.scriptUrl = url || DEFAULT_SCRIPT_URL; c.serverGen = SERVER_GEN; saveCfg(c);
+  toast('Endereço do servidor atualizado.', 'ok');
+};
 
 function logout(){
   localStorage.removeItem(SESSION_KEY);
   location.reload();
 }
-document.getElementById('btnLogout').onclick = ()=>{
+$('btnLogout').onclick = ()=>{
   if(confirm('Sair do DocSeg Digital?')) logout();
+};
+
+/* Ao abrir o app já logado: confere com o servidor se o acesso continua valendo
+   (usuário removido, senha trocada, termos novos) e atualiza foto, nome e empresa. */
+async function refreshSessionFromServer(){
+  const s = getSession();
+  if(!s || !navigator.onLine) return;
+  try{
+    const resp = await fetch(getScriptUrl(), {method:'POST', body: JSON.stringify({action:'login', username:s.username, passwordHash:s.passwordHash})});
+    const r = await resp.json();
+    if(r && r.ok){
+      const n = sessionFromServer(s.username, s.passwordHash, r);
+      saveSession(n);
+      applySessionToDevice(n);
+      applyRoleVisibility();
+      updateBrand();
+      if(gatesPending(n)){ await runGates(); }
+      refreshHomeMenuIfVisible();
+    } else if(r && r.error && (r.error === 'senha incorreta' || r.error === 'usuario nao encontrado' || /desativado/i.test(r.error))){
+      toast('Seu acesso mudou ou foi encerrado. Entre novamente.', 'err');
+      setTimeout(logout, 1500);
+    }
+  }catch(e){ /* sem conexão — segue com o que já está no aparelho */ }
+}
+
+/* ============ FOTO (quadrada, pequena) ============ */
+function squarePhotoFromFile(file, cb){
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    const img = new Image();
+    img.onload = ()=>{
+      const make = (side, q)=>{
+        const c = document.createElement('canvas'); c.width = side; c.height = side;
+        const m = Math.min(img.width, img.height);
+        c.getContext('2d').drawImage(img, (img.width-m)/2, (img.height-m)/2, m, m, 0, 0, side, side);
+        return c.toDataURL('image/jpeg', q);
+      };
+      let out = make(200, 0.8);
+      if(out.length > 42000) out = make(160, 0.7);
+      if(out.length > 42000) out = make(128, 0.6);
+      cb(out);
+    };
+    img.onerror = ()=> toast('Não foi possível ler essa imagem.', 'err');
+    img.src = reader.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+/* ============ MEU PERFIL ============ */
+function paintProfile(){
+  const s = getSession(); if(!s) return;
+  $('profAvatar').innerHTML = s.foto ? `<img src="${s.foto}" alt="">` : escHtml(initialsOf(s.nome || s.username));
+  $('profInfo').innerHTML =
+    `<div><span>Nome:</span> <b>${escHtml(s.nome || s.username)}</b></div>` +
+    `<div><span>Login:</span> <b>${escHtml(s.username)}</b></div>` +
+    `<div><span>Perfil:</span> <b>${roleLabel(s.role)}</b></div>` +
+    (s.empresa ? `<div><span>Empresa:</span> <b>${escHtml(s.empresa)}</b></div>` : '');
+  $('btnProfFotoRemove').style.display = s.foto ? '' : 'none';
+}
+function openProfileModal(){
+  if(!getSession()) return;
+  hideAllScreens();
+  $('profPassCur').value = ''; $('profPassNew').value = ''; $('profPassNew2').value = '';
+  $('profFotoMsg').textContent = '';
+  paintProfile();
+  $('profileModal').classList.add('show');
+  window.scrollTo(0,0);
+}
+async function saveOwnFoto(foto){
+  const s = getSession();
+  $('profFotoMsg').textContent = 'Salvando...';
+  try{
+    const r = await api('saveFoto', { target: s.username, foto });
+    if(r.error) throw new Error(r.error);
+    s.foto = foto; saveSession(s);
+    paintProfile();
+    $('profFotoMsg').textContent = foto ? 'Foto atualizada.' : 'Foto removida.';
+  }catch(e){
+    $('profFotoMsg').textContent = '';
+    toast(e.message || 'Não foi possível salvar a foto. Verifique a internet.', 'err');
+  }
+}
+$('closeProfile').onclick = goHome;
+$('btnProfFotoPick').onclick = ()=> $('profFotoFile').click();
+$('profFotoFile').onchange = (e)=>{
+  const f = e.target.files && e.target.files[0];
+  e.target.value = '';
+  if(f) squarePhotoFromFile(f, (data)=> saveOwnFoto(data));
+};
+$('btnProfFotoRemove').onclick = ()=> saveOwnFoto('');
+$('btnProfTerms').onclick = openTermsReader;
+$('btnProfPassSave').onclick = async ()=>{
+  const cur = $('profPassCur').value, a = $('profPassNew').value, b = $('profPassNew2').value;
+  if(!cur){ toast('Digite a senha atual.', 'err'); return; }
+  if(a.length < 6){ toast('A nova senha precisa ter pelo menos 6 caracteres.', 'err'); return; }
+  if(a !== b){ toast('As duas senhas novas não são iguais.', 'err'); return; }
+  const s = getSession();
+  const btn = $('btnProfPassSave'); btn.disabled = true; const old = btn.textContent; btn.textContent = 'Salvando...';
+  try{
+    const curHash = await hashPass(cur), newHash = await hashPass(a);
+    const r = await api('changePassword', { username: s.username, currentPasswordHash: curHash, newPasswordHash: newHash });
+    if(r.error) throw new Error(r.error);
+    s.passwordHash = newHash; saveSession(s);
+    $('profPassCur').value = ''; $('profPassNew').value = ''; $('profPassNew2').value = '';
+    toast('Senha alterada!', 'ok');
+  }catch(e){
+    toast(e.message || 'Não foi possível trocar a senha.', 'err');
+  }finally{ btn.disabled = false; btn.textContent = old; }
 };
 
 /* ============ STEP DEFINITIONS ============ */
@@ -1951,7 +2512,6 @@ function openSettingsModal(){
   if(!isAdmin()){ toast('Acesso restrito ao administrador.', 'err'); return; }
   const cfg = loadCfg();
   document.getElementById('cfgScriptUrl').value = cfg.scriptUrl||'';
-  document.getElementById('cfgDestEmail').value = cfg.destEmail||'';
   document.getElementById('cfgNextNumber').value = peekNextCounter();
   document.getElementById('cfgSoundEnabled').checked = cfg.soundEnabled !== false;
   document.getElementById('sheetAuditBox').style.display = 'none';
@@ -1984,7 +2544,7 @@ document.getElementById('saveSettings').onclick = async ()=>{
   const prevCfg = loadCfg();
   const cfg = {
     scriptUrl: document.getElementById('cfgScriptUrl').value.trim(),
-    destEmail: document.getElementById('cfgDestEmail').value.trim(),
+    serverGen: prevCfg.serverGen,
     empresaPadrao: prevCfg.empresaPadrao, // vem automático do login (empresa = usuário), não editável aqui
     themeColor: prevCfg.themeColor, themeColor2: prevCfg.themeColor2, // definidas no cadastro da empresa, não aqui
     tecNome: prevCfg.tecNome,
@@ -2126,18 +2686,27 @@ function applyCfgFromUrlIfPresent(){
   }
 }
 
-/* ============ GERENCIAMENTO DE USUÁRIOS (Administrador) ============ */
-let editingUsername = null; // null = cadastrando novo; string = editando (login não pode mudar)
+/* ============ GERENCIAMENTO DE USUÁRIOS (Administrador e Gestor) ============ */
+let editingUsername = null; // null = cadastrando novo; string = editando (login não muda)
+let userFormFoto = null;    // null = não mexeu na foto | '' = remover | texto "data:..." = foto nova
+let lastLoadedUsers = [];
+
+function userFormRoleValue(){ return isGestor() ? 'tecnico' : $('userFormRole').value; }
 
 function updateUserFormFieldsByRole(){
-  const role = document.getElementById('userFormRole').value;
-  document.getElementById('userFormUsernameWrap').style.display = role === 'admin' ? 'block' : 'none';
-  document.getElementById('userFormEmpresaSelectWrap').style.display = role === 'admin' ? 'none' : 'block';
+  const role = userFormRoleValue();
+  $('userFormRoleWrap').style.display = isGestor() ? 'none' : 'block';
+  $('userFormEmpresaSelectWrap').style.display = (role === 'admin' || isGestor()) ? 'none' : 'block';
+  $('userFormFotoWrap').style.display = role === 'admin' ? 'none' : 'block';
 }
-document.getElementById('userFormRole').onchange = updateUserFormFieldsByRole;
+$('userFormRole').onchange = updateUserFormFieldsByRole;
+
+function setUserFotoPreview(nome, foto){
+  $('userFormFotoPrev').innerHTML = foto ? `<img src="${foto}" alt="">` : ((nome||'').trim() ? escHtml(initialsOf(nome)) : '📷');
+}
 
 async function populateUserFormEmpresaSelect(){
-  const sel = document.getElementById('userFormEmpresaSelect');
+  const sel = $('userFormEmpresaSelect');
   const manterValor = sel.value;
   sel.innerHTML = '<option value="">Selecione a empresa cadastrada...</option>';
   (lastLoadedEmpresas||[]).forEach(emp=>{
@@ -2148,68 +2717,82 @@ async function populateUserFormEmpresaSelect(){
   if(manterValor) sel.value = manterValor;
 }
 
+// Sugere o login a partir do nome: "Marcos da Silva" -> marcos.silva
+function suggestLogin(nome){
+  const parts = (nome || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+    .replace(/[^a-z\s]/g, ' ').trim().split(/\s+/).filter(Boolean);
+  if(!parts.length) return '';
+  const ligacao = ['da','de','do','das','dos','e'];
+  const util = parts.filter(p => ligacao.indexOf(p) === -1);
+  const base = util.length > 1 ? util[0] + '.' + util[util.length-1] : (util[0] || parts[0]);
+  let cand = base, n = 2;
+  while(lastLoadedUsers.some(u => u.username === cand)) { cand = base + n; n++; }
+  return cand;
+}
+
 function resetUserForm(){
   editingUsername = null;
-  document.getElementById('userFormUsername').value = '';
-  document.getElementById('userFormUsername').disabled = false;
-  document.getElementById('userFormEmpresaSelect').value = '';
-  document.getElementById('userFormEmpresaSelect').disabled = false;
-  document.getElementById('userFormPassword').value = '';
-  document.getElementById('userFormPassword').placeholder = 'Senha';
-  document.getElementById('userFormRole').value = 'consulta';
-  document.getElementById('userFormTec').value = '';
-  document.getElementById('userFormEmail').value = '';
-  document.getElementById('userFormTitle').textContent = 'Novo usuário';
+  userFormFoto = null;
+  $('userFormNome').value = '';
+  $('userFormUsername').value = '';
+  $('userFormUsername').disabled = false;
+  $('userFormEmpresaSelect').value = isGestor() ? (getSession().empresa || '') : '';
+  $('userFormEmpresaSelect').disabled = false;
+  $('userFormPassword').value = '';
+  $('userFormPassword').placeholder = 'Mínimo de 6 caracteres';
+  $('userFormPassLabel').textContent = 'Senha provisória';
+  $('userFormRole').value = 'tecnico';
+  $('userFormEmail').value = '';
+  $('userFormTitle').textContent = isGestor() ? 'Novo técnico' : 'Novo usuário';
+  setUserFotoPreview('', '');
   updateUserFormFieldsByRole();
 }
 async function openUsersModal(){
-  if(!isAdmin()){ toast('Acesso restrito ao administrador.', 'err'); return; }
-  resetUserForm();
-  document.getElementById('usersSearch').value = '';
+  if(!isManager()){ toast('Acesso restrito.', 'err'); return; }
   hideAllScreens();
-  document.getElementById('usersModal').classList.add('show');
+  $('usersTitle').textContent = isGestor() ? 'Técnicos da empresa' : 'Usuários';
+  $('usersModal').classList.add('show');
+  $('usersSearch').value = '';
+  resetUserForm();
   await loadUsersList();
-  // empresas pode não ter sido carregada ainda (só carrega ao abrir a aba
-  // Empresas) — garante a lista pro dropdown de usuário igual
-  if(!lastLoadedEmpresas.length){
-    const cfg = loadCfg();
-    const scriptUrl = cfg.scriptUrl || DEFAULT_SCRIPT_URL;
-    if(scriptUrl){
-      try{
-        const data = await fetchAdminAction(scriptUrl, 'listEmpresas');
-        if(!data.error) lastLoadedEmpresas = data.empresas || [];
-      }catch(e){ /* dropdown fica só com a opção vazia */ }
-    }
+  // empresas pode não ter sido carregada ainda — garante a lista pro dropdown
+  if(isAdmin() && !lastLoadedEmpresas.length){
+    try{
+      const data = await fetchAdminAction(getScriptUrl(), 'listEmpresas');
+      if(!data.error) lastLoadedEmpresas = data.empresas || [];
+    }catch(e){ /* dropdown fica só com a opção vazia */ }
+  }
+  if(isGestor()){
+    lastLoadedEmpresas = [{nome: getSession().empresa || ''}];
   }
   await populateUserFormEmpresaSelect();
+  if(isGestor()) $('userFormEmpresaSelect').value = getSession().empresa || '';
 }
-document.getElementById('navUsuarios').onclick = openUsersModal;
-document.getElementById('closeUsers').onclick = goHome;
+$('navUsuarios').onclick = openUsersModal;
+$('closeUsers').onclick = goHome;
 
-let lastLoadedUsers = [];
 function renderUsersList(list){
-  const box = document.getElementById('usersList');
+  const box = $('usersList');
   if(!list.length){ box.innerHTML = '<p class="hint">Nenhum usuário encontrado.</p>'; return; }
   box.innerHTML = list.map(u => `
-    <div class="user-row">
-      <div>
-        <b>${u.username}</b><span class="user-role-tag ${u.role}">${u.role === 'admin' ? 'Administrador' : 'Usuário de Consulta'}</span>
-        ${u.empresa && u.empresa !== u.username ? '<div class="hint" style="margin-top:2px;">'+u.empresa+'</div>' : ''}
+    <div class="urow">
+      ${avatarHtml(u.nome || u.username, '', 40)}
+      <div class="m">
+        <b>${escHtml(u.nome || u.username)}<span class="user-role-tag ${escHtml(u.role)}">${u.legado ? 'Acesso antigo' : roleLabel(u.role)}</span></b>
+        <span>${escHtml(u.username)}${u.empresa ? ' · ' + escHtml(u.empresa) : ''}${u.mustChange ? ' · senha provisória' : ''}${u.legado ? ' · desativado, pode excluir' : ''}</span>
       </div>
       <div style="display:flex;gap:6px;">
-        <button type="button" class="rm-btn edit-user" data-username="${u.username}" title="Editar">✎</button>
-        <button type="button" class="rm-btn del-user" data-username="${u.username}" title="Excluir">✕</button>
+        ${u.legado ? '' : `<button type="button" class="rm-btn edit-user" data-username="${escHtml(u.username)}" title="Editar">✎</button>`}
+        <button type="button" class="rm-btn del-user" data-username="${escHtml(u.username)}" title="Excluir">✕</button>
       </div>
     </div>`).join('');
   box.querySelectorAll('.edit-user').forEach(btn=> btn.onclick = ()=> loadUserIntoForm(btn.getAttribute('data-username')));
   box.querySelectorAll('.del-user').forEach(btn=> btn.onclick = ()=> deleteUserByUsername(btn.getAttribute('data-username')));
 }
 async function loadUsersList(){
-  if(!isAdmin()) return;
-  const cfg = loadCfg();
-  const scriptUrl = cfg.scriptUrl || DEFAULT_SCRIPT_URL;
-  const box = document.getElementById('usersList');
-  if(!scriptUrl){ box.innerHTML = '<p class="hint">Configure a URL do Google Apps Script em Configurações primeiro.</p>'; return; }
+  if(!isManager()) return;
+  const scriptUrl = getScriptUrl();
+  const box = $('usersList');
   box.innerHTML = '<p class="hint">Carregando...</p>';
   try{
     const data = await fetchAdminAction(scriptUrl, 'listUsers');
@@ -2218,64 +2801,89 @@ async function loadUsersList(){
     if(!lastLoadedUsers.length){ box.innerHTML = '<p class="hint">Nenhum usuário cadastrado ainda — use o formulário abaixo.</p>'; return; }
     renderUsersList(lastLoadedUsers);
   }catch(err){
-    box.innerHTML = '<p class="hint" style="color:var(--red-dark);">Erro ao carregar: ' + (err.message||'falha de conexão') + '</p>';
+    box.innerHTML = '<p class="hint" style="color:var(--red-dark);">Erro ao carregar: ' + escHtml(err.message||'falha de conexão') + '</p>';
   }
 }
-document.getElementById('usersSearch').oninput = ()=>{
-  const q = document.getElementById('usersSearch').value.trim().toLowerCase();
+$('usersSearch').oninput = ()=>{
+  const q = $('usersSearch').value.trim().toLowerCase();
   if(!lastLoadedUsers.length) return;
-  const filtered = !q ? lastLoadedUsers : lastLoadedUsers.filter(u=>
-    (u.username||'').toLowerCase().includes(q) || (u.empresa||'').toLowerCase().includes(q)
+  const filtered = !q ? lastLoadedUsers : lastLoadedUsers.filter(u =>
+    (u.username||'').toLowerCase().includes(q) || (u.empresa||'').toLowerCase().includes(q) || (u.nome||'').toLowerCase().includes(q)
   );
   renderUsersList(filtered);
 };
 function loadUserIntoForm(username){
-  if(!isAdmin()) return;
+  if(!isManager()) return;
   const u = lastLoadedUsers.find(x=>x.username===username);
   if(!u) return;
   editingUsername = u.username;
-  document.getElementById('userFormRole').value = u.role;
+  userFormFoto = null;
+  $('userFormRole').value = u.role === 'consulta' ? 'tecnico' : u.role;
   updateUserFormFieldsByRole();
-  document.getElementById('userFormUsername').value = u.role === 'admin' ? u.username : '';
-  document.getElementById('userFormUsername').disabled = true;
-  document.getElementById('userFormEmpresaSelect').value = u.role === 'admin' ? '' : u.username;
-  document.getElementById('userFormEmpresaSelect').disabled = true;
-  document.getElementById('userFormPassword').value = '';
-  document.getElementById('userFormPassword').placeholder = 'Deixe em branco para manter a senha atual';
-  document.getElementById('userFormTec').value = (u.cfg && u.cfg.tecNome) || '';
-  document.getElementById('userFormEmail').value = (u.cfg && u.cfg.destEmail) || '';
-  document.getElementById('userFormTitle').textContent = 'Editar usuário: ' + u.username;
+  $('userFormNome').value = u.nome || '';
+  $('userFormUsername').value = u.username;
+  $('userFormUsername').disabled = true;
+  const sel = $('userFormEmpresaSelect');
+  if(u.empresa && ![...sel.options].some(o => o.value === u.empresa)){
+    const opt = document.createElement('option'); opt.value = u.empresa; opt.textContent = u.empresa; sel.appendChild(opt);
+  }
+  sel.value = u.empresa || '';
+  sel.disabled = isGestor();
+  $('userFormPassword').value = '';
+  $('userFormPassword').placeholder = 'Deixe em branco para manter a senha atual';
+  $('userFormPassLabel').textContent = 'Nova senha provisória (opcional)';
+  $('userFormEmail').value = u.email || '';
+  setUserFotoPreview(u.nome || u.username, '');
+  $('userFormTitle').textContent = 'Editar: ' + (u.nome || u.username) + (u.hasFoto ? ' (já tem foto)' : '');
+  $('usersModal').querySelector('.modal').scrollTo({top: $('userFormTitle').offsetTop - 70, behavior:'smooth'});
 }
-document.getElementById('btnUserFormCancel').onclick = resetUserForm;
-document.getElementById('btnUserFormSave').onclick = async ()=>{
-  if(!isAdmin()){ toast('Acesso restrito ao administrador.', 'err'); return; }
-  const cfg = loadCfg();
-  const scriptUrl = cfg.scriptUrl || DEFAULT_SCRIPT_URL;
-  if(!scriptUrl){ toast('Configure a URL do Google Apps Script em Configurações primeiro.', 'err'); return; }
-  const role = document.getElementById('userFormRole').value;
-  const username = role === 'admin'
-    ? document.getElementById('userFormUsername').value.trim()
-    : document.getElementById('userFormEmpresaSelect').value.trim();
-  const empresa = role === 'admin' ? '' : username;
-  const password = document.getElementById('userFormPassword').value;
-  const tecNome = document.getElementById('userFormTec').value.trim();
-  const destEmail = document.getElementById('userFormEmail').value.trim();
+$('userFormNome').addEventListener('blur', ()=>{
+  if(!editingUsername && !$('userFormUsername').value.trim() && $('userFormNome').value.trim()){
+    $('userFormUsername').value = suggestLogin($('userFormNome').value);
+  }
+  if(userFormFoto === null || userFormFoto === '') setUserFotoPreview($('userFormNome').value, userFormFoto || '');
+});
+$('btnUserFotoPick').onclick = ()=> $('userFormFotoFile').click();
+$('userFormFotoFile').onchange = (e)=>{
+  const f = e.target.files && e.target.files[0];
+  e.target.value = '';
+  if(f) squarePhotoFromFile(f, (data)=>{ userFormFoto = data; setUserFotoPreview($('userFormNome').value, data); });
+};
+$('btnUserFotoRemove').onclick = ()=>{ userFormFoto = ''; setUserFotoPreview($('userFormNome').value, ''); };
+$('btnUserFormCancel').onclick = resetUserForm;
+$('btnUserFormSave').onclick = async ()=>{
+  if(!isManager()){ toast('Acesso restrito.', 'err'); return; }
+  const scriptUrl = getScriptUrl();
+  const role = userFormRoleValue();
+  const nome = $('userFormNome').value.trim();
+  let username = $('userFormUsername').value.trim().toLowerCase();
+  const empresa = role === 'admin' ? '' : (isGestor() ? (getSession().empresa || '') : $('userFormEmpresaSelect').value.trim());
+  const password = $('userFormPassword').value;
+  const email = $('userFormEmail').value.trim();
   const isEditing = !!editingUsername;
-  if(!username){ toast(role==='admin' ? 'Digite o login do administrador.' : 'Selecione a empresa.', 'err'); return; }
-  if(!isEditing && !password){ toast('Defina uma senha para o novo usuário.', 'err'); return; }
+  if(!nome){ toast('Informe o nome completo.', 'err'); return; }
+  if(!username && !isEditing){ username = suggestLogin(nome); $('userFormUsername').value = username; }
+  if(!/^[a-z0-9._-]{3,30}$/.test(username)){ toast('Login inválido: use de 3 a 30 letras minúsculas, números, ponto ou hífen (sem espaços).', 'err'); return; }
+  if(role !== 'admin' && !empresa){ toast('Selecione a empresa.', 'err'); return; }
+  if(!isEditing && password.length < 6){ toast('Defina uma senha provisória com pelo menos 6 caracteres.', 'err'); return; }
+  if(isEditing && password && password.length < 6){ toast('A senha precisa ter pelo menos 6 caracteres.', 'err'); return; }
   if(!isEditing && lastLoadedUsers.some(u=>u.username===username)){
-    toast('Já existe um usuário com esse login — use o ✎ na lista para editar, em vez de cadastrar de novo.', 'err');
+    toast('Já existe um usuário com esse login — use o ✎ na lista para editar, ou escolha outro login.', 'err');
     return;
   }
-  const btn = document.getElementById('btnUserFormSave');
+  const btn = $('btnUserFormSave');
   btn.disabled = true; const oldTxt = btn.textContent; btn.textContent = 'Salvando...';
   try{
-    const payload = Object.assign({action:'saveUser', username, role, empresa, cfg:{destEmail, empresaPadrao: empresa, tecNome}}, currentAdminCreds());
+    const payload = Object.assign({action:'saveUser', username, role, nome, empresa, email}, currentAdminCreds());
     if(password) payload.passwordHash = await hashPass(password);
     const resp = await fetch(scriptUrl, {method:'POST', body: JSON.stringify(payload)});
     const data = await resp.json();
     if(data.error) throw new Error(data.error);
-    toast('Usuário salvo!', 'ok');
+    if(userFormFoto !== null && role !== 'admin'){
+      const r2 = await api('saveFoto', { target: username, foto: userFormFoto });
+      if(r2.error) toast('Usuário salvo, mas a foto não: ' + r2.error, 'err');
+    }
+    toast(password && !isEditing ? 'Usuário criado! Passe o login e a senha provisória a ele.' : 'Usuário salvo!', 'ok');
     resetUserForm();
     await loadUsersList();
   }catch(err){
@@ -2285,13 +2893,11 @@ document.getElementById('btnUserFormSave').onclick = async ()=>{
   }
 };
 async function deleteUserByUsername(username){
-  if(!isAdmin()) return;
-  if(!confirm('Excluir o usuário "'+username+'"? Ele não conseguirá mais entrar no sistema.')) return;
-  const cfg = loadCfg();
-  const scriptUrl = cfg.scriptUrl || DEFAULT_SCRIPT_URL;
+  if(!isManager()) return;
+  if(!confirm('Excluir o usuário "'+username+'"? Ele não conseguirá mais entrar no sistema. Os documentos que ele já enviou continuam guardados.')) return;
   try{
     const payload = Object.assign({action:'deleteUser', username}, currentAdminCreds());
-    const resp = await fetch(scriptUrl, {method:'POST', body: JSON.stringify(payload)});
+    const resp = await fetch(getScriptUrl(), {method:'POST', body: JSON.stringify(payload)});
     const data = await resp.json();
     if(data.error) throw new Error(data.error);
     toast('Usuário excluído.', 'ok');
@@ -2328,6 +2934,8 @@ function resetEmpresaForm(){
   document.getElementById('empresaFormColorPrimary').value = '#C8272A';
   document.getElementById('empresaFormColorAccent').value = '#F4B400';
   document.getElementById('empresaFormPtPrefix').value = '';
+  document.getElementById('empresaFormEmailAtivo').checked = false;
+  document.getElementById('empresaFormEmailDestino').value = '';
   empresaFormLogoDataUrl = null;
   empresaFormLogoDataUrl2 = null;
   setEmpresaLogoPreview('');
@@ -2420,6 +3028,8 @@ function loadEmpresaIntoForm(nome){
   document.getElementById('empresaFormColorPrimary').value = emp.themeColor || '#C8272A';
   document.getElementById('empresaFormColorAccent').value = emp.themeColor2 || '#F4B400';
   document.getElementById('empresaFormPtPrefix').value = emp.ptPrefix || '';
+  document.getElementById('empresaFormEmailAtivo').checked = !!emp.emailAtivo;
+  document.getElementById('empresaFormEmailDestino').value = emp.emailDestino || '';
   empresaFormLogoDataUrl = null; // ainda não mexeu — mantém a logo já salva, a não ser que troque/remova agora
   empresaFormLogoDataUrl2 = null;
   setEmpresaLogoPreview(emp.logoDataUrl || '');
@@ -2445,7 +3055,10 @@ document.getElementById('btnEmpresaFormSave').onclick = async ()=>{
     const themeColor = document.getElementById('empresaFormColorPrimary').value;
     const themeColor2 = document.getElementById('empresaFormColorAccent').value;
     const ptPrefix = document.getElementById('empresaFormPtPrefix').value.trim();
-    const payload = Object.assign({action:'saveEmpresa', nome, perguntas: cleaned, aviso: aviso, themeColor, themeColor2, ptPrefix}, currentAdminCreds());
+    const emailAtivo = document.getElementById('empresaFormEmailAtivo').checked;
+    const emailDestino = document.getElementById('empresaFormEmailDestino').value.trim();
+    if(emailAtivo && !emailDestino){ toast('Informe o e-mail de destino ou desligue o envio por e-mail.', 'err'); btn.disabled = false; btn.textContent = oldTxt; return; }
+    const payload = Object.assign({action:'saveEmpresa', nome, perguntas: cleaned, aviso: aviso, themeColor, themeColor2, ptPrefix, emailAtivo, emailDestino}, currentAdminCreds());
     // só manda o campo da logo quando o admin realmente mexeu nela
     // (escolheu uma nova ou clicou em "Remover logo") — null = não mexeu.
     if(empresaFormLogoDataUrl !== null) payload.logoDataUrl = empresaFormLogoDataUrl;
@@ -2453,7 +3066,7 @@ document.getElementById('btnEmpresaFormSave').onclick = async ()=>{
     const resp = await fetch(scriptUrl, {method:'POST', body: JSON.stringify(payload)});
     const data = await resp.json();
     if(data.error) throw new Error(data.error);
-    toast('Empresa salva! Os técnicos dela recebem essas perguntas no próximo login.', 'ok');
+    toast('Empresa salva! Quem é dessa empresa recebe as mudanças no próximo acesso.', 'ok');
     resetEmpresaForm();
     await loadEmpresasList();
   }catch(err){
@@ -2762,9 +3375,9 @@ async function finalizeAndSend(){
       numero: state.ptNumero || 'S/N', dataDoc: state.data||'', area: state.area||'',
       ts: new Date().toISOString(), pdfDataUrl: pdfDataUri, fileName
     };
-    if(cfg.scriptUrl && cfg.destEmail){
+    if(canSendDocs()){
       const payload = Object.assign({
-        destEmail: cfg.destEmail, tipoDocumento: 'Permissão de Trabalho (PT)',
+        docId: histMeta.id, tipoDocumento: 'Permissão de Trabalho (PT)',
         ptNumero: state.ptNumero || 'S/N', ptData: state.data || '', ptArea: state.area || '',
         resumo: resumo, pdfBase64: base64, pdfNome: fileName
       }, currentEmpresaUsuario());
@@ -2773,10 +3386,10 @@ async function finalizeAndSend(){
         addHistoryEntry(Object.assign({}, stripPdfFromMeta(histMeta), {status:'pendente'}));
         toast('PDF gerado! Documento guardado para enviar junto com outros — veja em "📁 Meus documentos".', 'ok');
       } else {
-        nextBtn.textContent = 'Enviando e-mail...';
+        nextBtn.textContent = 'Enviando...';
         try{
           await sendPayload(cfg, payload);
-          toast('PDF gerado e e-mail enviado com sucesso!', 'ok');
+          toast('PDF gerado e enviado! Já aparece no painel da empresa.', 'ok');
           playSuccessSound();
           addHistoryEntry(Object.assign({}, histMeta, {status:'enviado'}));
         }catch(err){
@@ -2786,7 +3399,7 @@ async function finalizeAndSend(){
         }
       }
     } else {
-      toast('PDF gerado! Veja em 🕘 Histórico. Configure o envio automático em ⚙ para mandar por e-mail também.', 'ok');
+      toast('PDF gerado! Veja em 🕘 Histórico.', 'ok');
       addHistoryEntry(Object.assign({}, histMeta, {status:'gerado'}));
     }
     await resetForNewPT();
@@ -2889,9 +3502,14 @@ function currentEmpresaUsuario(){
     usuario: loadCfg().tecNome || (s ? s.username : '') || ''
   };
 }
+// Pode enviar documentos quem entrou como técnico ou gestor (o administrador não preenche documentos)
+function canSendDocs(){ const s = getSession(); return !!(getScriptUrl() && s && s.role !== 'admin'); }
+// O login vai junto de cada envio (na hora de enviar, não guardado na fila): assim, se a
+// senha mudar, os documentos que ficaram esperando continuam sendo aceitos.
+function sendCreds(){ const s = getSession(); return s ? { username: s.username, passwordHash: s.passwordHash } : {}; }
 async function sendPayload(cfg, payload){
-  const resp = await fetch(cfg.scriptUrl, {
-    method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(payload)
+  const resp = await fetch((cfg && cfg.scriptUrl) || getScriptUrl(), {
+    method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(Object.assign({}, payload, sendCreds()))
   });
   const txt = await resp.text().catch(()=> "");
   if(txt && txt.indexOf('erro') !== -1 && txt.indexOf('sucesso') === -1) throw new Error(txt);
@@ -2900,7 +3518,7 @@ async function sendPayload(cfg, payload){
 async function retryQueue(){
   const cfg = loadCfg();
   const q = loadQueue();
-  if(!cfg.scriptUrl || !q.length) return;
+  if(!q.length || !getSession()) return;
   const btn = document.getElementById('btnRetryQueue');
   if(btn){ btn.disabled = true; btn.textContent = 'Reenviando...'; }
   const remaining = [];
@@ -2950,7 +3568,7 @@ function updateHistoryStatus(id, status){
 
 /* ============ ESCOLHA: ENVIAR AGORA x AGUARDAR (ao concluir um documento) ============
    Pergunta obrigatória ao final de cada PT/checklist gerado, só quando o
-   envio por e-mail está configurado (⚙ scriptUrl + destEmail). Resolve
+   o envio está disponível (login ativo). Resolve
    com 'now' ou 'later' — ver uso em finalizeAndSend()/generateAndSendDoc(). */
 function askSendChoice(tipoLabel){
   return new Promise(resolve=>{
@@ -2969,7 +3587,7 @@ function askSendChoice(tipoLabel){
    e enviar junto depois") ============
    Fila separada da fila offline (QUEUE_KEY) — aqui os documentos NÃO
    falharam o envio, o técnico só pediu para mandar mais tarde, junto com
-   outros, em um e-mail só (action 'sendBatch' no Apps Script). */
+   outros, numa só chamada (action 'sendBatch' no Apps Script). */
 const PENDING_SEND_KEY = 'pt_pending_send';
 // Teto da fila — sem isso, um técnico que esquece de enviar vai acumulando
 // PDFs em base64 no localStorage sem limite, até lotar o armazenamento do
@@ -3016,8 +3634,8 @@ async function sendPendingBatch(opts){
   const list = loadPendingSend();
   if(!list.length) return;
   const cfg = loadCfg();
-  if(!cfg.scriptUrl || !cfg.destEmail){
-    if(!opts.silent) toast('Configure o envio automático em ⚙ para enviar os documentos pendentes.', 'err');
+  if(!canSendDocs()){
+    if(!opts.silent) toast('Entre com o seu login para enviar os documentos pendentes.', 'err');
     return;
   }
   if(!navigator.onLine){
@@ -3030,7 +3648,7 @@ async function sendPendingBatch(opts){
   try{
     const first = (list[0] && list[0].payload) || {};
     const batchPayload = {
-      action: 'sendBatch', destEmail: cfg.destEmail,
+      action: 'sendBatch',
       empresa: first.empresa || '', usuario: first.usuario || '',
       items: list.map(it=>it.payload)
     };
@@ -3038,7 +3656,7 @@ async function sendPendingBatch(opts){
     list.forEach(it=> updateHistoryStatus(it.meta.id, 'enviado'));
     savePendingSend([]);
     playSuccessSound();
-    if(!opts.silent) toast(list.length>1 ? list.length+' documentos enviados em 1 e-mail!' : 'Documento enviado!', 'ok');
+    if(!opts.silent) toast(list.length>1 ? list.length+' documentos enviados!' : 'Documento enviado!', 'ok');
     renderPendingSendScreen();
     refreshHomeMenuIfVisible();
   }catch(err){
@@ -3049,7 +3667,7 @@ async function sendPendingBatch(opts){
   }
 }
 function deletePendingSend(idx){
-  if(!confirm('Remover este documento da fila de envio em lote? Ele não será enviado por e-mail (mas continua salvo no Histórico).')) return;
+  if(!confirm('Remover este documento da fila de envio em lote? Ele não será enviado (mas continua salvo no Histórico).')) return;
   const list = loadPendingSend();
   list.splice(idx,1);
   savePendingSend(list);
@@ -3073,7 +3691,7 @@ function renderPendingSendScreen(){
         <button type="button" class="btn btn-ghost" data-rmpending="${i}">Remover</button>
       </div>
     </div>`).join('')
-    + `<button type="button" class="btn btn-primary" style="width:100%;margin-top:14px;" id="btnSendPendingBatch">Enviar ${list.length} documento${list.length>1?'s':''} (1 e-mail)</button>`;
+    + `<button type="button" class="btn btn-primary" style="width:100%;margin-top:14px;" id="btnSendPendingBatch">Enviar ${list.length} documento${list.length>1?'s':''}</button>`;
   box.querySelectorAll('[data-rmpending]').forEach(b=>{ b.onclick = ()=> deletePendingSend(parseInt(b.getAttribute('data-rmpending'),10)); });
   const sendBtn = document.getElementById('btnSendPendingBatch');
   if(sendBtn) sendBtn.onclick = ()=> sendPendingBatch({btn: sendBtn});
@@ -3289,9 +3907,9 @@ async function generateAndSendDoc(opts){
       numero: opts.subjectLabel, dataDoc: opts.subjectDate||'', area: opts.subjectArea||'',
       ts: new Date().toISOString(), pdfDataUrl: pdfDataUri, fileName
     };
-    if(cfg.scriptUrl && cfg.destEmail){
+    if(canSendDocs()){
       const payload = Object.assign({
-        destEmail: cfg.destEmail, tipoDocumento: opts.tipoDocumento || opts.subjectLabel,
+        docId: histMeta.id, tipoDocumento: opts.tipoDocumento || opts.subjectLabel,
         ptNumero: opts.subjectLabel, ptData: opts.subjectDate || '', ptArea: opts.subjectArea || '',
         resumo: opts.resumo || '', pdfBase64: base64, pdfNome: fileName
       }, currentEmpresaUsuario());
@@ -3300,10 +3918,10 @@ async function generateAndSendDoc(opts){
         addHistoryEntry(Object.assign({}, stripPdfFromMeta(histMeta), {status:'pendente'}));
         toast('PDF gerado! Documento guardado para enviar junto com outros — veja em "📁 Meus documentos".', 'ok');
       } else {
-        btn.textContent = 'Enviando e-mail...';
+        btn.textContent = 'Enviando...';
         try{
           await sendPayload(cfg, payload);
-          toast('PDF gerado e e-mail enviado com sucesso!', 'ok');
+          toast('PDF gerado e enviado! Já aparece no painel da empresa.', 'ok');
           playSuccessSound();
           addHistoryEntry(Object.assign({}, histMeta, {status:'enviado'}));
         }catch(err){
@@ -3313,7 +3931,7 @@ async function generateAndSendDoc(opts){
         }
       }
     } else {
-      toast('PDF gerado! Veja em 🕘 Histórico. Configure o envio automático em ⚙ para mandar por e-mail também.', 'ok');
+      toast('PDF gerado! Veja em 🕘 Histórico.', 'ok');
       addHistoryEntry(Object.assign({}, histMeta, {status:'gerado'}));
     }
     if(opts.resetFn) opts.resetFn();
@@ -3768,6 +4386,9 @@ function hideAllScreens(){
   document.getElementById('adminAccountModal').classList.remove('show');
   document.getElementById('sendChoiceModal').classList.remove('show');
   document.getElementById('auditModal').classList.remove('show');
+  document.getElementById('painelView').style.display = 'none';
+  document.getElementById('profileModal').classList.remove('show');
+  stopPainelTimers();
 }
 
 function goHome(){
@@ -3783,73 +4404,352 @@ function openDocScreen(docId){
   window.scrollTo(0,0);
 }
 
-function homeItemHtml(id, icon, label, badge){
-  return `<button type="button" class="home-item${badge?' home-item-alert':''}" data-home-item="${id}">`
-    + `<span class="home-item-ic">${icon}</span>${label}`
-    + (badge ? `<span class="home-item-badge">${badge}</span>` : '')
-    + `</button>`;
+/* ============ TEMPO RELATIVO ("há 5 min") ============ */
+function timeAgo(ms, nowMs){
+  const d = Math.max(0, nowMs - ms);
+  const m = Math.floor(d / 60000);
+  if(m < 1) return 'agora mesmo';
+  if(m < 60) return 'há ' + m + ' min';
+  const h = Math.floor(m / 60);
+  if(h < 24) return 'há ' + h + ' h';
+  const dd = Math.floor(h / 24);
+  return 'há ' + dd + (dd === 1 ? ' dia' : ' dias');
+}
+function fmtClock(ms){
+  const d = new Date(ms), pad = n => String(n).padStart(2, '0');
+  const mesmoDia = d.toDateString() === new Date().toDateString();
+  return (mesmoDia ? '' : pad(d.getDate()) + '/' + pad(d.getMonth()+1) + ' · ') + pad(d.getHours()) + ':' + pad(d.getMinutes());
+}
+function sameLocalDay(iso){ const t = Date.parse(iso); return !isNaN(t) && new Date(t).toDateString() === new Date().toDateString(); }
+
+/* ============ PAINEL DE ACOMPANHAMENTO (gestor / administrador) ============ */
+const painel = { empresa:'', data:null, offset:0, dias:1, tec:'', tipo:'', loading:false, tickTimer:null, fetchTimer:null };
+
+function tipoKey(tipoDocumento){
+  const t = (tipoDocumento || '').toLowerCase();
+  if(t.indexOf('permiss') !== -1) return 'pt';
+  if(t.indexOf('culo') !== -1) return 'veiculo';
+  if(t.indexOf('escada') !== -1) return 'escada';
+  return 'outro';
+}
+const TIPO_CHIP = { pt:['PT','blue'], veiculo:['Veículo','ok'], escada:['Escada','wait'], outro:['Doc','gray'] };
+
+function stopPainelTimers(){
+  if(painel.tickTimer){ clearInterval(painel.tickTimer); painel.tickTimer = null; }
+  if(painel.fetchTimer){ clearInterval(painel.fetchTimer); painel.fetchTimer = null; }
+}
+function startPainelTimers(){
+  stopPainelTimers();
+  // a cada 30 s só reescreve o "há X min" (sem rede); a cada 3 min busca dados novos
+  painel.tickTimer = setInterval(()=>{ if(painel.data && document.visibilityState === 'visible') renderPainel(); }, 30000);
+  painel.fetchTimer = setInterval(()=>{ if(document.visibilityState === 'visible' && navigator.onLine) loadPainel(true); }, 180000);
+}
+
+async function openPainel(){
+  if(!isManager()) return;
+  hideAllScreens();
+  const s = getSession();
+  $('painelTitle').textContent = isAdmin() ? 'Painel de acompanhamento' : 'Painel · ' + (s.empresa || '');
+  $('painelView').style.display = 'block';
+  window.scrollTo(0,0);
+  painel.data = null; painel.tec = ''; painel.tipo = ''; $('painelFiltroTipo').value = '';
+  if(isAdmin()){
+    $('painelEmpresaRow').style.display = 'block';
+    const sel = $('painelEmpresa');
+    try{
+      if(!lastLoadedEmpresas.length){
+        const r = await fetchAdminAction(getScriptUrl(), 'listEmpresas');
+        if(!r.error) lastLoadedEmpresas = r.empresas || [];
+      }
+    }catch(e){ /* mostra vazio */ }
+    sel.innerHTML = lastLoadedEmpresas.map(e => `<option value="${escHtml(e.nome)}">${escHtml(e.nome)}</option>`).join('');
+    if(!lastLoadedEmpresas.length){
+      $('painelTecnicos').innerHTML = '<p class="empty">Nenhuma empresa cadastrada ainda.</p>';
+      $('painelStats').innerHTML = ''; $('painelDocs').innerHTML = ''; return;
+    }
+    if(painel.empresa && lastLoadedEmpresas.some(e => e.nome === painel.empresa)) sel.value = painel.empresa;
+    painel.empresa = sel.value;
+  } else {
+    $('painelEmpresaRow').style.display = 'none';
+    painel.empresa = s.empresa || '';
+  }
+  await loadPainel();
+  startPainelTimers();
+}
+
+async function loadPainel(silent){
+  if(painel.loading) return;
+  painel.loading = true;
+  const box = $('painelTecnicos');
+  if(!silent && !painel.data) box.innerHTML = '<p class="empty">Carregando...</p>';
+  try{
+    const r = await fetchAdminAction(getScriptUrl(), 'listPainel', { empresa: painel.empresa, dias: 30 });
+    if(r.error) throw new Error(r.error);
+    painel.data = r;
+    painel.offset = r.serverNow - Date.now();   // usa o relógio do servidor (não do celular)
+    renderPainel();
+  }catch(e){
+    if(!painel.data) box.innerHTML = '<p class="empty" style="color:#A32D2D;">Erro ao carregar: ' + escHtml(e.message || 'falha de conexão') + '</p>';
+    else toast('Não foi possível atualizar agora.', 'err');
+  }finally{
+    painel.loading = false;
+  }
+}
+
+function renderPainel(){
+  const d = painel.data; if(!d) return;
+  const nowS = Date.now() + painel.offset;
+  const inicio = painel.dias === 1 ? d.inicioHoje : nowS - painel.dias * 86400000;
+  const periodoLabel = painel.dias === 1 ? 'hoje' : 'nos últimos ' + painel.dias + ' dias';
+  const docsPeriodo = d.docs.filter(x => x.ts >= inicio);
+  const ativos = {};
+  docsPeriodo.forEach(x => { ativos[x.login] = (ativos[x.login] || 0) + 1; });
+  const nAtivos = d.tecnicos.filter(t => ativos[t.username]).length;
+  const nSem = d.tecnicos.length - nAtivos;
+
+  $('painelStats').innerHTML =
+    `<div class="stat"><b>${docsPeriodo.length}</b><span>documentos ${periodoLabel}</span></div>` +
+    `<div class="stat"><b>${nAtivos}/${d.tecnicos.length}</b><span>técnicos com envio</span></div>` +
+    `<div class="stat${nSem ? ' alert' : ''}"><b>${nSem}</b><span>sem envio ${periodoLabel}</span></div>`;
+
+  // Técnicos
+  if(!d.tecnicos.length){
+    $('painelTecnicos').innerHTML = '<p class="empty">Nenhum técnico cadastrado nesta empresa ainda.</p>';
+  } else {
+    $('painelTecnicos').innerHTML = d.tecnicos.map(t => {
+      const quando = t.ultimoTs
+        ? `<span class="${nowS - t.ultimoTs < 3600000 ? 'fresh' : ''}">Enviou ${timeAgo(t.ultimoTs, nowS)} · ${escHtml(shortTipo(t.ultimoTipo))}${tipoKey(t.ultimoTipo) === 'pt' && t.ultimoNumero ? ' ' + escHtml(t.ultimoNumero) : ''}</span>`
+        : '<span class="none">Nenhum envio nos últimos 30 dias</span>';
+      return `<button type="button" class="tec-row${painel.tec === t.username ? ' sel' : ''}" data-tec="${escHtml(t.username)}">` +
+        avatarHtml(t.nome, t.foto, 44) +
+        `<div class="m"><b>${escHtml(t.nome)}</b>${quando}</div>` +
+        `<div class="n"><b>${ativos[t.username] || 0}</b>${painel.dias === 1 ? 'hoje' : 'no período'}</div></button>`;
+    }).join('');
+    $('painelTecnicos').querySelectorAll('[data-tec]').forEach(b => {
+      b.onclick = ()=>{
+        const u = b.getAttribute('data-tec');
+        painel.tec = painel.tec === u ? '' : u;
+        $('painelFiltroTec').value = painel.tec;
+        renderPainel();
+      };
+    });
+  }
+
+  // Filtro por técnico
+  const selTec = $('painelFiltroTec');
+  const optTec = '<option value="">Todos os técnicos</option>' + d.tecnicos.map(t => `<option value="${escHtml(t.username)}">${escHtml(t.nome)}</option>`).join('');
+  if(selTec.getAttribute('data-sig') !== optTec){ selTec.innerHTML = optTec; selTec.setAttribute('data-sig', optTec); }
+  selTec.value = painel.tec;
+
+  // Documentos
+  let docs = docsPeriodo;
+  if(painel.tec) docs = docs.filter(x => x.login === painel.tec);
+  if(painel.tipo) docs = docs.filter(x => tipoKey(x.tipoDocumento) === painel.tipo);
+  const nomes = {}; d.tecnicos.forEach(t => { nomes[t.username] = t.nome; });
+  if(!docs.length){
+    $('painelDocs').innerHTML = '<p class="empty">Nenhum documento enviado ' + periodoLabel + (painel.tec || painel.tipo ? ' com esse filtro' : '') + '.</p>';
+  } else {
+    $('painelDocs').innerHTML = docs.slice(0, 200).map((x, i) => {
+      const k = TIPO_CHIP[tipoKey(x.tipoDocumento)];
+      const quem = nomes[x.login] || x.usuario || x.login || '—';
+      const btn = x.fileId
+        ? `<button type="button" class="dl" data-pdf="${i}">PDF</button>`
+        : `<button type="button" class="dl" disabled title="${x.expirado ? 'Passou do prazo de guarda' : 'PDF indisponível'}">${x.expirado ? 'Expirado' : '—'}</button>`;
+      return `<div class="pdoc"><div class="m">` +
+        `<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span class="pill ${k[1]}">${k[0]}</span><b>${escHtml(tipoKey(x.tipoDocumento) === 'pt' ? (x.numero || 'S/N') : (x.area || x.numero || ''))}</b></div>` +
+        `<span>${escHtml(quem)}${tipoKey(x.tipoDocumento) === 'pt' && x.area ? ' · ' + escHtml(x.area) : ''}</span></div>` +
+        `<div class="when"><b>${timeAgo(x.ts, nowS)}</b>${fmtClock(x.ts)}</div>${btn}</div>`;
+    }).join('');
+    $('painelDocs').querySelectorAll('[data-pdf]').forEach(b => {
+      const doc = docs[parseInt(b.getAttribute('data-pdf'), 10)];
+      b.onclick = ()=> painelDownload(doc, b);
+    });
+  }
+  $('painelAtualizado').textContent = 'Atualizado às ' + fmtClock(nowS).replace(/^.*· /, '') + ' · atualiza sozinho';
+}
+function shortTipo(t){ const k = tipoKey(t); return k === 'pt' ? 'PT' : k === 'veiculo' ? 'Veículo' : k === 'escada' ? 'Escada' : 'Doc'; }
+
+async function painelDownload(doc, btn){
+  const old = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Baixando...';
+  try{
+    const r = await fetchAdminAction(getScriptUrl(), 'getPdf', { fileId: doc.fileId });
+    if(r.error) throw new Error(r.error);
+    const bin = atob(r.base64), bytes = new Uint8Array(bin.length);
+    for(let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    const url = URL.createObjectURL(new Blob([bytes], {type:'application/pdf'}));
+    const a = document.createElement('a');
+    a.href = url; a.download = r.nome || doc.pdfNome || 'documento.pdf';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=> URL.revokeObjectURL(url), 60000);
+  }catch(e){
+    toast(e.message || 'Não foi possível baixar o PDF.', 'err');
+  }finally{
+    btn.disabled = false; btn.textContent = old;
+  }
+}
+
+$('painelBack').onclick = goHome;
+$('painelRefresh').onclick = ()=> loadPainel();
+$('painelEmpresa').onchange = ()=>{ painel.empresa = $('painelEmpresa').value; painel.data = null; painel.tec = ''; loadPainel(); };
+$('painelPeriodo').querySelectorAll('button').forEach(b => {
+  b.onclick = ()=>{
+    painel.dias = parseInt(b.getAttribute('data-d'), 10);
+    $('painelPeriodo').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+    renderPainel();
+  };
+});
+$('painelFiltroTec').onchange = ()=>{ painel.tec = $('painelFiltroTec').value; renderPainel(); };
+$('painelFiltroTipo').onchange = ()=>{ painel.tipo = $('painelFiltroTipo').value; renderPainel(); };
+
+/* ============ MENU INICIAL (novo visual) ============ */
+const ICONS = {
+  pt:'<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg>',
+  veiculo:'<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 16V9l2-4h10l2 4v7"/><path d="M3 16h18v3H3z"/><circle cx="7.5" cy="13" r=".6"/><circle cx="16.5" cy="13" r=".6"/></svg>',
+  escada:'<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3 5 21M17 3l2 18"/><path d="M6.2 8h11.6M5.7 13h12.6M5.3 18h13.4"/></svg>',
+  meusDocs:'<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>',
+  painel:'<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>',
+  users:'<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14a6.5 6.5 0 0 1 3.5 6"/></svg>',
+  empresas:'<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V5a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v16M14 10h5a1 1 0 0 1 1 1v10M2 21h20M8 8h2M8 12h2M8 16h2"/></svg>',
+  settings:'<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
+  conta:'<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>',
+  home:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 12 3l9 8"/><path d="M5 10v10h14V10"/></svg>',
+  perfil:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>',
+  ok:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+  clock:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>'
+};
+function tileHtml(id, label, bg, fg, opts){
+  opts = opts || {};
+  const badge = opts.badge ? `<span class="badge">${opts.badge}</span>` : '';
+  return `<button type="button" class="tile${opts.wide ? ' wide' : ''}" data-home="${id}">${badge}` +
+    `<span class="ic" style="background:${bg};color:${fg};">${ICONS[opts.icon || id]}</span>` +
+    (opts.sub ? `<span class="t"><b>${label}</b><small>${opts.sub}</small></span>` : `<b>${label}</b>`) + `</button>`;
 }
 
 function renderHomeMenu(){
-  const box = document.getElementById('homeMenuItems');
+  const box = $('homeMenuItems');
   if(!box) return;
-  const admin = isAdmin();
-  const s = getSession();
+  const s = getSession() || {};
+  const admin = isAdmin(), gestor = isGestor();
 
-  // Logo da empresa (definida pelo Administrador em Empresas) — só para
-  // o menu dos técnicos, centralizada acima dos botões.
-  const companyLogoBox = document.getElementById('homeCompanyLogo');
-  const companyLogoImg = document.getElementById('homeCompanyLogoImg');
+  // Cabeçalho: foto, saudação e perfil
+  const primeiro = ((s.nome || s.username || '') + '').trim().split(/\s+/)[0] || '';
+  $('homeGreeting').textContent = admin ? 'Administrador' : 'Olá, ' + primeiro;
+  $('homeUserRole').textContent = admin ? 'DocSeg Digital' : roleLabel(s.role) + (s.empresa ? ' · ' + s.empresa : '');
+  $('homeAvatar').innerHTML = s.foto ? `<img src="${s.foto}" alt="">` : escHtml(initialsOf(s.nome || s.username));
+  $('homeAvatar').onclick = openProfileModal;
+
+  // Logo da empresa (definida pelo Administrador em Empresas)
+  const companyLogoBox = $('homeCompanyLogo'), companyLogoImg = $('homeCompanyLogoImg');
   if(companyLogoBox && companyLogoImg){
-    if(!admin && s && s.empresaLogoDataUrl){
-      companyLogoImg.src = s.empresaLogoDataUrl;
-      companyLogoBox.style.display = 'flex';
+    if(!admin && s.empresaLogoDataUrl){ companyLogoImg.src = s.empresaLogoDataUrl; companyLogoBox.style.display = 'flex'; }
+    else companyLogoBox.style.display = 'none';
+  }
+
+  const nAction = admin ? 0 : (listPtDrafts().length + loadPendingSend().length + loadQueue().length);
+
+  // Cartão de resumo do dia
+  const stat = $('homeStat');
+  if(admin){ stat.style.display = 'none'; }
+  else {
+    const hist = loadHistory();
+    const enviadosHoje = hist.filter(h => h.status === 'enviado' && sameLocalDay(h.ts)).length;
+    const aguardando = loadPendingSend().length + loadQueue().length;
+    let ic = ICONS.ok, cls = '', t, sub;
+    if(aguardando > 0){
+      ic = ICONS.clock; cls = ' warn';
+      t = aguardando + (aguardando === 1 ? ' documento aguardando envio' : ' documentos aguardando envio');
+      sub = 'Abra "Meus documentos" para enviar';
+    } else if(enviadosHoje > 0){
+      t = enviadosHoje + (enviadosHoje === 1 ? ' documento enviado hoje' : ' documentos enviados hoje');
+      sub = 'Todos já aparecem no painel da empresa';
     } else {
-      companyLogoBox.style.display = 'none';
+      t = 'Nenhum documento enviado hoje';
+      sub = 'Comece por um dos documentos abaixo';
     }
+    $('homeStatIc').className = 'ic' + cls;
+    $('homeStatIc').innerHTML = ic;
+    $('homeStatTitle').textContent = t;
+    $('homeStatSub').textContent = sub;
+    stat.style.display = 'flex';
   }
 
   let html = '';
   if(admin){
-    html += homeItemHtml('users', '👤', 'Usuários');
-    html += homeItemHtml('adminAccount', '🔑', 'Administrador');
-    html += homeItemHtml('empresas', '🏢', 'Empresas');
-    html += homeItemHtml('settings', '⚙', 'Configurações');
+    html += '<div class="ds-sec">Gestão</div><div class="ds-grid">';
+    html += tileHtml('painel', 'Painel', '#E6ECF8', '#12254B');
+    html += tileHtml('users', 'Usuários', '#DDF1EF', '#0F6B63');
+    html += tileHtml('empresas', 'Empresas', '#FFF1D6', '#8A4B00');
+    html += tileHtml('settings', 'Configurações', '#E8ECF2', '#3B475E');
+    html += tileHtml('adminAccount', 'Senha do admin', '#FDECEB', '#A32D2D', {icon:'conta'});
+    html += '</div>';
   } else {
-    html += homeItemHtml('pt', '📋', 'Permissão de Trabalho');
-    html += homeItemHtml('veiculo', '🚗', 'Checklist de Veículo');
-    html += homeItemHtml('escada', '🪜', 'Checklist de Escada');
-    // "Meus documentos" junta rascunhos (PTs em andamento), envio pendente e
-    // a fila offline numa tela só — o badge conta só o que precisa de ação
-    // (enviados não contam, já estão resolvidos).
-    const nAction = listPtDrafts().length + loadPendingSend().length + loadQueue().length;
-    html += homeItemHtml('meusDocs', '📁', 'Meus documentos', nAction>0 ? String(nAction) : '');
-  }
-  box.innerHTML = html;
-  box.querySelectorAll('[data-home-item]').forEach(btn=>{
-    btn.onclick = ()=>{
-      const id = btn.getAttribute('data-home-item');
-      if(id==='users') openUsersModal();
-      else if(id==='adminAccount') openAdminAccountModal();
-      else if(id==='empresas') openEmpresasModal();
-      else if(id==='settings') openSettingsModal();
-      else if(id==='meusDocs') openMeusDocsScreen();
-      else openDocScreen(id);
-    };
-  });
-
-  // Aviso/lembrete da empresa (definido pelo Administrador em Empresas) —
-  // fecha o menu, logo abaixo de "PTs em andamento". Só para técnicos.
-  const noticeBox = document.getElementById('homeNotice');
-  const noticeText = document.getElementById('homeNoticeText');
-  if(noticeBox && noticeText){
-    if(!admin && s && s.empresaAviso){
-      noticeText.textContent = s.empresaAviso;
-      noticeBox.style.display = 'block';
-    } else {
-      noticeBox.style.display = 'none';
+    html += '<div class="ds-sec">Novo documento</div><div class="ds-grid">';
+    html += tileHtml('pt', 'Permissão de Trabalho', '#E6ECF8', '#1D3A6F');
+    html += tileHtml('veiculo', 'Checklist de Veículo', '#E3F4E6', '#1F6B2A');
+    html += tileHtml('escada', 'Checklist de Escada', '#FFF1D6', '#8A4B00');
+    html += tileHtml('meusDocs', 'Meus documentos', '#DDF1EF', '#0F6B63', {badge: nAction > 0 ? String(nAction) : ''});
+    html += '</div>';
+    if(gestor){
+      html += '<div class="ds-sec">Acompanhamento</div><div class="ds-grid">';
+      html += tileHtml('painel', 'Painel', '#E6ECF8', '#12254B', {sub:'Quem enviou e quando'});
+      html += tileHtml('users', 'Técnicos', '#DDF1EF', '#0F6B63', {sub:'Cadastro e fotos'});
+      html += '</div>';
     }
   }
+  box.innerHTML = html;
+  box.querySelectorAll('[data-home]').forEach(btn => { btn.onclick = ()=> homeAction(btn.getAttribute('data-home')); });
+
+  // Últimos documentos (neste aparelho)
+  const rec = $('homeRecent');
+  if(!admin){
+    const hist = loadHistory().filter(h => h.status).slice(0, 3);
+    if(hist.length){
+      const now = Date.now();
+      rec.innerHTML = '<div class="ds-sec ds-sec-row" style="margin-top:22px;"><span>Últimos documentos</span><button type="button" id="homeVerTodas">Ver todos</button></div>' +
+        hist.map(h => {
+          const t = Date.parse(h.ts);
+          let pill;
+          if(h.status === 'enviado') pill = `<span class="pill ok">Enviado ${timeAgo(t, now)}</span>`;
+          else if(h.status === 'pendente') pill = '<span class="pill wait">Aguardando envio</span>';
+          else pill = '<span class="pill gray">Gerado</span>';
+          const titulo = (h.tipo === 'pt' ? 'PT Nº ' + (h.numero || 'S/N') : (h.tipoLabel || 'Documento'));
+          return `<div class="ds-row"><div class="m"><b>${escHtml(titulo)}</b><span>${escHtml(h.area || h.numero || '')}</span></div>${pill}</div>`;
+        }).join('');
+      $('homeVerTodas').onclick = openMeusDocsScreen;
+    } else rec.innerHTML = '';
+  } else rec.innerHTML = '';
+
+  // Barra de navegação de baixo
+  const bar = $('homeTabbar');
+  if(admin){ bar.style.display = 'none'; }
+  else {
+    bar.style.display = 'flex';
+    const tab = (id, label, ic, on, badge) => `<button type="button" data-home="${id}"${on ? ' class="on"' : ''}>${ICONS[ic]}${label}${badge ? `<span class="nb">${badge}</span>` : ''}</button>`;
+    bar.innerHTML = tab('inicio', 'Início', 'home', true) +
+      (gestor ? tab('painel', 'Painel', 'painel') : '') +
+      tab('meusDocs', 'Documentos', 'meusDocs', false, nAction > 0 ? nAction : '') +
+      tab('perfil', 'Perfil', 'perfil');
+    bar.querySelectorAll('[data-home]').forEach(btn => { btn.onclick = ()=> homeAction(btn.getAttribute('data-home')); });
+  }
+
+  // Aviso/lembrete da empresa (definido pelo Administrador em Empresas)
+  const noticeBox = $('homeNotice'), noticeText = $('homeNoticeText');
+  if(noticeBox && noticeText){
+    if(!admin && s.empresaAviso){ noticeText.textContent = s.empresaAviso; noticeBox.style.display = 'block'; }
+    else noticeBox.style.display = 'none';
+  }
+}
+function homeAction(id){
+  if(id === 'users') openUsersModal();
+  else if(id === 'adminAccount') openAdminAccountModal();
+  else if(id === 'empresas') openEmpresasModal();
+  else if(id === 'settings') openSettingsModal();
+  else if(id === 'meusDocs') openMeusDocsScreen();
+  else if(id === 'painel') openPainel();
+  else if(id === 'perfil') openProfileModal();
+  else if(id === 'inicio') { window.scrollTo(0,0); }
+  else openDocScreen(id);
 }
 
 document.getElementById('ptBack').onclick = goHome;
@@ -3950,6 +4850,8 @@ document.getElementById('btnSaveExitPt').onclick = parkCurrentPtAndGoHome;
 
 /* ============ INIT ============ */
 async function initApp(){
+  // Servidor trocado (login individual): na primeira abertura, usa o endereço atual do app.
+  { const c = loadCfg(); if(c.serverGen !== SERVER_GEN){ c.scriptUrl = DEFAULT_SCRIPT_URL; c.serverGen = SERVER_GEN; saveCfg(c); } }
   const cfgApplied = applyCfgFromUrlIfPresent();
   loadDraft();
   loadVDraft();
@@ -3962,7 +4864,17 @@ async function initApp(){
   if(!eState.tecNome){ const c=loadCfg(); if(c.tecNome) eState.tecNome = c.tecNome; }
   updateBrand();
   applyRoleVisibility();
-  if(isLoggedIn()){ hideLoginScreen(); initPushNotifications(getSession()); goHome(); } else showLoginScreen();
+  const sess = getSession();
+  if(sess && (sess.role === 'tecnico' || sess.role === 'gestor' || sess.role === 'admin') && sess.username){
+    hideLoginScreen();
+    if(gatesPending(sess)){ runGates().then(()=>{ initPushNotifications(getSession()); goHome(); }); }
+    else { initPushNotifications(sess); goHome(); }
+    refreshSessionFromServer();
+  } else {
+    // sessão antiga (login compartilhado da empresa): não vale mais
+    if(sess) localStorage.removeItem(SESSION_KEY);
+    showLoginScreen();
+  }
   renderCurrentStep();
   if(cfgApplied) toast('Configuração da empresa aplicada automaticamente neste aparelho!', 'ok');
   renderOfflineBanner();
