@@ -1238,6 +1238,9 @@
 
     <p class="desc" style="margin-bottom:6px; margin-top:14px; border-top:1px solid var(--line); padding-top:14px;">Perguntas dos formulários desta empresa</p>
     <p class="hint" style="margin-top:-4px;margin-bottom:10px;">Se não personalizar, os colaboradores dessa empresa usam as perguntas padrão de fábrica. Toque no título de cada grupo para abrir.</p>
+    <p class="desc" style="margin-bottom:6px; margin-top:14px; border-top:1px solid var(--line); padding-top:14px;">Documentos contratados</p>
+    <p class="hint" style="margin-top:-4px;margin-bottom:8px;">Só estes aparecem para os colaboradores desta empresa. Documentos já enviados continuam no painel mesmo se você desligar um.</p>
+    <div id="empresaFormDocs"></div>
     <p class="desc" style="margin-bottom:6px; margin-top:14px; border-top:1px solid var(--line); padding-top:14px;">Contrato (licença de uso)</p>
     <p class="hint" style="margin-top:-4px;margin-bottom:10px;">Passada a validade, gestor e colaboradores da empresa deixam de entrar, sozinho, sem você precisar fazer nada. O gestor recebe um aviso na tela inicial perto do vencimento. Deixe a validade em branco para uso sem prazo.</p>
     <div class="ct-grid">
@@ -1663,7 +1666,8 @@ function sessionFromServer(uname, passHash, r){
     empresaAviso: r.empresaAviso || '', empresaAvisoGestor: r.empresaAvisoGestor || '', contratoFim: r.contratoFim || '', contratoAvisoDias: r.contratoAvisoDias || 0, contratoCarencia: r.contratoCarencia || 0, empresaLogoDataUrl: r.empresaLogoDataUrl || '',
     empresaLogoDataUrl2: r.empresaLogoDataUrl2 || '',
     empresaThemeColor: r.empresaThemeColor || '', empresaThemeColor2: r.empresaThemeColor2 || '',
-    empresaPtPrefix: r.empresaPtPrefix || ''
+    empresaPtPrefix: r.empresaPtPrefix || '',
+    empresaDocumentos: Array.isArray(r.empresaDocumentos) && r.empresaDocumentos.length ? r.empresaDocumentos : null
   };
 }
 
@@ -3244,7 +3248,21 @@ function updateContratoInfo(){
     : (d === 0 ? 'Vence hoje (vale até o fim do dia).' : 'Ativo, vence em ' + d + ' dia(s). Vale até o fim do dia ' + brDate(fim) + '.');
 }
 ['empresaFormContratoIni','empresaFormContratoFim','empresaFormCarencia'].forEach(id => { const e = document.getElementById(id); if(e) e.addEventListener('change', updateContratoInfo); });
+function docsResumo(emp){
+  const d = (Array.isArray(emp.documentos) && emp.documentos.length) ? emp.documentos : DOCS_CATALOGO.map(x => x.key);
+  const nome = {pt:'PT', veiculo:'Veículo', escada:'Escada'};
+  return DOCS_CATALOGO.filter(x => d.indexOf(x.key) !== -1).map(x => nome[x.key]).join(' · ') + ' (' + d.length + (d.length === 1 ? ' doc)' : ' docs)');
+}
+function paintEmpresaDocs(sel){
+  const box = document.getElementById('empresaFormDocs');
+  box.innerHTML = DOCS_CATALOGO.map(d => `<label style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #EDF0F6;font-size:14px;font-weight:600;"><input type="checkbox" data-empdoc="${d.key}" style="width:20px;height:20px;" ${sel.indexOf(d.key) !== -1 ? 'checked' : ''}>${d.label}</label>`).join('') +
+    '<div class="hint" id="empresaDocsCount" style="margin-top:6px;"></div>';
+  const upd = ()=>{ const n = box.querySelectorAll('input:checked').length; document.getElementById('empresaDocsCount').innerHTML = n + ' de ' + DOCS_CATALOGO.length + ' ligados' + (n === 0 ? ' · <b style="color:#A32D2D">pelo menos 1 é obrigatório</b>' : ''); };
+  box.querySelectorAll('input').forEach(i => i.onchange = upd); upd();
+}
+function empresaDocsSelecionados(){ return [...document.querySelectorAll('#empresaFormDocs input[data-empdoc]:checked')].map(i => i.getAttribute('data-empdoc')); }
 function resetEmpresaForm(){
+  paintEmpresaDocs(DOCS_CATALOGO.map(d => d.key));
   document.getElementById('empresaFormNome').value = '';
   document.getElementById('empresaFormAviso').value = '';
   document.getElementById('empresaFormSuspenso').checked = false;
@@ -3363,7 +3381,7 @@ async function loadEmpresasList(){
     const alerta = (nVencer || nVenc) ? '<div class="ct-alert"><b>Atenção:</b> ' + [nVencer ? nVencer + (nVencer === 1 ? ' empresa vence' : ' empresas vencem') + ' nos próximos 30 dias' : '', nVenc ? nVenc + (nVenc === 1 ? ' já venceu' : ' já venceram') : ''].filter(Boolean).join(' e ') + '.</div>' : '';
     box.innerHTML = alerta + lastLoadedEmpresas.map(emp => `
       <div class="user-row">
-        <div><b>${emp.nome}</b><div style="font-size:11px;color:var(--ink-soft);margin-top:2px;">${contratoSituacao(emp).sub}</div><span class="ct-pill ${contratoSituacao(emp).cls}" style="margin-top:5px;">${contratoSituacao(emp).txt}</span></div>
+        <div><b>${emp.nome}</b><div style="font-size:11px;color:var(--ink-soft);margin-top:2px;">${docsResumo(emp)}</div><div style="font-size:11px;color:var(--ink-soft);margin-top:2px;">${contratoSituacao(emp).sub}</div><span class="ct-pill ${contratoSituacao(emp).cls}" style="margin-top:5px;">${contratoSituacao(emp).txt}</span></div>
         <div style="display:flex;gap:6px;">
           <button type="button" class="rm-btn edit-empresa" data-nome="${emp.nome.replace(/"/g,'&quot;')}" title="Editar">✎</button>
           <button type="button" class="rm-btn del-empresa" data-nome="${emp.nome.replace(/"/g,'&quot;')}" title="Excluir">✕</button>
@@ -3380,6 +3398,7 @@ function loadEmpresaIntoForm(nome){
   const emp = lastLoadedEmpresas.find(x=>x.nome===nome);
   if(!emp) return;
   document.getElementById('empresaFormNome').value = emp.nome;
+  paintEmpresaDocs(Array.isArray(emp.documentos) && emp.documentos.length ? emp.documentos : DOCS_CATALOGO.map(d => d.key));
   document.getElementById('empresaFormAviso').value = emp.avisoGestor || '';
   document.getElementById('empresaFormSuspenso').checked = !!emp.suspenso;
   document.getElementById('empresaFormSuspensoMsg').value = emp.suspensoMsg || '';
@@ -3409,6 +3428,8 @@ document.getElementById('btnEmpresaFormSave').onclick = async ()=>{
   if(!scriptUrl){ toast('Configure a URL do Google Apps Script em Configurações primeiro.', 'err'); return; }
   const nome = document.getElementById('empresaFormNome').value.trim();
   if(!nome){ toast('Digite o nome da empresa.', 'err'); return; }
+  const documentos = empresaDocsSelecionados();
+  if(!documentos.length){ toast('Ligue pelo menos 1 documento contratado.', 'err'); return; }
   const aviso = document.getElementById('empresaFormAviso').value.trim();
   const btn = document.getElementById('btnEmpresaFormSave');
   btn.disabled = true; const oldTxt = btn.textContent; btn.textContent = 'Salvando...';
@@ -3419,7 +3440,7 @@ document.getElementById('btnEmpresaFormSave').onclick = async ()=>{
     const emailAtivo = document.getElementById('empresaFormEmailAtivo').checked;
     const emailDestino = document.getElementById('empresaFormEmailDestino').value.trim();
     if(emailAtivo && !emailDestino){ toast('Informe o e-mail de destino ou desligue o envio por e-mail.', 'err'); btn.disabled = false; btn.textContent = oldTxt; return; }
-    const payload = Object.assign({action:'saveEmpresa', nome, avisoGestor: aviso, suspenso: document.getElementById('empresaFormSuspenso').checked, suspensoMsg: document.getElementById('empresaFormSuspensoMsg').value.trim(), contratoInicio: document.getElementById('empresaFormContratoIni').value, contratoFim: document.getElementById('empresaFormContratoFim').value, avisoDias: +document.getElementById('empresaFormAvisoDias').value, carenciaDias: +document.getElementById('empresaFormCarencia').value, themeColor, themeColor2, ptPrefix, emailAtivo, emailDestino, driveEmails: document.getElementById('empresaFormDriveEmails').value.trim()}, currentAdminCreds());
+    const payload = Object.assign({action:'saveEmpresa', nome, documentos, avisoGestor: aviso, suspenso: document.getElementById('empresaFormSuspenso').checked, suspensoMsg: document.getElementById('empresaFormSuspensoMsg').value.trim(), contratoInicio: document.getElementById('empresaFormContratoIni').value, contratoFim: document.getElementById('empresaFormContratoFim').value, avisoDias: +document.getElementById('empresaFormAvisoDias').value, carenciaDias: +document.getElementById('empresaFormCarencia').value, themeColor, themeColor2, ptPrefix, emailAtivo, emailDestino, driveEmails: document.getElementById('empresaFormDriveEmails').value.trim()}, currentAdminCreds());
     // só manda o campo da logo quando o admin realmente mexeu nela
     // (escolheu uma nova ou clicou em "Remover logo") — null = não mexeu.
     if(empresaFormLogoDataUrl !== null) payload.logoDataUrl = empresaFormLogoDataUrl;
@@ -3454,9 +3475,22 @@ async function deleteEmpresaByNome(nome){
     toast(err.message || 'Não foi possível excluir.', 'err');
   }
 }
+/* ============ DOCUMENTOS CONTRATADOS ============ */
+const DOCS_CATALOGO = [
+  {key:'pt', label:'Permissão de Trabalho'},
+  {key:'veiculo', label:'Checklist de Veículo'},
+  {key:'escada', label:'Checklist de Escada'}
+];
+// Documentos que a empresa da pessoa contratou (admin e sessões antigas: todos)
+function docsAtivos(){
+  const s = getSession() || {};
+  if(isAdmin() || !Array.isArray(s.empresaDocumentos) || !s.empresaDocumentos.length) return DOCS_CATALOGO.map(d => d.key);
+  return DOCS_CATALOGO.map(d => d.key).filter(k => s.empresaDocumentos.indexOf(k) !== -1);
+}
+
 /* ============ SUPORTE ============ */
 const SUPORTE_WHATS = '5571996033896';
-const APP_VERSION = '3.2';
+const APP_VERSION = '3.3';
 const SUPORTE_FAQ = [
   ['Como envio um documento?', 'Preencha o documento (PT, checklist de veículo ou de escada) e toque em Enviar. Escolha "Enviar agora" ou "Guardar e enviar depois". Em "Meus documentos" você vê o que já foi enviado.'],
   ['Estou sem internet, e agora?', 'Pode preencher normalmente. O documento fica guardado no aparelho e é enviado sozinho quando a internet voltar. Em "Meus documentos" aparece como "Aguardando envio".'],
@@ -3603,13 +3637,22 @@ $('chamadosRefresh').onclick = loadChamados;
 /* ============ QUESTIONÁRIOS (Administrador) ============ */
 let qEmpresasCache = [];
 function qCurrentEmpresa(){ return qEmpresasCache.find(e => e.nome === document.getElementById('qEmpresa').value); }
+function qDocsPermitidos(){
+  const emp = qCurrentEmpresa();
+  const d = emp && Array.isArray(emp.documentos) && emp.documentos.length ? emp.documentos : QUESTION_DOCS.map(x => x.key);
+  return QUESTION_DOCS.filter(x => d.indexOf(x.key) !== -1);
+}
 function paintQDocTabs(){
   const box = document.getElementById('qDocTabs');
-  box.innerHTML = QUESTION_DOCS.map(d => `<button type="button" data-qdoc="${d.key}" class="${d.key===questionEditorDoc?'on':''}">${d.label}</button>`).join('');
+  const perm = qDocsPermitidos();
+  if(!perm.some(x => x.key === questionEditorDoc)) questionEditorDoc = perm[0] ? perm[0].key : 'pt';
+  box.innerHTML = perm.map(d => `<button type="button" data-qdoc="${d.key}" class="${d.key===questionEditorDoc?'on':''}">${d.label}</button>`).join('');
   box.querySelectorAll('[data-qdoc]').forEach(b => b.onclick = ()=>{ questionEditorDoc = b.getAttribute('data-qdoc'); paintQDocTabs(); paintQuestionEditor(); });
 }
 function qLoadSelected(){
   const emp = qCurrentEmpresa();
+  const perm = qDocsPermitidos();
+  if(!perm.some(x => x.key === questionEditorDoc)) questionEditorDoc = perm[0] ? perm[0].key : 'pt';
   initQuestionEditorFromPerguntas(emp ? emp.perguntas : {});
   paintQDocTabs();
 }
@@ -5024,6 +5067,7 @@ function goHome(){
 }
 
 function openDocScreen(docId){
+  if(['pt','veiculo','escada'].indexOf(docId) !== -1 && docsAtivos().indexOf(docId) === -1){ toast('Este documento não está disponível para a sua empresa.', 'err'); return; }
   hideAllScreens();
   switchDoc(docId);
   window.scrollTo(0,0);
@@ -5077,7 +5121,7 @@ async function openPainel(){
   $('painelTitle').textContent = isAdmin() ? 'Painel de acompanhamento' : 'Painel · ' + (s.empresa || '');
   $('painelView').style.display = 'block';
   window.scrollTo(0,0);
-  painel.data = null; painel.tec = ''; painel.tipo = ''; $('painelFiltroTipo').value = '';
+  painel.data = null; painel.tec = ''; painel.tipo = ''; $('painelFiltroTipo').value = ''; applyPainelTipoOptions();
   if(isAdmin()){
     $('painelEmpresaRow').style.display = 'block';
     const sel = $('painelEmpresa');
@@ -5225,6 +5269,10 @@ $('painelPeriodo').querySelectorAll('button').forEach(b => {
   };
 });
 $('painelFiltroTec').onchange = ()=>{ painel.tec = $('painelFiltroTec').value; renderPainel(); };
+function applyPainelTipoOptions(){
+  const dA = docsAtivos(), sel = $('painelFiltroTipo');
+  [...sel.options].forEach(o => { o.hidden = !!o.value && dA.indexOf(o.value) === -1; o.disabled = o.hidden; });
+}
 $('painelFiltroTipo').onchange = ()=>{ painel.tipo = $('painelFiltroTipo').value; renderPainel(); };
 
 /* ============ MENU INICIAL (novo visual) ============ */
@@ -5294,9 +5342,10 @@ function renderHomeMenu(){
     html += '</div>';
   } else {
     html += '<div class="ds-sec">Novo documento</div><div class="ds-grid">';
-    html += tileHtml('pt', 'Permissão de Trabalho', '#E6ECF8', '#1D3A6F');
-    html += tileHtml('veiculo', 'Checklist de Veículo', '#E3F4E6', '#1F6B2A');
-    html += tileHtml('escada', 'Checklist de Escada', '#FFF1D6', '#8A4B00');
+    const dA = docsAtivos();
+    if(dA.indexOf('pt') !== -1) html += tileHtml('pt', 'Permissão de Trabalho', '#E6ECF8', '#1D3A6F');
+    if(dA.indexOf('veiculo') !== -1) html += tileHtml('veiculo', 'Checklist de Veículo', '#E3F4E6', '#1F6B2A');
+    if(dA.indexOf('escada') !== -1) html += tileHtml('escada', 'Checklist de Escada', '#FFF1D6', '#8A4B00');
     html += tileHtml('meusDocs', 'Meus documentos', '#DDF1EF', '#0F6B63', {badge: nAction > 0 ? String(nAction) : ''});
     html += '</div>';
   }
