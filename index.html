@@ -462,12 +462,12 @@
   .draft-actions .btn{flex:1; padding:9px; font-size:13px;}
 
   /* ============ TELAS DE ADMINISTRAÇÃO EM TELA CHEIA (sem caixinha/fundo escuro) ============ */
-  #usersModal, #empresasModal, #settingsModal, #adminAccountModal, #auditModal{background:#fff; align-items:stretch; justify-content:stretch;}
-  #usersModal .modal, #empresasModal .modal, #settingsModal .modal, #adminAccountModal .modal, #auditModal .modal{
+  #usersModal, #empresasModal, #questionariosModal, #settingsModal, #adminAccountModal, #auditModal{background:#fff; align-items:stretch; justify-content:stretch;}
+  #usersModal .modal, #empresasModal .modal, #questionariosModal .modal, #settingsModal .modal, #adminAccountModal .modal, #auditModal .modal{
     width:100%; max-width:none; height:100%; max-height:100%; border-radius:0;
     padding:0 16px calc(18px + env(safe-area-inset-bottom));
   }
-  #usersModal .modal-close, #empresasModal .modal-close, #settingsModal .modal-close, #adminAccountModal .modal-close, #auditModal .modal-close{
+  #usersModal .modal-close, #empresasModal .modal-close, #questionariosModal .modal-close, #settingsModal .modal-close, #adminAccountModal .modal-close, #auditModal .modal-close{
     float:none; position:sticky; top:0; left:0; margin:0 -16px 14px; width:calc(100% + 32px);
     text-align:left; background:#12254B; color:#fff; padding:16px; font-size:20px; z-index:5; border-radius:0;
   }
@@ -542,6 +542,9 @@
   .ds-statcard b{display:block; font-size:14.5px;}
   .ds-statcard span{font-size:12.5px; color:#566179;}
   .ds-body{padding:20px 16px 0; max-width:520px; margin:0 auto;}
+  .q-tabs{display:flex; gap:6px; flex-wrap:wrap; margin:6px 0 12px;}
+  .q-tabs button{border:1.5px solid #D6D3CC; background:#fff; border-radius:999px; padding:7px 13px; font-size:12.5px; font-weight:600; color:#3B475E; cursor:pointer;}
+  .q-tabs button.on{background:var(--ui-dark,#12254B); border-color:var(--ui-dark,#12254B); color:#fff;}
   .ds-sec{font-size:12px; font-weight:700; letter-spacing:.6px; text-transform:uppercase; color:#566179; padding:0 2px; margin:18px 0 10px;}
   .ds-sec:first-child{margin-top:0;}
   .ds-sec-row{display:flex; align-items:center; justify-content:space-between;}
@@ -571,7 +574,10 @@
   .ds-tabbar button{border:none; background:none; display:flex; flex-direction:column; align-items:center; gap:3px; color:#566179; font-size:11px; font-weight:500; min-width:64px; min-height:48px; position:relative; cursor:pointer;}
   .ds-tabbar button.on{color:#12254B; font-weight:700;}
   .ds-tabbar .nb{position:absolute; top:0; right:6px; background:#1D3A6F; color:#fff; border-radius:999px; font-size:10px; font-weight:700; min-width:18px; height:18px; display:flex; align-items:center; justify-content:center;}
-  #homeMenu .home-notice{margin:18px 0 0;}
+  #homeMenu .home-notice{margin:-44px 16px 0; position:relative; max-width:520px; box-shadow:0 8px 24px rgba(15,27,51,.12); border-radius:18px; padding:14px 16px;}
+  #homeMenu .ds-hero.compact{padding-bottom:30px;}
+  #homeMenu .ds-hero.compact + .home-notice{margin-top:0;}
+  #homeMenu .ds-body{padding-top:18px;}
 
   /* ---- Painel ---- */
   #painelView.ds{background:var(--bg); min-height:100vh; padding-bottom:30px;}
@@ -825,9 +831,9 @@
       </div>
     </div>
   </div>
-  <div class="ds-statcard" id="homeStat" style="display:none;">
-    <div class="ic" id="homeStatIc"></div>
-    <div><b id="homeStatTitle"></b><span id="homeStatSub"></span></div>
+  <div class="home-notice" id="homeNotice" style="display:none;">
+    <b>📌 Aviso da empresa</b>
+    <p id="homeNoticeText"></p>
   </div>
   <div class="ds-body">
     <div class="home-contract" id="homeContract" style="display:none;"><b id="homeContractTitle"></b><p id="homeContractText"></p></div>
@@ -836,10 +842,6 @@
     </div>
     <div id="homeMenuItems"></div>
     <div id="homeRecent"></div>
-    <div class="home-notice" id="homeNotice" style="display:none;">
-      <b>📌 Aviso da empresa</b>
-      <p id="homeNoticeText"></p>
-    </div>
   </div>
   <nav class="ds-tabbar" id="homeTabbar" aria-label="Navegação principal"></nav>
 </div>
@@ -858,11 +860,11 @@
       <button type="button" data-d="30">30 dias</button>
     </div>
     <div class="painel-stats" id="painelStats"></div>
-    <div class="ds-h">Técnicos</div>
+    <div class="ds-h">Colaboradores</div>
     <div id="painelTecnicos"></div>
     <div class="ds-h">Documentos enviados</div>
     <div class="painel-filters">
-      <select id="painelFiltroTec" aria-label="Filtrar por técnico"></select>
+      <select id="painelFiltroTec" aria-label="Filtrar por colaborador"></select>
       <select id="painelFiltroTipo" aria-label="Filtrar por tipo">
         <option value="">Todos os tipos</option>
         <option value="pt">Permissão de Trabalho</option>
@@ -977,7 +979,7 @@
   <div class="modal">
     <button class="modal-close" id="closeUsers">←</button>
     <h2 id="usersTitle">Usuários</h2>
-    <p class="desc" id="usersDesc">Cada pessoa tem o seu login. O técnico entra com o login e a senha provisória que você definir aqui e troca a senha no primeiro acesso.</p>
+    <p class="desc" id="usersDesc">Cada pessoa tem o seu login. O colaborador entra com o login e a senha provisória que você definir aqui e troca a senha no primeiro acesso.</p>
 
     <div class="field" style="margin-bottom:10px;">
       <input type="text" id="usersSearch" placeholder="🔍 Buscar por nome, login ou empresa..." autocomplete="off">
@@ -987,8 +989,8 @@
     <p class="desc" style="margin-bottom:6px; border-top:1px solid var(--line); padding-top:14px;" id="userFormTitle">Novo usuário</p>
     <div class="field" id="userFormRoleWrap"><label>Perfil</label>
       <select id="userFormRole" style="width:100%;padding:11px 12px;border:1px solid #D6D3CC;border-radius:8px;font-size:15px;background:#fff;">
-        <option value="tecnico">Técnico (preenche e envia documentos)</option>
-        <option value="gestor">Gestor (acompanha o painel da empresa)</option>
+        <option value="tecnico">Colaborador (preenche e envia documentos)</option>
+        <option value="gestor">Empresa / Gestor (acompanha o painel da empresa)</option>
         <option value="admin">Administrador (acesso completo)</option>
       </select>
     </div>
@@ -1007,10 +1009,10 @@
       <select id="userFormEmpresaSelect" style="width:100%;padding:11px 12px;border:1px solid #D6D3CC;border-radius:8px;font-size:15px;background:#fff;">
         <option value="">Selecione a empresa cadastrada...</option>
       </select>
-      <p class="hint">Define a empresa do técnico: logo, cor, perguntas, numeração e painel.</p>
+      <p class="hint">Define a empresa do colaborador: logo, cor, perguntas, numeração e painel.</p>
     </div>
     <div class="field"><label id="userFormPassLabel">Senha provisória</label><input type="password" id="userFormPassword" placeholder="Mínimo de 6 caracteres" autocomplete="new-password">
-      <p class="hint">Passe esta senha ao técnico. No primeiro acesso o app pede para ele criar uma senha só dele.</p>
+      <p class="hint">Passe esta senha ao colaborador. No primeiro acesso o app pede para ele criar uma senha só dele.</p>
     </div>
     <div class="field">
       <label>E-mail pessoal (opcional)</label>
@@ -1063,16 +1065,16 @@
 <div class="modal-bg" id="empresaGestorModal">
   <div class="modal">
     <button class="modal-close" id="closeEmpresaGestor">←</button>
-    <h2 id="egTitle">Empresa</h2>
-    <p class="desc">Avisos da sua empresa.</p>
+    <h2 id="egTitle">Notificar equipe</h2>
+    <p class="desc">Escreva um aviso para os colaboradores da sua empresa.</p>
     <div class="field" id="egAdminBox" style="display:none;">
       <label>🔒 Aviso do DocSeg Digital (só você vê)</label>
       <div class="eg-ro" id="egAdminAviso"></div>
     </div>
     <div class="field">
-      <label>📣 Aviso para os técnicos</label>
+      <label>📣 Aviso para os colaboradores</label>
       <textarea id="egAviso" rows="4" maxlength="600" placeholder="Ex: Uso obrigatório de cinto tipo paraquedista acima de 2m." style="width:100%;padding:11px 12px;border:1px solid #D6D3CC;border-radius:8px;font-size:14px;font-family:inherit;resize:vertical;"></textarea>
-      <p class="hint">Aparece no final do menu de todos os técnicos da empresa. Deixe em branco para não mostrar nenhum aviso.</p>
+      <p class="hint">Aparece no final do menu de todos os colaboradores da empresa. Deixe em branco para não mostrar nenhum aviso.</p>
     </div>
     <button type="button" class="btn btn-primary" id="egSave" style="width:100%;">Salvar aviso</button>
   </div>
@@ -1082,7 +1084,7 @@
   <div class="modal">
     <button class="modal-close" id="closeEmpresas">←</button>
     <h2>Empresas</h2>
-    <p class="desc">Cada empresa tem suas próprias perguntas, cor da PT, logo, aviso e a opção de envio por e-mail. Cadastre a empresa aqui primeiro; depois crie os técnicos e o gestor dela em "Usuários".</p>
+    <p class="desc">Cada empresa tem suas próprias perguntas, cor da PT, logo, aviso e a opção de envio por e-mail. Cadastre a empresa aqui primeiro; depois crie os colaboradores e o gestor dela em "Usuários".</p>
 
     <div id="empresasList" style="margin-bottom:18px;"></div>
 
@@ -1090,7 +1092,7 @@
     <div class="field">
       <label>Nome da empresa</label>
       <input type="text" id="empresaFormNome" placeholder="Ex: Global Seg">
-      <p class="hint">Depois de salva, essa empresa aparece na lista para escolher ao cadastrar técnicos e gestores, em "Usuários".</p>
+      <p class="hint">Depois de salva, essa empresa aparece na lista para escolher ao cadastrar colaboradores e gestores, em "Usuários".</p>
     </div>
 
     <p class="desc" style="margin-bottom:6px; margin-top:14px; border-top:1px solid var(--line); padding-top:14px;">Logo esquerda</p>
@@ -1122,7 +1124,7 @@
     </div>
 
     <p class="desc" style="margin-bottom:6px; margin-top:14px; border-top:1px solid var(--line); padding-top:14px;">Cor da PT desta empresa</p>
-    <p class="hint" style="margin-top:-4px;margin-bottom:10px;">Muda a cor do app, do ícone e do PDF gerado para quem fizer login como técnico ou gestor desta empresa.</p>
+    <p class="hint" style="margin-top:-4px;margin-bottom:10px;">Muda a cor do app, do ícone e do PDF gerado para quem fizer login como colaborador ou gestor desta empresa.</p>
     <div class="row2">
       <div class="field">
         <label>Cor principal</label>
@@ -1160,15 +1162,15 @@
     </div>
 
     <p class="desc" style="margin-bottom:6px; margin-top:14px; border-top:1px solid var(--line); padding-top:14px;">Aviso para o gestor</p>
-    <p class="hint" style="margin-top:-4px;margin-bottom:10px;">Só o gestor dessa empresa vê, na tela inicial dele, e só você edita. O aviso para os técnicos quem escreve é o próprio gestor. Deixe em branco para não mostrar nenhum aviso.</p>
+    <p class="hint" style="margin-top:-4px;margin-bottom:10px;">Só o gestor dessa empresa vê, na tela inicial dele, e só você edita. O aviso para os colaboradores quem escreve é o próprio gestor. Deixe em branco para não mostrar nenhum aviso.</p>
     <div class="field">
       <textarea id="empresaFormAviso" rows="3" placeholder="Ex: Renovação do contrato em 05/11." style="width:100%;padding:11px 12px;border:1px solid #D6D3CC;border-radius:8px;font-size:14px;font-family:inherit;resize:vertical;"></textarea>
     </div>
 
     <p class="desc" style="margin-bottom:6px; margin-top:14px; border-top:1px solid var(--line); padding-top:14px;">Perguntas dos formulários desta empresa</p>
-    <p class="hint" style="margin-top:-4px;margin-bottom:10px;">Se não personalizar, os técnicos dessa empresa usam as perguntas padrão de fábrica. Toque no título de cada grupo para abrir.</p>
+    <p class="hint" style="margin-top:-4px;margin-bottom:10px;">Se não personalizar, os colaboradores dessa empresa usam as perguntas padrão de fábrica. Toque no título de cada grupo para abrir.</p>
     <p class="desc" style="margin-bottom:6px; margin-top:14px; border-top:1px solid var(--line); padding-top:14px;">Contrato (licença de uso)</p>
-    <p class="hint" style="margin-top:-4px;margin-bottom:10px;">Passada a validade, gestor e técnicos da empresa deixam de entrar, sozinho, sem você precisar fazer nada. O gestor recebe um aviso na tela inicial perto do vencimento. Deixe a validade em branco para uso sem prazo.</p>
+    <p class="hint" style="margin-top:-4px;margin-bottom:10px;">Passada a validade, gestor e colaboradores da empresa deixam de entrar, sozinho, sem você precisar fazer nada. O gestor recebe um aviso na tela inicial perto do vencimento. Deixe a validade em branco para uso sem prazo.</p>
     <div class="ct-grid">
       <div class="field"><label>Início</label><input type="date" class="ct-date" id="empresaFormContratoIni"></div>
       <div class="field"><label>Válido até</label><input type="date" class="ct-date" id="empresaFormContratoFim"></div>
@@ -1183,18 +1185,33 @@
 
     <div class="susp-card">
       <label class="chk-line" style="margin:0;"><input type="checkbox" id="empresaFormSuspenso"> <b>Suspender o acesso da empresa (inadimplência)</b></label>
-      <p class="hint" style="margin:8px 0 8px;">Gestor e técnicos desta empresa deixam de conseguir entrar. Documentos, PDFs e cadastros ficam guardados. Desmarque e salve para reativar.</p>
+      <p class="hint" style="margin:8px 0 8px;">Gestor e colaboradores desta empresa deixam de conseguir entrar. Documentos, PDFs e cadastros ficam guardados. Desmarque e salve para reativar.</p>
       <textarea id="empresaFormSuspensoMsg" rows="2" placeholder="Acesso suspenso. Entre em contato com o DocSeg Digital para regularizar." style="width:100%;padding:11px 12px;border:1px solid #D6D3CC;border-radius:8px;font-size:14px;font-family:inherit;resize:vertical;"></textarea>
       <p class="hint" style="margin-top:4px;">Mensagem mostrada na tela de bloqueio. Em branco usa o texto padrão acima.</p>
     </div>
 
-    <div id="empresaQuestionEditor"></div>
+    <p class="hint" style="margin-top:6px;">As perguntas dos documentos desta empresa são editadas em <b>Questionários</b>, no menu inicial.</p>
 
     <div class="row2" style="margin-top:10px;">
       <button type="button" class="btn btn-ghost" id="btnEmpresaFormCancel">Cancelar edição</button>
       <button type="button" class="btn btn-primary" id="btnEmpresaFormSave">Salvar empresa</button>
     </div>
-    <button type="button" class="btn btn-ghost" style="width:100%;margin-top:8px;" id="btnEmpresaResetQuestions">Restaurar perguntas padrão de fábrica (desta empresa)</button>
+  </div>
+</div>
+
+<!-- QUESTIONÁRIOS (só Administrador): perguntas de cada documento, por empresa -->
+<div class="modal-bg" id="questionariosModal">
+  <div class="modal">
+    <button class="modal-close" id="closeQuestionarios">←</button>
+    <h2>Questionários</h2>
+    <p class="desc">Edite as perguntas dos documentos de cada empresa. Sem personalização, os colaboradores usam as perguntas padrão de fábrica.</p>
+    <div class="field"><label>Empresa</label>
+      <select id="qEmpresa" style="width:100%;padding:11px 12px;border:1px solid #D6D3CC;border-radius:8px;font-size:15px;background:#fff;"></select>
+    </div>
+    <div class="q-tabs" id="qDocTabs"></div>
+    <div id="questionariosEditor"></div>
+    <button type="button" class="btn btn-primary" style="width:100%;margin-top:10px;" id="btnQSave">Salvar questionários</button>
+    <button type="button" class="btn btn-ghost" style="width:100%;margin-top:8px;" id="btnQReset">Restaurar padrão de fábrica (este documento)</button>
   </div>
 </div>
 
@@ -1395,18 +1412,24 @@ function getQ(key){
   return getDefaultQuestions(key);
 }
 
-const QUESTION_GROUPS = [
-  {key:'eletrico', label:'PT — Proteção contra choque elétrico'},
-  {key:'altura', label:'PT — Trabalhos em altura'},
-  {key:'saude', label:'PT — Questionário de saúde'},
-  {key:'instalacao', label:'PT — Checklist da instalação'},
-  {key:'veiculoBasico', label:'Checklist de Veículo — Itens básicos'},
-  {key:'veiculoManut', label:'Checklist de Veículo — Manutenção/Conservação'},
-  {key:'escada', label:'Checklist de Escada — Itens a verificar'}
+// Documentos que têm perguntas editáveis. Para um documento novo no futuro,
+// basta acrescentar um item aqui (e os grupos dele em QUESTION_GROUPS).
+const QUESTION_DOCS = [
+  {key:'pt', label:'Permissão de Trabalho'},
+  {key:'veiculo', label:'Checklist de Veículo'},
+  {key:'escada', label:'Checklist de Escada'}
 ];
-// Estado do editor de perguntas na tela "Empresas" (Administrador) — trabalha
-// sobre as perguntas de UMA empresa por vez, não sobre o aparelho.
+const QUESTION_GROUPS = [
+  {doc:'pt', key:'eletrico', label:'Proteção contra choque elétrico'},
+  {doc:'pt', key:'altura', label:'Trabalhos em altura'},
+  {doc:'pt', key:'saude', label:'Questionário de saúde'},
+  {doc:'pt', key:'instalacao', label:'Checklist da instalação'},
+  {doc:'veiculo', key:'veiculoBasico', label:'Itens básicos'},
+  {doc:'veiculo', key:'veiculoManut', label:'Manutenção/Conservação'},
+  {doc:'escada', key:'escada', label:'Itens a verificar'}
+];
 let questionEditorState = null;
+let questionEditorDoc = 'pt';
 function initQuestionEditorFromPerguntas(perguntas){
   perguntas = perguntas || {};
   questionEditorState = {};
@@ -1417,18 +1440,19 @@ function initQuestionEditorFromPerguntas(perguntas){
   paintQuestionEditor();
 }
 function paintQuestionEditor(){
-  const box = document.getElementById('empresaQuestionEditor');
-  if(!box) return;
-  box.innerHTML = QUESTION_GROUPS.map(g=>{
+  const box = document.getElementById('questionariosEditor');
+  if(!box || !questionEditorState) return;
+  const abertos = new Set([...box.querySelectorAll('details[open]')].map(d=>d.getAttribute('data-g')));
+  box.innerHTML = QUESTION_GROUPS.filter(g=>g.doc===questionEditorDoc).map(g=>{
     const rows = questionEditorState[g.key].map((item,idx)=>`
       <div style="display:flex;gap:6px;margin-bottom:6px;align-items:flex-start;">
         <textarea data-qgroup="${g.key}" data-qidx="${idx}" style="flex:1;min-height:40px;font-size:12.5px;padding:7px 9px;border:1px solid #D6D3CC;border-radius:8px;font-family:inherit;">${(item[1]||'').replace(/</g,'&lt;')}</textarea>
         <button type="button" data-qrm="${g.key}:${idx}" style="width:32px;height:32px;flex-shrink:0;border:1.5px solid #D6D3CC;background:#fff;border-radius:8px;cursor:pointer;">✕</button>
       </div>`).join('');
-    return `<details style="border:1px solid var(--line);border-radius:8px;margin-bottom:8px;padding:8px 10px;">
+    return `<details data-g="${g.key}"${(abertos.has(g.key) || QUESTION_GROUPS.filter(x=>x.doc===questionEditorDoc).length===1) ? ' open' : ''} style="border:1px solid var(--line);border-radius:8px;margin-bottom:8px;padding:8px 10px;">
       <summary style="font-size:12.5px;font-weight:700;cursor:pointer;">${g.label} <span style="font-weight:400;color:#918E86;">(${questionEditorState[g.key].length})</span></summary>
       <div style="margin-top:10px;">${rows}</div>
-      <button type="button" data-qadd="${g.key}" style="margin-top:2px;border:1.5px dashed #D6D3CC;background:#fff;border-radius:8px;padding:7px 10px;font-size:12px;cursor:pointer;color:var(--red-dark);">+ Adicionar pergunta</button>
+      <button type="button" data-qadd="${g.key}" style="margin-top:2px;border:1.5px dashed #D6D3CC;background:#fff;border-radius:8px;padding:7px 10px;font-size:12px;cursor:pointer;color:var(--ui-dark);">+ Adicionar pergunta</button>
     </details>`;
   }).join('');
   box.querySelectorAll('textarea[data-qgroup]').forEach(ta=>{
@@ -1515,7 +1539,7 @@ function isAdmin(){ return getRole() === 'admin'; }
 function isGestor(){ return getRole() === 'gestor'; }
 function isManager(){ const r = getRole(); return r === 'admin' || r === 'gestor'; }
 function getScriptUrl(){ return (loadCfg().scriptUrl) || DEFAULT_SCRIPT_URL; }
-function roleLabel(r){ return r === 'admin' ? 'Administrador' : (r === 'gestor' ? 'Gestor' : 'Técnico'); }
+function roleLabel(r){ return r === 'admin' ? 'Administrador' : (r === 'gestor' ? 'Gestor' : 'Colaborador'); }
 function escHtml(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function initialsOf(nome){
   const p = (nome||'').trim().split(/\s+/).filter(Boolean);
@@ -2919,14 +2943,14 @@ function resetUserForm(){
   $('userFormPassLabel').textContent = 'Senha provisória';
   $('userFormRole').value = 'tecnico';
   $('userFormEmail').value = '';
-  $('userFormTitle').textContent = isGestor() ? 'Novo técnico' : 'Novo usuário';
+  $('userFormTitle').textContent = isGestor() ? 'Novo colaborador' : 'Novo usuário';
   setUserFotoPreview('', '');
   updateUserFormFieldsByRole();
 }
 async function openUsersModal(){
   if(!isManager()){ toast('Acesso restrito.', 'err'); return; }
   hideAllScreens();
-  $('usersTitle').textContent = isGestor() ? 'Técnicos da empresa' : 'Usuários';
+  $('usersTitle').textContent = isGestor() ? 'Colaboradores da empresa' : 'Usuários';
   $('usersModal').classList.add('show');
   $('usersSearch').value = '';
   resetUserForm();
@@ -2950,7 +2974,7 @@ $('closeUsers').onclick = goHome;
 function renderUsersList(list){
   const box = $('usersList');
   if(!list.length){ box.innerHTML = '<p class="hint">Nenhum usuário encontrado.</p>'; return; }
-  box.innerHTML = list.map(u => `
+  const row = u => `
     <div class="urow">
       ${avatarHtml(u.nome || u.username, '', 40)}
       <div class="m">
@@ -2961,7 +2985,14 @@ function renderUsersList(list){
         ${u.legado ? '' : `<button type="button" class="rm-btn edit-user" data-username="${escHtml(u.username)}" title="Editar">✎</button>`}
         <button type="button" class="rm-btn del-user" data-username="${escHtml(u.username)}" title="Excluir">✕</button>
       </div>
-    </div>`).join('');
+    </div>`;
+  if(!isAdmin()){ box.innerHTML = list.map(row).join(''); }
+  else {
+    const gest = list.filter(u => u.role === 'gestor');
+    const outros = list.filter(u => u.role !== 'gestor');
+    const sec = (t, arr) => arr.length ? `<div class="ds-sec" style="margin:14px 0 6px;">${t} (${arr.length})</div>` + arr.map(row).join('') : '';
+    box.innerHTML = sec('Empresas · gestores', gest) + sec('Colaboradores', outros);
+  }
   box.querySelectorAll('.edit-user').forEach(btn=> btn.onclick = ()=> loadUserIntoForm(btn.getAttribute('data-username')));
   box.querySelectorAll('.del-user').forEach(btn=> btn.onclick = ()=> deleteUserByUsername(btn.getAttribute('data-username')));
 }
@@ -3144,7 +3175,6 @@ function resetEmpresaForm(){
   empresaFormLogoDataUrl2 = null;
   setEmpresaLogoPreview('');
   setEmpresaLogoPreview2('');
-  initQuestionEditorFromPerguntas({});
 }
 
 document.getElementById('btnEmpresaLogoPick').onclick = ()=> document.getElementById('empresaLogoFile').click();
@@ -3211,7 +3241,7 @@ $('egSave').onclick = async ()=>{
   try{
     const r = await api('saveAviso', { aviso: $('egAviso').value.trim() });
     if(r.error) throw new Error(r.error);
-    toast('Aviso salvo! Os técnicos veem no próximo acesso.', 'ok');
+    toast('Aviso salvo! Os colaboradores veem no próximo acesso.', 'ok');
   }catch(err){ toast(err.message || 'Não foi possível salvar.', 'err'); }
   finally{ btn.disabled = false; btn.textContent = old; }
 };
@@ -3279,7 +3309,6 @@ function loadEmpresaIntoForm(nome){
   empresaFormLogoDataUrl2 = null;
   setEmpresaLogoPreview(emp.logoDataUrl || '');
   setEmpresaLogoPreview2(emp.logoDataUrl2 || '');
-  initQuestionEditorFromPerguntas(emp.perguntas);
 }
 document.getElementById('btnEmpresaFormCancel').onclick = resetEmpresaForm;
 document.getElementById('btnEmpresaFormSave').onclick = async ()=>{
@@ -3289,10 +3318,6 @@ document.getElementById('btnEmpresaFormSave').onclick = async ()=>{
   if(!scriptUrl){ toast('Configure a URL do Google Apps Script em Configurações primeiro.', 'err'); return; }
   const nome = document.getElementById('empresaFormNome').value.trim();
   if(!nome){ toast('Digite o nome da empresa.', 'err'); return; }
-  const cleaned = {};
-  Object.keys(questionEditorState||{}).forEach(k=>{
-    cleaned[k] = questionEditorState[k].filter(([id,txt])=>txt && txt.trim());
-  });
   const aviso = document.getElementById('empresaFormAviso').value.trim();
   const btn = document.getElementById('btnEmpresaFormSave');
   btn.disabled = true; const oldTxt = btn.textContent; btn.textContent = 'Salvando...';
@@ -3303,7 +3328,7 @@ document.getElementById('btnEmpresaFormSave').onclick = async ()=>{
     const emailAtivo = document.getElementById('empresaFormEmailAtivo').checked;
     const emailDestino = document.getElementById('empresaFormEmailDestino').value.trim();
     if(emailAtivo && !emailDestino){ toast('Informe o e-mail de destino ou desligue o envio por e-mail.', 'err'); btn.disabled = false; btn.textContent = oldTxt; return; }
-    const payload = Object.assign({action:'saveEmpresa', nome, perguntas: cleaned, avisoGestor: aviso, suspenso: document.getElementById('empresaFormSuspenso').checked, suspensoMsg: document.getElementById('empresaFormSuspensoMsg').value.trim(), contratoInicio: document.getElementById('empresaFormContratoIni').value, contratoFim: document.getElementById('empresaFormContratoFim').value, avisoDias: +document.getElementById('empresaFormAvisoDias').value, carenciaDias: +document.getElementById('empresaFormCarencia').value, themeColor, themeColor2, ptPrefix, emailAtivo, emailDestino, driveEmails: document.getElementById('empresaFormDriveEmails').value.trim()}, currentAdminCreds());
+    const payload = Object.assign({action:'saveEmpresa', nome, avisoGestor: aviso, suspenso: document.getElementById('empresaFormSuspenso').checked, suspensoMsg: document.getElementById('empresaFormSuspensoMsg').value.trim(), contratoInicio: document.getElementById('empresaFormContratoIni').value, contratoFim: document.getElementById('empresaFormContratoFim').value, avisoDias: +document.getElementById('empresaFormAvisoDias').value, carenciaDias: +document.getElementById('empresaFormCarencia').value, themeColor, themeColor2, ptPrefix, emailAtivo, emailDestino, driveEmails: document.getElementById('empresaFormDriveEmails').value.trim()}, currentAdminCreds());
     // só manda o campo da logo quando o admin realmente mexeu nela
     // (escolheu uma nova ou clicou em "Remover logo") — null = não mexeu.
     if(empresaFormLogoDataUrl !== null) payload.logoDataUrl = empresaFormLogoDataUrl;
@@ -3324,7 +3349,7 @@ document.getElementById('btnEmpresaFormSave').onclick = async ()=>{
 };
 async function deleteEmpresaByNome(nome){
   if(!isAdmin()) return;
-  if(!confirm('Excluir a personalização de perguntas da empresa "'+nome+'"? Os técnicos dela voltam a usar as perguntas padrão de fábrica.')) return;
+  if(!confirm('Excluir a personalização de perguntas da empresa "'+nome+'"? Os colaboradores dela voltam a usar as perguntas padrão de fábrica.')) return;
   const cfg = loadCfg();
   const scriptUrl = cfg.scriptUrl || DEFAULT_SCRIPT_URL;
   try{
@@ -3338,12 +3363,63 @@ async function deleteEmpresaByNome(nome){
     toast(err.message || 'Não foi possível excluir.', 'err');
   }
 }
-document.getElementById('btnEmpresaResetQuestions').onclick = ()=>{
+/* ============ QUESTIONÁRIOS (Administrador) ============ */
+let qEmpresasCache = [];
+function qCurrentEmpresa(){ return qEmpresasCache.find(e => e.nome === document.getElementById('qEmpresa').value); }
+function paintQDocTabs(){
+  const box = document.getElementById('qDocTabs');
+  box.innerHTML = QUESTION_DOCS.map(d => `<button type="button" data-qdoc="${d.key}" class="${d.key===questionEditorDoc?'on':''}">${d.label}</button>`).join('');
+  box.querySelectorAll('[data-qdoc]').forEach(b => b.onclick = ()=>{ questionEditorDoc = b.getAttribute('data-qdoc'); paintQDocTabs(); paintQuestionEditor(); });
+}
+function qLoadSelected(){
+  const emp = qCurrentEmpresa();
+  initQuestionEditorFromPerguntas(emp ? emp.perguntas : {});
+  paintQDocTabs();
+}
+async function openQuestionarios(){
   if(!isAdmin()){ toast('Acesso restrito ao administrador.', 'err'); return; }
-  if(confirm('Restaurar as perguntas desta empresa para o padrão de fábrica nesta tela? (só some de verdade quando clicar em "Salvar empresa")')){
-    initQuestionEditorFromPerguntas({});
-    toast('Perguntas restauradas na tela — clique em "Salvar empresa" para confirmar.', 'ok');
+  hideAllScreens();
+  document.getElementById('questionariosModal').classList.add('show');
+  const sel = document.getElementById('qEmpresa');
+  sel.innerHTML = '<option>Carregando...</option>';
+  questionEditorDoc = 'pt';
+  try{
+    const data = await fetchAdminAction(getScriptUrl(), 'listEmpresas');
+    if(data.error) throw new Error(data.error);
+    qEmpresasCache = data.empresas || [];
+    if(!qEmpresasCache.length){ sel.innerHTML = '<option value="">Cadastre uma empresa primeiro</option>'; document.getElementById('questionariosEditor').innerHTML = '<p class="hint">Cadastre a empresa em "Empresas" para personalizar as perguntas dela.</p>'; return; }
+    sel.innerHTML = qEmpresasCache.map(e => `<option value="${escHtml(e.nome)}">${escHtml(e.nome)}</option>`).join('');
+    qLoadSelected();
+  }catch(err){
+    sel.innerHTML = '<option value="">—</option>';
+    toast(err.message || 'Não foi possível carregar.', 'err');
   }
+}
+document.getElementById('qEmpresa').onchange = qLoadSelected;
+document.getElementById('closeQuestionarios').onclick = goHome;
+document.getElementById('btnQSave').onclick = async ()=>{
+  const emp = qCurrentEmpresa();
+  if(!emp){ toast('Escolha a empresa.', 'err'); return; }
+  const cleaned = {};
+  Object.keys(questionEditorState||{}).forEach(k=>{
+    cleaned[k] = questionEditorState[k].filter(([id,txt])=>txt && txt.trim());
+  });
+  const btn = document.getElementById('btnQSave'); const old = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Salvando...';
+  try{
+    const data = await fetchAdminAction(getScriptUrl(), 'savePerguntas', {nome: emp.nome, perguntas: cleaned});
+    if(data.error) throw new Error(data.error);
+    emp.perguntas = cleaned;
+    toast('Questionários salvos! Os colaboradores recebem no próximo acesso.', 'ok');
+  }catch(err){ toast(err.message || 'Não foi possível salvar.', 'err'); }
+  finally{ btn.disabled = false; btn.textContent = old; }
+};
+document.getElementById('btnQReset').onclick = ()=>{
+  const doc = QUESTION_DOCS.find(d => d.key === questionEditorDoc);
+  if(!confirm('Restaurar "' + doc.label + '" para o padrão de fábrica? (só vale de verdade ao clicar em "Salvar questionários")')) return;
+  QUESTION_GROUPS.filter(g => g.doc === questionEditorDoc).forEach(g => { questionEditorState[g.key] = getDefaultQuestions(g.key).map(i => i.slice()); });
+  paintQuestionEditor();
+  toast('Restaurado na tela — clique em "Salvar questionários" para confirmar.', 'ok');
 };
 
 /* ============ HISTÓRICO DE DOCUMENTOS POR EMPRESA (auditoria) — só Admin ============
@@ -4691,6 +4767,7 @@ function hideAllScreens(){
   document.getElementById('usersModal').classList.remove('show');
   document.getElementById('empresaGestorModal').classList.remove('show');
   document.getElementById('empresasModal').classList.remove('show');
+  document.getElementById('questionariosModal').classList.remove('show');
   document.getElementById('settingsModal').classList.remove('show');
   document.getElementById('adminAccountModal').classList.remove('show');
   document.getElementById('sendChoiceModal').classList.remove('show');
@@ -4818,12 +4895,12 @@ function renderPainel(){
 
   $('painelStats').innerHTML =
     `<div class="stat"><b>${docsPeriodo.length}</b><span>documentos ${periodoLabel}</span></div>` +
-    `<div class="stat"><b>${nAtivos}/${d.tecnicos.length}</b><span>técnicos com envio</span></div>` +
+    `<div class="stat"><b>${nAtivos}/${d.tecnicos.length}</b><span>colaboradores com envio</span></div>` +
     `<div class="stat${nSem ? ' alert' : ''}"><b>${nSem}</b><span>sem envio ${periodoLabel}</span></div>`;
 
   // Técnicos
   if(!d.tecnicos.length){
-    $('painelTecnicos').innerHTML = '<p class="empty">Nenhum técnico cadastrado nesta empresa ainda.</p>';
+    $('painelTecnicos').innerHTML = '<p class="empty">Nenhum colaborador cadastrado nesta empresa ainda.</p>';
   } else {
     $('painelTecnicos').innerHTML = d.tecnicos.map(t => {
       const quando = t.ultimoTs
@@ -4844,9 +4921,9 @@ function renderPainel(){
     });
   }
 
-  // Filtro por técnico
+  // Filtro por colaborador
   const selTec = $('painelFiltroTec');
-  const optTec = '<option value="">Todos os técnicos</option>' + d.tecnicos.map(t => `<option value="${escHtml(t.username)}">${escHtml(t.nome)}</option>`).join('');
+  const optTec = '<option value="">Todos os colaboradores</option>' + d.tecnicos.map(t => `<option value="${escHtml(t.username)}">${escHtml(t.nome)}</option>`).join('');
   if(selTec.getAttribute('data-sig') !== optTec){ selTec.innerHTML = optTec; selTec.setAttribute('data-sig', optTec); }
   selTec.value = painel.tec;
 
@@ -4920,6 +4997,7 @@ const ICONS = {
   painel:'<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>',
   users:'<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14a6.5 6.5 0 0 1 3.5 6"/></svg>',
   empresas:'<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V5a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v16M14 10h5a1 1 0 0 1 1 1v10M2 21h20M8 8h2M8 12h2M8 16h2"/></svg>',
+  aviso:'<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>',
   settings:'<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
   conta:'<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>',
   home:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 12 3l9 8"/><path d="M5 10v10h14V10"/></svg>',
@@ -4944,7 +5022,7 @@ function renderHomeMenu(){
   // Cabeçalho: foto, saudação e perfil
   const primeiro = ((s.nome || s.username || '') + '').trim().split(/\s+/)[0] || '';
   $('homeGreeting').textContent = admin ? 'Administrador' : 'Olá, ' + primeiro;
-  $('homeUserRole').textContent = admin ? 'DocSeg Digital' : roleLabel(s.role) + (s.empresa ? ' · ' + s.empresa : '');
+  $('homeUserRole').textContent = admin ? 'DocSeg Digital' : (gestor ? 'Gestor' + (s.empresa ? ' · ' + s.empresa : '') : (s.empresa || 'Colaborador'));
   $('homeAvatar').innerHTML = s.foto ? `<img src="${s.foto}" alt="">` : escHtml(initialsOf(s.nome || s.username));
   $('homeAvatar').onclick = openProfileModal;
 
@@ -4957,46 +5035,20 @@ function renderHomeMenu(){
 
   const nAction = admin ? 0 : (listPtDrafts().length + loadPendingSend().length + loadQueue().length);
 
-  // Cartão de resumo do dia
-  const stat = $('homeStat');
-  if(admin || gestor){ stat.style.display = 'none'; }
-  else {
-    const hist = loadHistory();
-    const enviadosHoje = hist.filter(h => h.status === 'enviado' && sameLocalDay(h.ts)).length;
-    const aguardando = loadPendingSend().length + loadQueue().length;
-    let ic = ICONS.ok, cls = '', t, sub;
-    if(aguardando > 0){
-      ic = ICONS.clock; cls = ' warn';
-      t = aguardando + (aguardando === 1 ? ' documento aguardando envio' : ' documentos aguardando envio');
-      sub = 'Abra "Meus documentos" para enviar';
-    } else if(enviadosHoje > 0){
-      t = enviadosHoje + (enviadosHoje === 1 ? ' documento enviado hoje' : ' documentos enviados hoje');
-      sub = 'Todos já aparecem no painel da empresa';
-    } else {
-      t = 'Nenhum documento enviado hoje';
-      sub = 'Comece por um dos documentos abaixo';
-    }
-    $('homeStatIc').className = 'ic' + cls;
-    $('homeStatIc').innerHTML = ic;
-    $('homeStatTitle').textContent = t;
-    $('homeStatSub').textContent = sub;
-    stat.style.display = 'flex';
-  }
-
   let html = '';
   if(admin){
     html += '<div class="ds-sec">Gestão</div><div class="ds-grid">';
-    html += tileHtml('painel', 'Painel', '#E6ECF8', '#12254B');
     html += tileHtml('users', 'Usuários', '#DDF1EF', '#0F6B63');
     html += tileHtml('empresas', 'Empresas', '#FFF1D6', '#8A4B00');
+    html += tileHtml('questionarios', 'Questionários', '#E6ECF8', '#1D3A6F', {sub:'PT e checklists', icon:'pt'});
     html += tileHtml('settings', 'Configurações', '#E8ECF2', '#3B475E');
     html += tileHtml('adminAccount', 'Senha do admin', '#FDECEB', '#A32D2D', {icon:'conta'});
     html += '</div>';
   } else if(gestor){
     html += '<div class="ds-sec">Acompanhamento</div><div class="ds-grid">';
     html += tileHtml('painel', 'Painel', '#E6ECF8', '#12254B', {sub:'Quem enviou e quando'});
-    html += tileHtml('users', 'Técnicos', '#DDF1EF', '#0F6B63', {sub:'Cadastro e fotos'});
-    html += tileHtml('empresa', 'Empresa', '#FFF1D6', '#8A4B00', {sub:'Avisos', icon:'empresas'});
+    html += tileHtml('users', 'Colaboradores', '#DDF1EF', '#0F6B63', {sub:'Cadastro e fotos'});
+    html += tileHtml('empresa', 'Notificar equipe', '#FFF1D6', '#8A4B00', {sub:'Aviso aos colaboradores', icon:'aviso'});
     html += '</div>';
   } else {
     html += '<div class="ds-sec">Novo documento</div><div class="ds-grid">';
@@ -5071,6 +5123,7 @@ function renderHomeMenu(){
     const tt = noticeBox.querySelector('b'); if(tt) tt.textContent = gestor ? '📌 Aviso do DocSeg Digital' : '📌 Aviso da empresa';
     if(txt){ noticeText.textContent = txt; noticeBox.style.display = 'block'; }
     else noticeBox.style.display = 'none';
+    const hero = document.querySelector('#homeMenu .ds-hero'); if(hero) hero.classList.toggle('compact', !txt);
   }
 }
 function homeAction(id){
@@ -5078,6 +5131,7 @@ function homeAction(id){
   else if(id === 'empresa') openEmpresaGestorModal();
   else if(id === 'adminAccount') openAdminAccountModal();
   else if(id === 'empresas') openEmpresasModal();
+  else if(id === 'questionarios') openQuestionarios();
   else if(id === 'settings') openSettingsModal();
   else if(id === 'meusDocs') openMeusDocsScreen();
   else if(id === 'painel') openPainel();
