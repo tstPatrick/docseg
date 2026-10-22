@@ -843,7 +843,7 @@
 </div>
 
 <div id="offlineBanner">
-  <span>⚠ Sem conexão · <b id="offlineCount">0</b> documento(s) na fila</span>
+  <span>⚠ <span id="offlineWhy">Sem conexão</span> · <b id="offlineCount">0</b> documento(s) na fila</span>
   <button class="oflink" id="btnRetryQueue">Tentar reenviar agora</button>
 </div>
 
@@ -3467,9 +3467,9 @@ async function finalizeAndSend(){
           playSuccessSound();
           addHistoryEntry(Object.assign({}, histMeta, {status:'enviado'}));
         }catch(err){
-          console.error(err);
+          noteSendError(err);
           enqueueDocument({payload, meta: histMeta});
-          toast('Sem conexão — documento salvo na fila e será reenviado automaticamente.', 'err');
+          toast(sendErrToast(err), 'err');
         }
       }
     } else {
@@ -3561,6 +3561,8 @@ function renderOfflineBanner(){
   if(!banner) return;
   const n = loadQueue().length;
   document.getElementById('offlineCount').textContent = n;
+  let why = ''; try{ why = localStorage.getItem('docseg_last_send_error') || ''; }catch(e){}
+  const w = document.getElementById('offlineWhy'); if(w) w.textContent = why ? ('Servidor recusou: ' + why) : 'Sem conexão';
   banner.classList.toggle('show', n>0);
 }
 function enqueueDocument(item){
@@ -3582,12 +3584,33 @@ function canSendDocs(){ const s = getSession(); return !!(getScriptUrl() && s &&
 // senha mudar, os documentos que ficaram esperando continuam sendo aceitos.
 function sendCreds(){ const s = getSession(); return s ? { username: s.username, passwordHash: s.passwordHash } : {}; }
 async function sendPayload(cfg, payload){
-  const resp = await fetch((cfg && cfg.scriptUrl) || getScriptUrl(), {
-    method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(Object.assign({}, payload, sendCreds()))
-  });
-  const txt = await resp.text().catch(()=> "");
-  if(txt && txt.indexOf('erro') !== -1 && txt.indexOf('sucesso') === -1) throw new Error(txt);
+  let resp;
+  try{
+    resp = await fetch((cfg && cfg.scriptUrl) || getScriptUrl(), {
+      method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(Object.assign({}, payload, sendCreds()))
+    });
+  }catch(e){
+    const ne = new Error('sem conexão com o servidor'); ne.kind = 'net'; throw ne;
+  }
+  const txt = (await resp.text().catch(()=> "")).trim();
+  let j = null; try{ j = JSON.parse(txt); }catch(e){}
+  let reason = '';
+  if(j){ if(j.error) reason = String(j.error); }
+  else if(txt.indexOf('sucesso') !== 0){
+    reason = txt.replace(/^erro:\s*/i,'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim().slice(0,140) || ('resposta inesperada do servidor (' + resp.status + ')');
+  }
+  if(reason){ const se = new Error(reason); se.kind = 'server'; throw se; }
+  try{ localStorage.removeItem('docseg_last_send_error'); }catch(e){}
   return true;
+}
+function noteSendError(err){
+  console.error(err);
+  try{ localStorage.setItem('docseg_last_send_error', (err && err.kind === 'server') ? err.message : ''); }catch(e){}
+  renderOfflineBanner();
+}
+function sendErrToast(err){
+  if(err && err.kind === 'server') return 'O servidor recusou o envio: ' + err.message + '. Documento guardado na fila.';
+  return 'Sem conexão — documento salvo na fila e será reenviado automaticamente.';
 }
 async function retryQueue(){
   const cfg = loadCfg();
@@ -3601,6 +3624,7 @@ async function retryQueue(){
       await sendPayload(cfg, item.payload);
       addHistoryEntry(Object.assign({}, item.meta, {status:'enviado'}));
     }catch(e){
+      noteSendError(e);
       remaining.push(item);
     }
   }
@@ -3735,7 +3759,7 @@ async function sendPendingBatch(opts){
     refreshHomeMenuIfVisible();
   }catch(err){
     console.error(err);
-    if(!opts.silent) toast('Não foi possível enviar agora. Tente de novo mais tarde.', 'err');
+    if(!opts.silent) toast(err && err.kind === 'server' ? ('O servidor recusou o envio: ' + err.message) : 'Não foi possível enviar agora. Verifique a internet e tente de novo.', 'err');
   } finally {
     if(btn){ btn.disabled = false; btn.textContent = originalText || 'Enviar'; }
   }
@@ -3835,7 +3859,7 @@ function buildMeusDocsRows(){
     rows.push({
       status:'fila', icon: DOC_TYPE_ICON[m.tipo] || 'x',
       title: meusDocsTitle(m.tipo, m.tipoLabel, m.numero),
-      num: meusDocsNum(m.tipo, m.numero), meta: navigator.onLine ? 'Tentando reenviar...' : 'Sem conexão',
+      num: meusDocsNum(m.tipo, m.numero), meta: (function(){ var w=''; try{ w=localStorage.getItem('docseg_last_send_error')||''; }catch(e){} return w ? 'Servidor recusou' : (navigator.onLine ? 'Tentando reenviar...' : 'Sem conexão'); })(),
       ts: m.ts, actionLabel:'Tentar agora',
       action: ()=>{ retryQueue(); }
     });
@@ -4036,9 +4060,9 @@ async function generateAndSendDoc(opts){
           playSuccessSound();
           addHistoryEntry(Object.assign({}, histMeta, {status:'enviado'}));
         }catch(err){
-          console.error(err);
+          noteSendError(err);
           enqueueDocument({payload, meta: histMeta});
-          toast('Sem conexão — documento salvo na fila e será reenviado automaticamente.', 'err');
+          toast(sendErrToast(err), 'err');
         }
       }
     } else {
