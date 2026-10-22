@@ -550,6 +550,9 @@
   .tile{position:relative; background:#fff; border:1px solid #E1E7F1; border-radius:18px; padding:14px; display:flex; flex-direction:column; align-items:flex-start; gap:12px; min-height:112px; text-align:left; box-shadow:0 1px 2px rgba(15,27,51,.04); cursor:pointer; color:#0F1B33;}
   .tile:active{background:#F5F8FD;}
   .tile b{font-size:14.5px; line-height:1.25; font-weight:700;}
+  .tile .t{display:flex; flex-direction:column; gap:2px; text-align:left;}
+  .tile .t b{display:block;}
+  .tile .t small{display:block; font-size:11.5px; font-weight:500; color:#566179; line-height:1.3;}
   .tile .ic{width:44px; height:44px; border-radius:13px; display:flex; align-items:center; justify-content:center; flex-shrink:0;}
   .tile .badge{position:absolute; top:12px; right:12px; font-size:11px; font-weight:700; padding:3px 9px; border-radius:999px; background:#1D3A6F; color:#fff;}
   .tile.wide{grid-column:1 / -1; flex-direction:row; align-items:center; min-height:0;}
@@ -652,6 +655,24 @@
   #splash .sp-d{font-family:'Poppins','DM Sans',Arial,sans-serif; font-weight:600; font-size:12px; letter-spacing:4px; color:#3A5068; margin-top:6px; opacity:0; transition:opacity .4s ease; padding-left:4px;}
   #splash.s2 .sp-d{opacity:1;}
   @media (prefers-reduced-motion: reduce){ #splash *{transition-duration:.01s !important;} }
+  #suspendedScreen{position:fixed; inset:0; z-index:900; display:none; align-items:center; justify-content:center; background:linear-gradient(160deg,#1D3A6F 0%,#12254B 55%,#0A1428 100%); color:#fff; padding:26px; overflow:auto;}
+  .susp-box{max-width:380px; width:100%; text-align:center;}
+  .susp-lock{width:84px; height:84px; border-radius:24px; background:rgba(255,255,255,.12); display:grid; place-items:center; margin:0 auto 16px;}
+  .susp-box h2{font-family:'Poppins','DM Sans',sans-serif; font-size:22px; font-weight:600; margin-bottom:10px;}
+  .susp-box p{font-size:14px; opacity:.85; line-height:1.55;}
+  .susp-msg{background:rgba(255,255,255,.1); border-radius:14px; padding:13px 15px; font-size:13.5px; margin:14px 0 20px; line-height:1.5; white-space:pre-wrap;}
+  .susp-btn{width:100%; height:48px; border:none; border-radius:13px; background:#fff; color:#12254B; font-size:15px; font-weight:700; cursor:pointer; font-family:inherit;}
+  .eg-ro{background:#F6F8FC; border:1px dashed #C9D3E6; border-radius:10px; padding:11px 12px; font-size:13.5px; color:#2A3550; line-height:1.5; white-space:pre-wrap;}
+  .susp-card{border:1.5px solid #F0B8B8; background:#FFF7F7; border-radius:12px; padding:12px 14px; margin-top:14px;}
+  .home-contract{margin:12px 0 0; background:#FFF1D6; border:1px solid #F0C46A; border-radius:14px; padding:11px 14px; color:#5D4200;}
+  .home-contract.urgent{border-width:2px; border-color:#D9A21B; background:#FFEBC2;}
+  .home-contract b{display:block; font-size:13px; margin-bottom:3px;}
+  .home-contract p{font-size:12.5px; line-height:1.45;}
+  .ct-grid{display:flex; gap:10px;} .ct-grid>div{flex:1;}
+  .ct-sel, .ct-date{width:100%; padding:11px 12px; border:1px solid #D6D3CC; border-radius:8px; font-size:15px; font-family:inherit; background:#fff; color:var(--ink);}
+  .ct-pill{display:inline-block; font-size:10px; font-weight:700; padding:3px 9px; border-radius:20px; text-transform:uppercase; letter-spacing:.3px; white-space:nowrap;}
+  .ct-pill.ok{background:#E6F4DE; color:#1F6B2A;} .ct-pill.warn{background:#FFF1D6; color:#8A4B00;} .ct-pill.bad{background:#FDECEC; color:#A32D2D;} .ct-pill.none{background:#EEF1F7; color:#566179;}
+  .ct-alert{background:#FFF8E1; border:1px solid #F5D77A; border-radius:12px; padding:10px 12px; font-size:12.5px; color:#5D4B00; margin-bottom:12px; line-height:1.45;}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
@@ -683,6 +704,17 @@
 })();
 </script>
 
+
+<!-- TELA: EMPRESA SUSPENSA -->
+<div id="suspendedScreen" class="ds" style="display:none;">
+  <div class="susp-box">
+    <div class="susp-lock"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></div>
+    <h2 id="suspendedTitle">Acesso suspenso</h2>
+    <p id="suspendedText">O acesso da sua empresa ao DocSeg Digital está temporariamente suspenso.</p>
+    <div class="susp-msg" id="suspendedMsg"></div>
+    <button type="button" class="susp-btn" id="suspendedBack">Sair</button>
+  </div>
+</div>
 
 <!-- TELA DE LOGIN -->
 <div id="loginScreen" class="ds">
@@ -798,6 +830,7 @@
     <div><b id="homeStatTitle"></b><span id="homeStatSub"></span></div>
   </div>
   <div class="ds-body">
+    <div class="home-contract" id="homeContract" style="display:none;"><b id="homeContractTitle"></b><p id="homeContractText"></p></div>
     <div class="home-company-logo" id="homeCompanyLogo" style="display:none;">
       <img id="homeCompanyLogoImg" alt="Logo da empresa">
     </div>
@@ -1027,6 +1060,24 @@
 </div>
 
 <!-- EMPRESAS MODAL (Administrador) -->
+<div class="modal-bg" id="empresaGestorModal">
+  <div class="modal">
+    <button class="modal-close" id="closeEmpresaGestor">←</button>
+    <h2 id="egTitle">Empresa</h2>
+    <p class="desc">Avisos da sua empresa.</p>
+    <div class="field" id="egAdminBox" style="display:none;">
+      <label>🔒 Aviso do DocSeg Digital (só você vê)</label>
+      <div class="eg-ro" id="egAdminAviso"></div>
+    </div>
+    <div class="field">
+      <label>📣 Aviso para os técnicos</label>
+      <textarea id="egAviso" rows="4" maxlength="600" placeholder="Ex: Uso obrigatório de cinto tipo paraquedista acima de 2m." style="width:100%;padding:11px 12px;border:1px solid #D6D3CC;border-radius:8px;font-size:14px;font-family:inherit;resize:vertical;"></textarea>
+      <p class="hint">Aparece no final do menu de todos os técnicos da empresa. Deixe em branco para não mostrar nenhum aviso.</p>
+    </div>
+    <button type="button" class="btn btn-primary" id="egSave" style="width:100%;">Salvar aviso</button>
+  </div>
+</div>
+
 <div class="modal-bg" id="empresasModal">
   <div class="modal">
     <button class="modal-close" id="closeEmpresas">←</button>
@@ -1108,14 +1159,35 @@
       <p class="hint">Um ou mais e-mails, separados por vírgula.</p>
     </div>
 
-    <p class="desc" style="margin-bottom:6px; margin-top:14px; border-top:1px solid var(--line); padding-top:14px;">Aviso/lembrete para os técnicos</p>
-    <p class="hint" style="margin-top:-4px;margin-bottom:10px;">Aparece no final do menu, só para os técnicos dessa empresa. Deixe em branco pra não mostrar nenhum aviso.</p>
+    <p class="desc" style="margin-bottom:6px; margin-top:14px; border-top:1px solid var(--line); padding-top:14px;">Aviso para o gestor</p>
+    <p class="hint" style="margin-top:-4px;margin-bottom:10px;">Só o gestor dessa empresa vê, na tela inicial dele, e só você edita. O aviso para os técnicos quem escreve é o próprio gestor. Deixe em branco para não mostrar nenhum aviso.</p>
     <div class="field">
-      <textarea id="empresaFormAviso" rows="3" placeholder="Ex: Uso obrigatório de cinto tipo paraquedista acima de 2m." style="width:100%;padding:11px 12px;border:1px solid #D6D3CC;border-radius:8px;font-size:14px;font-family:inherit;resize:vertical;"></textarea>
+      <textarea id="empresaFormAviso" rows="3" placeholder="Ex: Renovação do contrato em 05/11." style="width:100%;padding:11px 12px;border:1px solid #D6D3CC;border-radius:8px;font-size:14px;font-family:inherit;resize:vertical;"></textarea>
     </div>
 
     <p class="desc" style="margin-bottom:6px; margin-top:14px; border-top:1px solid var(--line); padding-top:14px;">Perguntas dos formulários desta empresa</p>
     <p class="hint" style="margin-top:-4px;margin-bottom:10px;">Se não personalizar, os técnicos dessa empresa usam as perguntas padrão de fábrica. Toque no título de cada grupo para abrir.</p>
+    <p class="desc" style="margin-bottom:6px; margin-top:14px; border-top:1px solid var(--line); padding-top:14px;">Contrato (licença de uso)</p>
+    <p class="hint" style="margin-top:-4px;margin-bottom:10px;">Passada a validade, gestor e técnicos da empresa deixam de entrar, sozinho, sem você precisar fazer nada. O gestor recebe um aviso na tela inicial perto do vencimento. Deixe a validade em branco para uso sem prazo.</p>
+    <div class="ct-grid">
+      <div class="field"><label>Início</label><input type="date" class="ct-date" id="empresaFormContratoIni"></div>
+      <div class="field"><label>Válido até</label><input type="date" class="ct-date" id="empresaFormContratoFim"></div>
+    </div>
+    <div class="ct-grid">
+      <div class="field"><label>Avisar o gestor a partir de</label>
+        <select class="ct-sel" id="empresaFormAvisoDias"><option value="7">7 dias antes</option><option value="15">15 dias antes</option><option value="30" selected>30 dias antes</option><option value="45">45 dias antes</option><option value="60">60 dias antes</option></select></div>
+      <div class="field"><label>Carência após vencer</label>
+        <select class="ct-sel" id="empresaFormCarencia"><option value="0" selected>0 dias</option><option value="1">1 dia</option><option value="2">2 dias</option><option value="3">3 dias</option><option value="5">5 dias</option><option value="7">7 dias</option><option value="10">10 dias</option><option value="15">15 dias</option></select></div>
+    </div>
+    <p class="hint" id="empresaFormContratoInfo" style="margin:0 0 12px;"></p>
+
+    <div class="susp-card">
+      <label class="chk-line" style="margin:0;"><input type="checkbox" id="empresaFormSuspenso"> <b>Suspender o acesso da empresa (inadimplência)</b></label>
+      <p class="hint" style="margin:8px 0 8px;">Gestor e técnicos desta empresa deixam de conseguir entrar. Documentos, PDFs e cadastros ficam guardados. Desmarque e salve para reativar.</p>
+      <textarea id="empresaFormSuspensoMsg" rows="2" placeholder="Acesso suspenso. Entre em contato com o DocSeg Digital para regularizar." style="width:100%;padding:11px 12px;border:1px solid #D6D3CC;border-radius:8px;font-size:14px;font-family:inherit;resize:vertical;"></textarea>
+      <p class="hint" style="margin-top:4px;">Mensagem mostrada na tela de bloqueio. Em branco usa o texto padrão acima.</p>
+    </div>
+
     <div id="empresaQuestionEditor"></div>
 
     <div class="row2" style="margin-top:10px;">
@@ -1495,7 +1567,7 @@ function sessionFromServer(uname, passHash, r){
     username: r.username || uname, nome: r.nome || '', role, empresa: r.empresa || '', foto: r.foto || '',
     passwordHash: passHash, mustChange: !!r.mustChange, termsOk: r.termsOk !== false, termsVersion: r.termsVersion || '',
     cfg: r.cfg || null, perguntas: r.perguntas || null,
-    empresaAviso: r.empresaAviso || '', empresaLogoDataUrl: r.empresaLogoDataUrl || '',
+    empresaAviso: r.empresaAviso || '', empresaAvisoGestor: r.empresaAvisoGestor || '', contratoFim: r.contratoFim || '', contratoAvisoDias: r.contratoAvisoDias || 0, contratoCarencia: r.contratoCarencia || 0, empresaLogoDataUrl: r.empresaLogoDataUrl || '',
     empresaLogoDataUrl2: r.empresaLogoDataUrl2 || '',
     empresaThemeColor: r.empresaThemeColor || '', empresaThemeColor2: r.empresaThemeColor2 || '',
     empresaPtPrefix: r.empresaPtPrefix || ''
@@ -1523,6 +1595,9 @@ async function attemptLogin(username, password){
   if(serverChecked && serverResult && serverResult.ok){
     return sessionFromServer(uname, passHash, serverResult);
   }
+  if(serverChecked && serverResult && serverResult.suspenso){
+    const se = new Error(serverResult.suspensoMsg || 'Acesso suspenso. Entre em contato com o DocSeg Digital.'); se.suspenso = true; se.motivo = serverResult.motivo; se.vencimento = serverResult.vencimento; throw se;
+  }
   if(serverChecked && serverResult && serverResult.error){
     if(/desativado/i.test(serverResult.error)) throw new Error(serverResult.error);
     throw new Error('Usuário ou senha inválidos.');
@@ -1534,8 +1609,23 @@ async function attemptLogin(username, password){
   throw new Error('Usuário ou senha inválidos.');
 }
 
-function showLoginScreen(){ $('loginScreen').style.display = 'flex'; }
+function brDate(iso){ const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || ''); return m ? m[3] + '/' + m[2] + '/' + m[1] : (iso || ''); }
+function todayLocalISO(){ const d = new Date(), p = n => String(n).padStart(2,'0'); return d.getFullYear() + '-' + p(d.getMonth()+1) + '-' + p(d.getDate()); }
+function daysUntilISO(iso){ const a = todayLocalISO().split('-'), b = (iso || '').split('-'); if(b.length !== 3) return null; return Math.round((Date.UTC(+b[0],+b[1]-1,+b[2]) - Date.UTC(+a[0],+a[1]-1,+a[2])) / 86400000); }
+function showSuspended(msg, motivo, vencimento){
+  const venc = motivo === 'vencido';
+  $('suspendedTitle').textContent = venc ? 'Licença vencida' : 'Acesso suspenso';
+  $('suspendedText').textContent = venc
+    ? 'O período de uso da sua empresa no DocSeg Digital terminou' + (vencimento ? ' em ' + brDate(vencimento) : '') + '.'
+    : 'O acesso da sua empresa ao DocSeg Digital está temporariamente suspenso.';
+  hideLoginScreen();
+  $('suspendedMsg').textContent = msg || (venc ? 'Acesso suspenso temporariamente. Entre em contato com o DocSeg Digital para renovar.' : 'Acesso suspenso. Entre em contato com o DocSeg Digital para regularizar.');
+  $('suspendedScreen').style.display = 'flex';
+}
+function showLoginScreen(){ $('suspendedScreen').style.display = 'none'; $('loginScreen').style.display = 'flex'; }
 function hideLoginScreen(){ $('loginScreen').style.display = 'none'; }
+
+$('suspendedBack').onclick = ()=>{ showLoginScreen(); };
 
 /* ============ TERMOS DE USO E PRIVACIDADE ============ */
 const TERMS_HTML = `
@@ -1703,6 +1793,7 @@ $('loginConfirm').onclick = async ()=>{
     await runGates();           // senha provisória → termos de uso
     finishLogin(getSession());
   }catch(err){
+    if(err && err.suspenso){ showSuspended(err.message, err.motivo, err.vencimento); return; }
     errEl.textContent = err.message || 'Não foi possível entrar.';
     errEl.style.display = 'block';
   } finally {
@@ -1749,6 +1840,10 @@ async function refreshSessionFromServer(){
       updateBrand();
       if(gatesPending(n)){ await runGates(); }
       refreshHomeMenuIfVisible();
+    } else if(r && r.suspenso){
+      localStorage.removeItem(SESSION_KEY);
+      hideAllScreens();
+      showSuspended(r.suspensoMsg, r.motivo, r.vencimento);
     } else if(r && r.error && (r.error === 'senha incorreta' || r.error === 'usuario nao encontrado' || /desativado/i.test(r.error))){
       toast('Seu acesso mudou ou foi encerrado. Entre novamente.', 'err');
       setTimeout(logout, 1500);
@@ -3008,9 +3103,35 @@ function setEmpresaLogoPreview2(dataUrl){
   else { img.src = ''; img.style.display = 'none'; empty.style.display = 'block'; }
 }
 
+function contratoSituacao(emp){
+  if(emp.suspenso) return {cls:'bad', txt:'Suspensa', sub:'suspensa manualmente'};
+  if(emp.contratoVencido) return {cls:'bad', txt:'Vencida', sub:'venceu em ' + brDate(emp.contratoFim)};
+  const d = emp.diasRestantes;
+  if(d === null || d === undefined || !emp.contratoFim) return {cls:'none', txt:'Sem validade', sub:'uso sem prazo'};
+  if(d < 0) return {cls:'warn', txt:'Em carência', sub:'venceu em ' + brDate(emp.contratoFim)};
+  if(d <= 30) return {cls:'warn', txt: d === 0 ? 'Vence hoje' : (d === 1 ? 'Vence amanhã' : 'Vence em ' + d + ' dias'), sub:'até ' + brDate(emp.contratoFim)};
+  return {cls:'ok', txt:'Ativa · ' + d + ' dias', sub:'até ' + brDate(emp.contratoFim)};
+}
+function updateContratoInfo(){
+  const el = document.getElementById('empresaFormContratoInfo'); if(!el) return;
+  const fim = document.getElementById('empresaFormContratoFim').value, ini = document.getElementById('empresaFormContratoIni').value;
+  if(!fim){ el.textContent = 'Sem validade definida: a empresa usa sem prazo.'; return; }
+  if(ini && fim < ini){ el.textContent = '⚠ A validade não pode ser antes do início.'; return; }
+  const d = daysUntilISO(fim), car = +document.getElementById('empresaFormCarencia').value || 0;
+  el.textContent = d < 0 ? (d + car >= 0 ? 'Venceu, em carência: o acesso fecha em ' + (d + car) + ' dia(s).' : 'Contrato vencido: o acesso já está bloqueado.')
+    : (d === 0 ? 'Vence hoje (vale até o fim do dia).' : 'Ativo, vence em ' + d + ' dia(s). Vale até o fim do dia ' + brDate(fim) + '.');
+}
+['empresaFormContratoIni','empresaFormContratoFim','empresaFormCarencia'].forEach(id => { const e = document.getElementById(id); if(e) e.addEventListener('change', updateContratoInfo); });
 function resetEmpresaForm(){
   document.getElementById('empresaFormNome').value = '';
   document.getElementById('empresaFormAviso').value = '';
+  document.getElementById('empresaFormSuspenso').checked = false;
+  document.getElementById('empresaFormSuspensoMsg').value = '';
+  document.getElementById('empresaFormContratoIni').value = '';
+  document.getElementById('empresaFormContratoFim').value = '';
+  document.getElementById('empresaFormAvisoDias').value = '30';
+  document.getElementById('empresaFormCarencia').value = '0';
+  updateContratoInfo();
   document.getElementById('empresaFormTitle').textContent = 'Nova empresa';
   document.getElementById('empresaFormColorPrimary').value = '#C8272A';
   document.getElementById('empresaFormColorAccent').value = '#F4B400';
@@ -3065,6 +3186,35 @@ document.getElementById('btnEmpresaLogoRemove2').onclick = ()=>{
   empresaFormLogoDataUrl2 = '';
   setEmpresaLogoPreview2('');
 };
+async function openEmpresaGestorModal(){
+  if(!isGestor()){ toast('Acesso restrito ao gestor.', 'err'); return; }
+  hideAllScreens();
+  const s = getSession() || {};
+  $('egTitle').textContent = s.empresa || 'Empresa';
+  $('egAviso').value = '';
+  $('egAdminBox').style.display = 'none';
+  $('empresaGestorModal').classList.add('show');
+  try{
+    const data = await fetchAdminAction(getScriptUrl(), 'listEmpresas');
+    if(data.error) throw new Error(data.error);
+    const emp = (data.empresas || [])[0];
+    if(emp){
+      $('egAviso').value = emp.aviso || '';
+      if(emp.avisoGestor){ $('egAdminAviso').textContent = emp.avisoGestor; $('egAdminBox').style.display = 'block'; }
+    }
+  }catch(err){ toast('Não foi possível carregar: ' + (err.message || 'falha de conexão'), 'err'); }
+}
+$('closeEmpresaGestor').onclick = goHome;
+$('egSave').onclick = async ()=>{
+  const btn = $('egSave'); const old = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Salvando...';
+  try{
+    const r = await api('saveAviso', { aviso: $('egAviso').value.trim() });
+    if(r.error) throw new Error(r.error);
+    toast('Aviso salvo! Os técnicos veem no próximo acesso.', 'ok');
+  }catch(err){ toast(err.message || 'Não foi possível salvar.', 'err'); }
+  finally{ btn.disabled = false; btn.textContent = old; }
+};
 async function openEmpresasModal(){
   if(!isAdmin()){ toast('Acesso restrito ao administrador.', 'err'); return; }
   resetEmpresaForm();
@@ -3087,9 +3237,12 @@ async function loadEmpresasList(){
     if(data.error) throw new Error(data.error);
     lastLoadedEmpresas = data.empresas || [];
     if(!lastLoadedEmpresas.length){ box.innerHTML = '<p class="hint">Nenhuma empresa com perguntas personalizadas ainda — use o formulário abaixo para criar.</p>'; return; }
-    box.innerHTML = lastLoadedEmpresas.map(emp => `
+    const nVencer = lastLoadedEmpresas.filter(e => !e.suspenso && !e.contratoVencido && e.diasRestantes != null && e.diasRestantes <= 30).length;
+    const nVenc = lastLoadedEmpresas.filter(e => e.contratoVencido).length;
+    const alerta = (nVencer || nVenc) ? '<div class="ct-alert"><b>Atenção:</b> ' + [nVencer ? nVencer + (nVencer === 1 ? ' empresa vence' : ' empresas vencem') + ' nos próximos 30 dias' : '', nVenc ? nVenc + (nVenc === 1 ? ' já venceu' : ' já venceram') : ''].filter(Boolean).join(' e ') + '.</div>' : '';
+    box.innerHTML = alerta + lastLoadedEmpresas.map(emp => `
       <div class="user-row">
-        <div><b>${emp.nome}</b></div>
+        <div><b>${emp.nome}</b><div style="font-size:11px;color:var(--ink-soft);margin-top:2px;">${contratoSituacao(emp).sub}</div><span class="ct-pill ${contratoSituacao(emp).cls}" style="margin-top:5px;">${contratoSituacao(emp).txt}</span></div>
         <div style="display:flex;gap:6px;">
           <button type="button" class="rm-btn edit-empresa" data-nome="${emp.nome.replace(/"/g,'&quot;')}" title="Editar">✎</button>
           <button type="button" class="rm-btn del-empresa" data-nome="${emp.nome.replace(/"/g,'&quot;')}" title="Excluir">✕</button>
@@ -3106,7 +3259,14 @@ function loadEmpresaIntoForm(nome){
   const emp = lastLoadedEmpresas.find(x=>x.nome===nome);
   if(!emp) return;
   document.getElementById('empresaFormNome').value = emp.nome;
-  document.getElementById('empresaFormAviso').value = emp.aviso || '';
+  document.getElementById('empresaFormAviso').value = emp.avisoGestor || '';
+  document.getElementById('empresaFormSuspenso').checked = !!emp.suspenso;
+  document.getElementById('empresaFormSuspensoMsg').value = emp.suspensoMsg || '';
+  document.getElementById('empresaFormContratoIni').value = emp.contratoInicio || '';
+  document.getElementById('empresaFormContratoFim').value = emp.contratoFim || '';
+  document.getElementById('empresaFormAvisoDias').value = String(emp.avisoDias || 30);
+  document.getElementById('empresaFormCarencia').value = String(emp.carenciaDias || 0);
+  updateContratoInfo();
   document.getElementById('empresaFormTitle').textContent = 'Editar empresa: ' + emp.nome;
   document.getElementById('empresaFormColorPrimary').value = emp.themeColor || '#C8272A';
   document.getElementById('empresaFormColorAccent').value = emp.themeColor2 || '#F4B400';
@@ -3143,7 +3303,7 @@ document.getElementById('btnEmpresaFormSave').onclick = async ()=>{
     const emailAtivo = document.getElementById('empresaFormEmailAtivo').checked;
     const emailDestino = document.getElementById('empresaFormEmailDestino').value.trim();
     if(emailAtivo && !emailDestino){ toast('Informe o e-mail de destino ou desligue o envio por e-mail.', 'err'); btn.disabled = false; btn.textContent = oldTxt; return; }
-    const payload = Object.assign({action:'saveEmpresa', nome, perguntas: cleaned, aviso: aviso, themeColor, themeColor2, ptPrefix, emailAtivo, emailDestino, driveEmails: document.getElementById('empresaFormDriveEmails').value.trim()}, currentAdminCreds());
+    const payload = Object.assign({action:'saveEmpresa', nome, perguntas: cleaned, avisoGestor: aviso, suspenso: document.getElementById('empresaFormSuspenso').checked, suspensoMsg: document.getElementById('empresaFormSuspensoMsg').value.trim(), contratoInicio: document.getElementById('empresaFormContratoIni').value, contratoFim: document.getElementById('empresaFormContratoFim').value, avisoDias: +document.getElementById('empresaFormAvisoDias').value, carenciaDias: +document.getElementById('empresaFormCarencia').value, themeColor, themeColor2, ptPrefix, emailAtivo, emailDestino, driveEmails: document.getElementById('empresaFormDriveEmails').value.trim()}, currentAdminCreds());
     // só manda o campo da logo quando o admin realmente mexeu nela
     // (escolheu uma nova ou clicou em "Remover logo") — null = não mexeu.
     if(empresaFormLogoDataUrl !== null) payload.logoDataUrl = empresaFormLogoDataUrl;
@@ -4529,6 +4689,7 @@ function hideAllScreens(){
   document.getElementById('pendingSendView').style.display = 'none';
   document.getElementById('meusDocsView').style.display = 'none';
   document.getElementById('usersModal').classList.remove('show');
+  document.getElementById('empresaGestorModal').classList.remove('show');
   document.getElementById('empresasModal').classList.remove('show');
   document.getElementById('settingsModal').classList.remove('show');
   document.getElementById('adminAccountModal').classList.remove('show');
@@ -4798,7 +4959,7 @@ function renderHomeMenu(){
 
   // Cartão de resumo do dia
   const stat = $('homeStat');
-  if(admin){ stat.style.display = 'none'; }
+  if(admin || gestor){ stat.style.display = 'none'; }
   else {
     const hist = loadHistory();
     const enviadosHoje = hist.filter(h => h.status === 'enviado' && sameLocalDay(h.ts)).length;
@@ -4831,6 +4992,12 @@ function renderHomeMenu(){
     html += tileHtml('settings', 'Configurações', '#E8ECF2', '#3B475E');
     html += tileHtml('adminAccount', 'Senha do admin', '#FDECEB', '#A32D2D', {icon:'conta'});
     html += '</div>';
+  } else if(gestor){
+    html += '<div class="ds-sec">Acompanhamento</div><div class="ds-grid">';
+    html += tileHtml('painel', 'Painel', '#E6ECF8', '#12254B', {sub:'Quem enviou e quando'});
+    html += tileHtml('users', 'Técnicos', '#DDF1EF', '#0F6B63', {sub:'Cadastro e fotos'});
+    html += tileHtml('empresa', 'Empresa', '#FFF1D6', '#8A4B00', {sub:'Avisos', icon:'empresas'});
+    html += '</div>';
   } else {
     html += '<div class="ds-sec">Novo documento</div><div class="ds-grid">';
     html += tileHtml('pt', 'Permissão de Trabalho', '#E6ECF8', '#1D3A6F');
@@ -4838,19 +5005,13 @@ function renderHomeMenu(){
     html += tileHtml('escada', 'Checklist de Escada', '#FFF1D6', '#8A4B00');
     html += tileHtml('meusDocs', 'Meus documentos', '#DDF1EF', '#0F6B63', {badge: nAction > 0 ? String(nAction) : ''});
     html += '</div>';
-    if(gestor){
-      html += '<div class="ds-sec">Acompanhamento</div><div class="ds-grid">';
-      html += tileHtml('painel', 'Painel', '#E6ECF8', '#12254B', {sub:'Quem enviou e quando'});
-      html += tileHtml('users', 'Técnicos', '#DDF1EF', '#0F6B63', {sub:'Cadastro e fotos'});
-      html += '</div>';
-    }
   }
   box.innerHTML = html;
   box.querySelectorAll('[data-home]').forEach(btn => { btn.onclick = ()=> homeAction(btn.getAttribute('data-home')); });
 
   // Últimos documentos (neste aparelho)
   const rec = $('homeRecent');
-  if(!admin){
+  if(!admin && !gestor){
     const hist = loadHistory().filter(h => h.status).slice(0, 3);
     if(hist.length){
       const now = Date.now();
@@ -4876,20 +5037,45 @@ function renderHomeMenu(){
     const tab = (id, label, ic, on, badge) => `<button type="button" data-home="${id}"${on ? ' class="on"' : ''}>${ICONS[ic]}${label}${badge ? `<span class="nb">${badge}</span>` : ''}</button>`;
     bar.innerHTML = tab('inicio', 'Início', 'home', true) +
       (gestor ? tab('painel', 'Painel', 'painel') : '') +
-      tab('meusDocs', 'Documentos', 'meusDocs', false, nAction > 0 ? nAction : '') +
+      (gestor ? '' : tab('meusDocs', 'Documentos', 'meusDocs', false, nAction > 0 ? nAction : '')) +
       tab('perfil', 'Perfil', 'perfil');
     bar.querySelectorAll('[data-home]').forEach(btn => { btn.onclick = ()=> homeAction(btn.getAttribute('data-home')); });
+  }
+
+  // Faixa de vencimento do contrato (só o gestor)
+  const ctBox = $('homeContract');
+  if(ctBox){
+    let show = false;
+    if(gestor && s.contratoFim){
+      const d = daysUntilISO(s.contratoFim), lim = s.contratoAvisoDias || 30, car = s.contratoCarencia || 0;
+      if(d !== null && d >= 0 && d <= lim){
+        show = true;
+        $('homeContractTitle').textContent = '⏳ ' + (d === 0 ? 'Contrato vence hoje' : d === 1 ? 'Contrato vence amanhã' : 'Contrato vence em ' + d + ' dias');
+        $('homeContractText').textContent = 'Seu acesso vai até ' + brDate(s.contratoFim) + '. Para renovar, fale com o DocSeg Digital.';
+        ctBox.classList.toggle('urgent', d <= 7);
+      } else if(d !== null && d < 0 && d + car >= 0){
+        show = true;
+        const resta = d + car;
+        $('homeContractTitle').textContent = '⏳ Contrato vencido há ' + (-d) + (d === -1 ? ' dia' : ' dias');
+        $('homeContractText').textContent = 'O acesso será suspenso ' + (resta === 0 ? 'hoje, ao fim do dia' : 'em ' + resta + (resta === 1 ? ' dia' : ' dias')) + '. Fale com o DocSeg Digital para renovar.';
+        ctBox.classList.add('urgent');
+      }
+    }
+    ctBox.style.display = show ? 'block' : 'none';
   }
 
   // Aviso/lembrete da empresa (definido pelo Administrador em Empresas)
   const noticeBox = $('homeNotice'), noticeText = $('homeNoticeText');
   if(noticeBox && noticeText){
-    if(!admin && s.empresaAviso){ noticeText.textContent = s.empresaAviso; noticeBox.style.display = 'block'; }
+    const txt = admin ? '' : (gestor ? (s.empresaAvisoGestor || '') : (s.empresaAviso || ''));
+    const tt = noticeBox.querySelector('b'); if(tt) tt.textContent = gestor ? '📌 Aviso do DocSeg Digital' : '📌 Aviso da empresa';
+    if(txt){ noticeText.textContent = txt; noticeBox.style.display = 'block'; }
     else noticeBox.style.display = 'none';
   }
 }
 function homeAction(id){
   if(id === 'users') openUsersModal();
+  else if(id === 'empresa') openEmpresaGestorModal();
   else if(id === 'adminAccount') openAdminAccountModal();
   else if(id === 'empresas') openEmpresasModal();
   else if(id === 'settings') openSettingsModal();
