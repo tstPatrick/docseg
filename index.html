@@ -1093,6 +1093,13 @@
     <p class="hint" style="margin-top:-4px;margin-bottom:10px;">Registro de todos os documentos enviados por esta empresa (planilha de auditoria). Só o Administrador acessa esta tela — e "apagar" aqui nunca remove de vez: move para uma aba "Excluídos" na planilha, por segurança.</p>
     <button type="button" class="btn btn-ghost" style="width:100%;margin-bottom:14px;" id="btnOpenAudit">Ver / apagar histórico desta empresa</button>
 
+    <p class="desc" style="margin-bottom:6px; margin-top:14px; border-top:1px solid var(--line); padding-top:14px;">Acesso da empresa à pasta de PDFs (Google Drive)</p>
+    <p class="hint" style="margin-top:-4px;margin-bottom:10px;">Os e-mails abaixo passam a ver e baixar, só para leitura, a pasta desta empresa no Drive do DocSeg Digital (aparece em "Compartilhados comigo"). Use contas Google (Gmail ou Workspace). Quem for tirado da lista perde o acesso ao salvar.</p>
+    <div class="field">
+      <textarea id="empresaFormDriveEmails" rows="2" placeholder="gestor@empresa.com, seguranca@empresa.com" style="width:100%;padding:11px 12px;border:1px solid #D6D3CC;border-radius:8px;font-size:14px;font-family:inherit;resize:vertical;"></textarea>
+      <a href="#" id="empresaFormDriveLink" target="_blank" style="display:none;font-size:12px;color:var(--ui);margin-top:6px;">Abrir a pasta desta empresa no Drive ↗</a>
+    </div>
+
     <p class="desc" style="margin-bottom:6px; margin-top:14px; border-top:1px solid var(--line); padding-top:14px;">Envio por e-mail (opcional)</p>
     <p class="hint" style="margin-top:-4px;margin-bottom:10px;">Por padrão os documentos NÃO são enviados por e-mail: eles vão para o painel do gestor, onde o PDF pode ser baixado. Se esta empresa quiser também receber cada documento por e-mail, ligue aqui.</p>
     <label class="chk-line"><input type="checkbox" id="empresaFormEmailAtivo"> Enviar também por e-mail</label>
@@ -3010,6 +3017,8 @@ function resetEmpresaForm(){
   document.getElementById('empresaFormPtPrefix').value = '';
   document.getElementById('empresaFormEmailAtivo').checked = false;
   document.getElementById('empresaFormEmailDestino').value = '';
+  document.getElementById('empresaFormDriveEmails').value = '';
+  { const dl = document.getElementById('empresaFormDriveLink'); dl.style.display = 'none'; dl.removeAttribute('href'); }
   empresaFormLogoDataUrl = null;
   empresaFormLogoDataUrl2 = null;
   setEmpresaLogoPreview('');
@@ -3104,6 +3113,8 @@ function loadEmpresaIntoForm(nome){
   document.getElementById('empresaFormPtPrefix').value = emp.ptPrefix || '';
   document.getElementById('empresaFormEmailAtivo').checked = !!emp.emailAtivo;
   document.getElementById('empresaFormEmailDestino').value = emp.emailDestino || '';
+  document.getElementById('empresaFormDriveEmails').value = emp.driveEmails || '';
+  { const dl = document.getElementById('empresaFormDriveLink'); if(emp.driveFolderUrl){ dl.href = emp.driveFolderUrl; dl.style.display = 'inline-block'; } else { dl.style.display = 'none'; } }
   empresaFormLogoDataUrl = null; // ainda não mexeu — mantém a logo já salva, a não ser que troque/remova agora
   empresaFormLogoDataUrl2 = null;
   setEmpresaLogoPreview(emp.logoDataUrl || '');
@@ -3132,7 +3143,7 @@ document.getElementById('btnEmpresaFormSave').onclick = async ()=>{
     const emailAtivo = document.getElementById('empresaFormEmailAtivo').checked;
     const emailDestino = document.getElementById('empresaFormEmailDestino').value.trim();
     if(emailAtivo && !emailDestino){ toast('Informe o e-mail de destino ou desligue o envio por e-mail.', 'err'); btn.disabled = false; btn.textContent = oldTxt; return; }
-    const payload = Object.assign({action:'saveEmpresa', nome, perguntas: cleaned, aviso: aviso, themeColor, themeColor2, ptPrefix, emailAtivo, emailDestino}, currentAdminCreds());
+    const payload = Object.assign({action:'saveEmpresa', nome, perguntas: cleaned, aviso: aviso, themeColor, themeColor2, ptPrefix, emailAtivo, emailDestino, driveEmails: document.getElementById('empresaFormDriveEmails').value.trim()}, currentAdminCreds());
     // só manda o campo da logo quando o admin realmente mexeu nela
     // (escolheu uma nova ou clicou em "Remover logo") — null = não mexeu.
     if(empresaFormLogoDataUrl !== null) payload.logoDataUrl = empresaFormLogoDataUrl;
@@ -3140,7 +3151,9 @@ document.getElementById('btnEmpresaFormSave').onclick = async ()=>{
     const resp = await fetch(scriptUrl, {method:'POST', body: JSON.stringify(payload)});
     const data = await resp.json();
     if(data.error) throw new Error(data.error);
-    toast('Empresa salva! Quem é dessa empresa recebe as mudanças no próximo acesso.', 'ok');
+    if(data.driveFalhas && data.driveFalhas.length) toast('Empresa salva, mas a pasta não foi compartilhada com: ' + data.driveFalhas.join('; '), 'err');
+    else if(data.driveShared && data.driveShared.length) toast('Empresa salva! Pasta do Drive compartilhada com ' + data.driveShared.length + ' e-mail(s).', 'ok');
+    else toast('Empresa salva! Quem é dessa empresa recebe as mudanças no próximo acesso.', 'ok');
     resetEmpresaForm();
     await loadEmpresasList();
   }catch(err){
