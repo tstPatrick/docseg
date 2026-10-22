@@ -628,6 +628,33 @@
   .stat b{font-family:'Poppins',sans-serif; font-size:24px; font-weight:700; color:#12254B; line-height:1.1;}
   .stat span{font-size:11.5px; color:#566179; line-height:1.3;}
   .stat.alert b{color:#B26A00;}
+  .loc-sum{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:10px;}
+  .loc-sum button{border:1.5px solid #E1E6EF;background:#fff;border-radius:14px;padding:10px 6px;text-align:center;font-family:inherit;cursor:pointer;color:#12254B;}
+  .loc-sum button.on{border-color:#1D3A6F;background:#E6ECF8;}
+  .loc-sum b{display:block;font-size:22px;font-family:'Poppins',sans-serif;line-height:1.1;}
+  .loc-sum span{font-size:11px;color:#566179;}
+  .loc-card{display:block;width:100%;text-align:left;background:#fff;border:1.5px solid #E1E6EF;border-radius:16px;padding:12px 14px;margin-bottom:10px;font-family:inherit;cursor:pointer;color:#12254B;}
+  .loc-card .top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;}
+  .loc-card .top b{font-size:14px;} .loc-card .meta{font-size:11.5px;color:#566179;margin-top:2px;}
+  .loc-card .lc{display:flex;gap:6px;align-items:flex-start;margin-top:8px;font-size:13px;line-height:1.35;}
+  .loc-card .lc svg{flex:0 0 auto;margin-top:1px;color:#A32D2D;}
+  .loc-card .times{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px;background:#F4F6FB;border-radius:10px;padding:8px 10px;}
+  .loc-card .times small{display:block;font-size:10px;color:#566179;text-transform:uppercase;letter-spacing:.4px;}
+  .loc-card .times b{font-size:14px;}
+  .loc-pill{font-size:10.5px;font-weight:700;border-radius:8px;padding:3px 8px;white-space:nowrap;}
+  .loc-pill.ok{background:#E3F4E6;color:#1F6B2A;} .loc-pill.warn{background:#FFF1D6;color:#8A4B00;}
+  .loc-bg{position:fixed;inset:0;background:rgba(5,10,25,.5);z-index:300;display:none;}
+  .loc-sheet{position:fixed;left:0;right:0;bottom:0;margin:0 auto;max-width:460px;background:#fff;border-radius:22px 22px 0 0;padding:14px 18px calc(18px + env(safe-area-inset-bottom,0px));z-index:301;display:none;max-height:85vh;overflow:auto;}
+  .loc-sheet h3{margin:0 0 2px;font-size:17px;color:#12254B;}
+  .loc-tl{list-style:none;margin:14px 0 8px;padding:0;}
+  .loc-tl li{display:grid;grid-template-columns:52px 14px 1fr;gap:8px;padding-bottom:14px;position:relative;font-size:13px;}
+  .loc-tl time{font-weight:700;font-size:14px;color:#12254B;}
+  .loc-tl .d{width:12px;height:12px;border-radius:50%;background:#1D3A6F;margin-top:3px;}
+  .loc-tl li:not(:last-child)::before{content:"";position:absolute;left:60px;top:16px;bottom:-2px;width:2px;background:#E1E6EF;}
+  .loc-tl span{color:#566179;display:block;font-size:12px;}
+  .loc-acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;}
+  .loc-acts a,.loc-acts button{flex:1;min-width:130px;text-align:center;text-decoration:none;border-radius:12px;padding:11px;font:700 13px inherit;font-family:inherit;cursor:pointer;border:1.5px solid #1D3A6F;background:#fff;color:#12254B;}
+  .loc-acts .p{background:#12254B;color:#fff;}
   .gfx{background:#fff;border:1px solid #E1E6EF;border-radius:14px;padding:12px 14px;margin-bottom:10px;}
   .gfx h4{margin:0 0 10px;font-size:12.5px;color:#12254B;}
   .gfx-cols{display:flex;align-items:flex-end;gap:8px;height:96px;}
@@ -943,6 +970,23 @@
     <div id="chamadosList"></div>
   </div>
 </div>
+
+<!-- ===================== TELA: LOCALIZAÇÃO DAS PTs ===================== -->
+<div id="locView" class="ds" style="display:none;">
+  <div class="screen-topbar"><button type="button" id="locBack" title="Voltar">←</button><b>Localização das PTs</b><button type="button" id="locRefresh" title="Atualizar" style="margin-left:auto;">↻</button></div>
+  <div class="painel-wrap">
+    <div class="field" id="locEmpresaRow" style="display:none;">
+      <label for="locEmpresa" style="font-weight:600;font-size:13px;">Empresa</label>
+      <select id="locEmpresa" style="width:100%;height:48px;border:1.5px solid #D5DCE9;border-radius:12px;background:#fff;font-size:15px;padding:0 12px;"></select>
+    </div>
+    <div class="seg" id="locPeriodo"><button type="button" data-d="1" class="on">Hoje</button><button type="button" data-d="7">7 dias</button><button type="button" data-d="30">30 dias</button></div>
+    <div class="loc-sum" id="locSum"></div>
+    <div id="locList"></div>
+    <p class="hint" style="margin-top:6px;">O local vem do campo "Área / Local" preenchido na PT (pelo 📍 ou digitado). Início e término são os horários informados na PT.</p>
+  </div>
+</div>
+<div class="loc-bg" id="locBg"></div>
+<div class="loc-sheet" id="locSheet" role="dialog" aria-modal="true"></div>
 
 <!-- ===================== TELA: PAINEL (gestor / administrador) ===================== -->
 <div id="painelView" class="ds" style="display:none;">
@@ -3574,7 +3618,7 @@ function docsAtivos(){
 
 /* ============ SUPORTE ============ */
 const SUPORTE_WHATS = '5571996033896';
-const APP_VERSION = '4.0';
+const APP_VERSION = '4.1';
 const SUPORTE_FAQ = [
   ['Como envio um documento?', 'Preencha o documento (PT, checklist de veículo ou de escada) e toque em Enviar. Escolha "Enviar agora" ou "Guardar e enviar depois". Em "Meus documentos" você vê o que já foi enviado.'],
   ['Estou sem internet, e agora?', 'Pode preencher normalmente. O documento fica guardado no aparelho e é enviado sozinho quando a internet voltar. Em "Meus documentos" aparece como "Aguardando envio".'],
@@ -4129,6 +4173,7 @@ async function finalizeAndSend(){
       const payload = Object.assign({
         docId: histMeta.id, tipoDocumento: 'Permissão de Trabalho (PT)',
         ptNumero: state.ptNumero || 'S/N', ptData: state.data || '', ptArea: state.area || '',
+        ptHoraIni: state.horario || '', ptHoraFim: state.encHora || '', ptMotivo: state.encMotivo || '',
         resumo: resumo, pdfBase64: base64, pdfNome: fileName
       }, currentEmpresaUsuario());
       const choice = await askSendChoice('Permissão de Trabalho (PT)');
@@ -5237,6 +5282,8 @@ function hideAllScreens(){
   document.getElementById('sendChoiceModal').classList.remove('show');
   document.getElementById('auditModal').classList.remove('show');
   document.getElementById('painelView').style.display = 'none';
+  document.getElementById('locView').style.display = 'none';
+  document.getElementById('locBg').style.display = 'none'; document.getElementById('locSheet').style.display = 'none';
   document.getElementById('profileModal').classList.remove('show');
   stopPainelTimers();
 }
@@ -5512,6 +5559,83 @@ function tileHtml(id, label, bg, fg, opts){
     (opts.sub ? `<span class="t"><b>${label}</b><small>${opts.sub}</small></span>` : `<b>${label}</b>`) + `</button>`;
 }
 
+ICONS.pin = '<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>';
+const loc = { dias:1, filtro:'todas', data:null, empresa:'' };
+function locConcluida(x){ return /^conclu[ií]do$/i.test(x.motivo || ''); }
+function locDur(x){
+  if(!x.horaIni || !x.horaFim) return '—';
+  const [a,b] = x.horaIni.split(':').map(Number), [c,d] = x.horaFim.split(':').map(Number);
+  let m = (c*60+d) - (a*60+b); if(m < 0) m += 1440;
+  return Math.floor(m/60) + 'h' + String(m%60).padStart(2,'0');
+}
+function locList(){
+  const d = loc.data; if(!d) return [];
+  const ini = loc.dias === 1 ? d.inicioHoje : d.serverNow - loc.dias * 86400000;
+  return d.docs.filter(x => x.ts >= ini && tipoKey(x.tipoDocumento) === 'pt');
+}
+async function openLoc(){
+  if(!isManager()) return;
+  hideAllScreens();
+  $('locView').style.display = 'block'; window.scrollTo(0,0);
+  loc.data = null; loc.filtro = 'todas';
+  if(isAdmin()){
+    $('locEmpresaRow').style.display = 'block';
+    const sel = $('locEmpresa');
+    try{
+      if(!lastLoadedEmpresas.length){ const r = await fetchAdminAction(getScriptUrl(), 'listEmpresas'); if(!r.error) lastLoadedEmpresas = r.empresas || []; }
+    }catch(e){}
+    sel.innerHTML = lastLoadedEmpresas.map(e => `<option value="${escHtml(e.nome)}">${escHtml(e.nome)}</option>`).join('');
+    loc.empresa = sel.value;
+  } else { $('locEmpresaRow').style.display = 'none'; loc.empresa = (getSession() || {}).empresa || ''; }
+  loadLoc();
+}
+async function loadLoc(){
+  $('locList').innerHTML = '<p class="empty">Carregando...</p>';
+  try{
+    const r = await api('listPainel', { empresa: loc.empresa, dias: 30 });
+    if(r.error) throw new Error(r.error);
+    loc.data = r; renderLoc();
+  }catch(e){ $('locList').innerHTML = '<p class="empty" style="color:#A32D2D;">Erro ao carregar: ' + escHtml(e.message || 'falha de conexão') + '</p>'; }
+}
+function renderLoc(){
+  const todas = locList();
+  const nOk = todas.filter(locConcluida).length;
+  $('locSum').innerHTML = [['todas', todas.length, 'PTs'], ['ok', nOk, 'concluídas'], ['pend', todas.length - nOk, 'com ressalva']].map(a => `<button type="button" data-f="${a[0]}" class="${loc.filtro === a[0] ? 'on' : ''}"><b>${a[1]}</b><span>${a[2]}</span></button>`).join('');
+  $('locSum').querySelectorAll('button').forEach(b => b.onclick = ()=>{ const f = b.getAttribute('data-f'); loc.filtro = (loc.filtro === f ? 'todas' : f); renderLoc(); });
+  const lista = todas.filter(x => loc.filtro === 'todas' || (loc.filtro === 'ok') === locConcluida(x));
+  if(!lista.length){ $('locList').innerHTML = '<p class="empty">Nenhuma PT neste período.</p>'; return; }
+  const nomes = {}; (loc.data.tecnicos || []).forEach(t => { nomes[t.username] = t.nome; });
+  $('locList').innerHTML = lista.slice(0, 100).map((x, i) => {
+    const ok = locConcluida(x);
+    return `<button type="button" class="loc-card" data-i="${i}"><div class="top"><div><b>PT Nº ${escHtml(x.numero || 'S/N')}</b><div class="meta">${escHtml(nomes[x.login] || x.usuario || '')} · ${new Date(x.ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})}</div></div><span class="loc-pill ${ok ? 'ok' : 'warn'}">${escHtml(x.motivo || 'Sem motivo')}</span></div>
+      <div class="lc">${ICONS.pin.replace(/width="23" height="23"/, 'width="15" height="15"')}<span>${escHtml(x.area || 'Local não informado')}</span></div>
+      <div class="times"><div><small>Início</small><b>${escHtml(x.horaIni || '—')}</b></div><div><small>Término</small><b>${escHtml(x.horaFim || '—')}</b></div><div><small>Duração</small><b>${locDur(x)}</b></div></div></button>`;
+  }).join('');
+  $('locList').querySelectorAll('[data-i]').forEach(b => b.onclick = ()=> locSheet(lista[parseInt(b.getAttribute('data-i'), 10)], nomes));
+}
+function locSheet(x, nomes){
+  const ok = locConcluida(x);
+  const q = encodeURIComponent(x.area || '');
+  $('locSheet').innerHTML = `<h3>PT Nº ${escHtml(x.numero || 'S/N')}</h3><div class="meta" style="font-size:12px;color:#566179;">${escHtml(nomes[x.login] || x.usuario || '')} · enviada ${escHtml(x.dataEnvio || '')}</div>
+    <ul class="loc-tl">
+      <li><time>${escHtml(x.horaIni || '—')}</time><i class="d"></i><div><b>Início</b><span>${escHtml(x.area || 'Local não informado')}</span></div></li>
+      <li><time>${escHtml(x.horaFim || '—')}</time><i class="d" style="background:${ok ? '#1F6B2A' : '#C88A00'}"></i><div><b>Encerramento</b><span>${escHtml(x.motivo || 'Sem motivo informado')} · duração ${locDur(x)}</span></div></li>
+    </ul>
+    <div class="loc-acts">${x.area ? `<a href="https://www.google.com/maps/search/?api=1&query=${q}" target="_blank" rel="noopener">Abrir no mapa</a>` : ''}${x.fileId ? '<button type="button" class="p" id="locPdf">Baixar PDF</button>' : ''}<button type="button" id="locFechar">Fechar</button></div>`;
+  $('locBg').style.display = 'block'; $('locSheet').style.display = 'block';
+  $('locFechar').onclick = locFecha;
+  const pb = $('locPdf'); if(pb) pb.onclick = ()=> painelDownload(x, pb);
+}
+function locFecha(){ $('locBg').style.display = 'none'; $('locSheet').style.display = 'none'; }
+$('locBg').onclick = locFecha;
+$('locBack').onclick = goHome;
+$('locRefresh').onclick = loadLoc;
+$('locEmpresa').onchange = ()=>{ loc.empresa = $('locEmpresa').value; loadLoc(); };
+$('locPeriodo').querySelectorAll('button').forEach(b => b.onclick = ()=>{
+  $('locPeriodo').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+  loc.dias = parseInt(b.getAttribute('data-d'), 10); if(loc.data) renderLoc();
+});
+
 async function loadTeamCard(){
   const el = document.getElementById('teamCard'); if(!el) return;
   const s = getSession() || {};
@@ -5561,6 +5685,7 @@ function renderHomeMenu(){
     html += tileHtml('users', 'Colaboradores', '#DDF1EF', '#0F6B63', {sub:'Quem preenche os documentos'});
     html += tileHtml('empresas', 'Empresas', '#FFF1D6', '#8A4B00');
     html += tileHtml('questionarios', 'Questionários', '#E6ECF8', '#1D3A6F', {sub:'PT e checklists', icon:'pt'});
+    html += tileHtml('localizacao', 'Localização das PTs', '#FDECEB', '#A32D2D', {sub:'Onde, início e término', icon:'pin'});
     html += tileHtml('chamados', 'Suporte', '#FDECEB', '#A32D2D', {sub:'Chamados dos usuários', icon:'suporte'});
     html += tileHtml('settings', 'Configurações', '#E8ECF2', '#3B475E');
     html += tileHtml('adminAccount', 'Senha do admin', '#FDECEB', '#A32D2D', {icon:'conta'});
@@ -5568,6 +5693,7 @@ function renderHomeMenu(){
   } else if(gestor){
     html += '<div class="ds-sec">Acompanhamento</div><div class="ds-grid">';
     html += tileHtml('painel', 'Painel', '#E6ECF8', '#12254B', {sub:'Quem enviou e quando'});
+    html += tileHtml('localizacao', 'Localização das PTs', '#FDECEB', '#A32D2D', {sub:'Onde, início e término', icon:'pin'});
     html += tileHtml('users', 'Colaboradores', '#DDF1EF', '#0F6B63', {sub:'Cadastro e fotos'});
     html += tileHtml('empresa', 'Notificar equipe', '#FFF1D6', '#8A4B00', {sub:'Aviso aos colaboradores', icon:'aviso'});
     html += '</div>';
@@ -5663,6 +5789,7 @@ function homeAction(id){
   else if(id === 'settings') openSettingsModal();
   else if(id === 'meusDocs') openMeusDocsScreen();
   else if(id === 'painel') openPainel();
+  else if(id === 'localizacao') openLoc();
   else if(id === 'perfil') openProfileModal();
   else if(id === 'suporte') openSuporte();
   else if(id === 'chamados') openChamados();
