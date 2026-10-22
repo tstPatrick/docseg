@@ -163,6 +163,10 @@
   .justif{margin-top:8px; display:none;}
   .justif.show{display:block;}
   .justif textarea{min-height:50px;}
+  .qphoto{display:flex; align-items:center; gap:10px; margin-top:8px; flex-wrap:wrap;}
+  .qphoto-btn{border:1.5px solid #1D3A6F; color:#1D3A6F; background:#fff; border-radius:10px; padding:8px 12px; font-size:13px; font-weight:700; cursor:pointer;}
+  .qphoto-prev{width:56px; height:56px; object-fit:cover; border-radius:8px; border:1px solid #D6D3CC;}
+  .qphoto-rm{border:0; background:none; color:#A32D2D; font-size:12px; font-weight:700; cursor:pointer;}
 
   /* team table */
   .team-row{
@@ -560,6 +564,14 @@
   .sup-card .tec{margin-top:7px; background:#EEF2FA; border-radius:8px; padding:7px 9px; font-size:11px; color:#566179; line-height:1.5; word-break:break-word;}
   .sup-card .acts{display:flex; gap:8px; margin-top:9px; flex-wrap:wrap;}
   .sup-card .acts a,.sup-card .acts button{border:1.5px solid #D6D3CC; background:#fff; border-radius:10px; padding:7px 11px; font-size:12px; font-weight:700; cursor:pointer; color:#12254B; text-decoration:none; font-family:inherit;}
+  .conv{margin-top:9px;display:flex;flex-direction:column;gap:6px;}
+  .conv .m{max-width:88%;padding:7px 10px;border-radius:12px;font-size:12.5px;line-height:1.45;white-space:pre-wrap;word-break:break-word;}
+  .conv .m small{display:block;font-size:10px;opacity:.7;margin-bottom:2px;}
+  .conv .m.u{align-self:flex-start;background:#EEF2FA;color:#12254B;}
+  .conv .m.s{align-self:flex-end;background:#12254B;color:#fff;}
+  .conv-reply{display:flex;gap:6px;margin-top:9px;}
+  .conv-reply textarea{flex:1;min-width:0;border:1.5px solid #D6D3CC;border-radius:10px;padding:8px 10px;font:inherit;font-size:13px;resize:none;height:42px;}
+  .conv-reply button{border:0;background:#1D3A6F;color:#fff;border-radius:10px;padding:0 14px;font-weight:700;font-family:inherit;cursor:pointer;}
   .sup-pill{font-size:10.5px; font-weight:700; border-radius:8px; padding:3px 8px; white-space:nowrap;}
   .sup-pill.a{background:#FFF1D6; color:#8A4B00;} .sup-pill.o{background:#E3F4E6; color:#1F6B2A;}
   .sup-auto{background:#EEF2FA; border-radius:10px; padding:10px 12px; font-size:11.5px; color:#566179; line-height:1.6; margin:4px 0 14px;}
@@ -616,6 +628,22 @@
   .stat b{font-family:'Poppins',sans-serif; font-size:24px; font-weight:700; color:#12254B; line-height:1.1;}
   .stat span{font-size:11.5px; color:#566179; line-height:1.3;}
   .stat.alert b{color:#B26A00;}
+  .gfx{background:#fff;border:1px solid #E1E6EF;border-radius:14px;padding:12px 14px;margin-bottom:10px;}
+  .gfx h4{margin:0 0 10px;font-size:12.5px;color:#12254B;}
+  .gfx-cols{display:flex;align-items:flex-end;gap:8px;height:96px;}
+  .gfx-cols .c{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;min-width:0;font-size:11px;color:#566179;}
+  .gfx-cols .c i{display:block;width:100%;max-width:38px;background:#1D3A6F;border-radius:6px 6px 0 0;min-height:2px;}
+  .gfx-cols .c b{font-size:12px;color:#12254B;margin-bottom:3px;}
+  .gfx-row{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,2fr) 30px;gap:8px;align-items:center;font-size:12px;margin-bottom:6px;}
+  .gfx-row span.l{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .gfx-row .bar{height:9px;background:#EEF1F7;border-radius:5px;overflow:hidden;}
+  .gfx-row .bar i{display:block;height:100%;background:#1D3A6F;border-radius:5px;}
+  .gfx-row.nc .bar i{background:#A32D2D;}
+  .gfx-row b{text-align:right;color:#12254B;}
+  .team-card{margin:0 0 14px;background:#fff;border:1px solid #E1E6EF;border-radius:16px;padding:14px 16px;}
+  .team-card h4{margin:0 0 8px;font-size:13px;color:#12254B;}
+  .team-card p{margin:0 0 4px;font-size:13px;color:#2B3650;line-height:1.5;}
+  .team-card .warn{color:#A32D2D;font-weight:600;}
   .ds-h{font-size:12px; font-weight:700; letter-spacing:.6px; text-transform:uppercase; color:#566179; margin:20px 2px 10px;}
   .tec-row{background:#fff; border:1px solid #E1E7F1; border-radius:16px; padding:11px 12px; display:flex; align-items:center; gap:12px; margin-bottom:8px; width:100%; text-align:left; cursor:pointer; color:#0F1B33;}
   .tec-row.sel{border-color:#12254B; box-shadow:0 0 0 2px rgba(18,37,75,.12);}
@@ -930,6 +958,7 @@
       <button type="button" data-d="30">30 dias</button>
     </div>
     <div class="painel-stats" id="painelStats"></div>
+    <div id="painelGraficos"></div>
     <div class="ds-h">Colaboradores</div>
     <div id="painelTecnicos"></div>
     <div class="ds-h">Documentos enviados</div>
@@ -1243,6 +1272,15 @@
     <div id="empresaFormDocs"></div>
     <p class="desc" style="margin-bottom:6px; margin-top:14px; border-top:1px solid var(--line); padding-top:14px;">Contrato (licença de uso)</p>
     <p class="hint" style="margin-top:-4px;margin-bottom:10px;">Passada a validade, gestor e colaboradores da empresa deixam de entrar, sozinho, sem você precisar fazer nada. O gestor recebe um aviso na tela inicial perto do vencimento. Deixe a validade em branco para uso sem prazo.</p>
+    <div class="field" style="margin-bottom:8px;">
+      <button type="button" class="btn btn-ghost" id="btnEmpresaTeste7" style="width:100%;border-color:#1F6B2A;color:#1F6B2A;">⏱ Criar teste de 7 dias</button>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;margin-top:8px;"><input type="checkbox" id="empresaFormTeste" style="width:18px;height:18px;"> Esta empresa está em período de teste</label>
+    </div>
+    <div class="field" style="margin-bottom:8px;">
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;"><input type="checkbox" id="empresaFormRelatorio" style="width:18px;height:18px;"> Enviar relatório mensal por e-mail (PDF)</label>
+      <p class="hint" style="margin:4px 0 6px;">Todo dia 1º, resumo do mês anterior. Vai para o e-mail de destino da empresa ou, se vazio, para os gestores.</p>
+      <button type="button" class="btn btn-ghost" id="btnRelatorioAgora" style="width:100%;">Enviar relatório do mês passado agora</button>
+    </div>
     <div class="ct-grid">
       <div class="field"><label>Início</label><input type="date" class="ct-date" id="empresaFormContratoIni"></div>
       <div class="field"><label>Válido até</label><input type="date" class="ct-date" id="empresaFormContratoFim"></div>
@@ -1340,6 +1378,20 @@
     </div>
     <div class="field"><label>URL do Google Apps Script</label><input type="text" id="cfgScriptUrl" placeholder="https://script.google.com/macros/s/AKfycb.../exec"></div>
 
+    <p class="desc" style="margin-bottom:6px; margin-top:14px; border-top:1px solid var(--line); padding-top:14px;">Backup dos dados</p>
+    <div class="card-lite" id="backupBox" style="background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:12px;font-size:13px;line-height:1.5;">
+      <div id="backupUltimo">Carregando...</div>
+      <p class="hint" style="margin:4px 0 8px;">Usuários, empresas, perguntas, avisos e contratos. Guardado no Drive em "_Backups", todo dia de madrugada (30 dias).</p>
+      <button type="button" class="btn btn-primary" id="btnBackupNow" style="width:100%;">Fazer backup agora</button>
+      <div id="backupList" style="margin-top:10px;"></div>
+      <div id="backupRestoreBox" style="display:none;margin-top:10px;border-top:1px solid var(--line);padding-top:10px;">
+        <b id="backupRestoreTitle" style="font-size:13px;"></b>
+        <p class="hint" style="margin:4px 0 6px;">Isso sobrescreve usuários e empresas atuais pelos do backup (antes é feito um backup do estado de agora). Confirme com a senha do administrador.</p>
+        <input type="password" id="backupRestorePass" placeholder="Senha do administrador" autocomplete="current-password" style="width:100%;padding:10px;border:1px solid #D6D3CC;border-radius:8px;font-size:15px;">
+        <div class="row2" style="margin-top:8px;"><button type="button" class="btn btn-ghost" id="btnBackupRestoreCancel">Cancelar</button><button type="button" class="btn btn-primary" id="btnBackupRestoreGo" style="background:#A32D2D;">Restaurar</button></div>
+      </div>
+    </div>
+
     <div id="sheetAuditBox" style="display:none; border:1px solid var(--line); border-radius:8px; padding:10px 12px; margin-bottom:14px;">
       <div style="display:flex; gap:8px; align-items:flex-start;">
         <span style="font-size:18px;">📊</span>
@@ -1418,7 +1470,7 @@ function makeEmptyState(){
     saude:{}, colaboradorNome:"",
     instalacao:{},
     equipe:[{nome:"",doc:""}],
-    respNome:"", tecNome:"", tecCarimbo:"",
+    respNome:"", libNome:"", tecNome:"", tecCarimbo:"",
     naoConformidades:"", acoesGerais:"",
     encHora:"", encMotivo:"",
     fotos:[]
@@ -1663,7 +1715,7 @@ function sessionFromServer(uname, passHash, r){
     username: r.username || uname, nome: r.nome || '', role, empresa: r.empresa || '', foto: r.foto || '',
     passwordHash: passHash, mustChange: !!r.mustChange, termsOk: r.termsOk !== false, termsVersion: r.termsVersion || '',
     cfg: r.cfg || null, perguntas: r.perguntas || null,
-    empresaAviso: r.empresaAviso || '', empresaAvisoGestor: r.empresaAvisoGestor || '', contratoFim: r.contratoFim || '', contratoAvisoDias: r.contratoAvisoDias || 0, contratoCarencia: r.contratoCarencia || 0, empresaLogoDataUrl: r.empresaLogoDataUrl || '',
+    empresaAviso: r.empresaAviso || '', empresaAvisoGestor: r.empresaAvisoGestor || '', contratoFim: r.contratoFim || '', empresaTeste: !!r.empresaTeste, senhaPadrao: !!r.senhaPadrao, contratoAvisoDias: r.contratoAvisoDias || 0, contratoCarencia: r.contratoCarencia || 0, empresaLogoDataUrl: r.empresaLogoDataUrl || '',
     empresaLogoDataUrl2: r.empresaLogoDataUrl2 || '',
     empresaThemeColor: r.empresaThemeColor || '', empresaThemeColor2: r.empresaThemeColor2 || '',
     empresaPtPrefix: r.empresaPtPrefix || '',
@@ -2319,7 +2371,10 @@ function renderFinal(){
     <div class="field"><label>Responsável pela atividade *</label><input type="text" id="f_respNome" value="${state.respNome}" placeholder="Nome">
       <p class="field-err-msg" id="err_f_respNome" style="display:none;">⚠ Campo obrigatório</p></div>
     <div class="field"><label>Assinatura do responsável</label>${sigCanvasHtml('sigResp','Assine aqui')}</div>
+    <div class="field"><label>Responsável pela liberação</label><input type="text" id="f_libNome" value="${state.libNome||''}" placeholder="Nome de quem libera a PT (opcional)"></div>
+    <div class="field"><label>Assinatura de quem libera</label>${sigCanvasHtml('sigLib','Assine aqui (opcional)')}</div>
     <div class="field"><label>Técnico de Segurança do Trabalho</label><input type="text" id="f_tecNome" value="${state.tecNome}" placeholder="Nome do técnico que está preenchendo"></div>
+    <div class="field"><label>Assinatura do Técnico de Segurança</label>${sigCanvasHtml('sigTec','Assine aqui (opcional)')}</div>
     ${carimboBoxHtml()}
     <div class="field"><label>Observações de não conformidades durante as atividades</label><textarea id="f_naoConf">${state.naoConformidades}</textarea></div>
     <div class="field"><label>Ações gerais</label><textarea id="f_acoes">${state.acoesGerais}</textarea></div>
@@ -2532,7 +2587,7 @@ function bindStepEvents(stepKey){
     f_ptNumero:['ptNumero'], f_data:['data'], f_horario:['horario'], f_area:['area'],
     f_descricao:['descricaoAtividade'], f_ferrOutros:['ferramentasOutros'],
     f_protColetiva:['alturaProtecaoColetiva'], f_episOutros:['episOutros'],
-    f_colabNome:['colaboradorNome'], f_respNome:['respNome'],
+    f_colabNome:['colaboradorNome'], f_respNome:['respNome'], f_libNome:['libNome'],
     f_naoConf:['naoConformidades'], f_acoes:['acoesGerais'], f_encHora:['encHora'], f_encMotivo:['encMotivo'], f_tecNome:['tecNome'],
     f_tipoCabo:['outrasAtividades','tipoCabo']
   };
@@ -2806,6 +2861,7 @@ function openSettingsModal(){
   document.getElementById('sheetAuditBox').style.display = 'none';
   hideAllScreens();
   document.getElementById('settingsModal').classList.add('show');
+  loadBackups();
   if(cfg.scriptUrl){
     populateCfgNumEmpresa(cfg.scriptUrl).then(()=>{
       const sel = document.getElementById('cfgNumEmpresa');
@@ -2880,7 +2936,8 @@ document.getElementById('btnAdminPassSave').onclick = async ()=>{
   const newPass = document.getElementById('adminNewPass').value;
   const newPass2 = document.getElementById('adminNewPass2').value;
   if(!curPass){ toast('Informe a senha atual.', 'err'); return; }
-  if(!newPass || newPass.length < 4){ toast('A nova senha precisa ter pelo menos 4 caracteres.', 'err'); return; }
+  if(!newPass || newPass.length < 8){ toast('A nova senha precisa ter pelo menos 8 caracteres.', 'err'); return; }
+  if(newPass === 'admin0110'){ toast('Escolha uma senha diferente da padrão.', 'err'); return; }
   if(newPass !== newPass2){ toast('A confirmação não bate com a nova senha.', 'err'); return; }
   const cfg = loadCfg();
   const scriptUrl = cfg.scriptUrl || DEFAULT_SCRIPT_URL;
@@ -2898,7 +2955,7 @@ document.getElementById('btnAdminPassSave').onclick = async ()=>{
     if(data.error) throw new Error(data.error);
     // Atualiza a sessão deste aparelho pra não precisar logar de novo.
     const s = getSession();
-    if(s && s.username === 'admin'){ s.passwordHash = newPasswordHash; localStorage.setItem(SESSION_KEY, JSON.stringify(s)); }
+    if(s && s.username === 'admin'){ s.passwordHash = newPasswordHash; s.senhaPadrao = false; localStorage.setItem(SESSION_KEY, JSON.stringify(s)); }
     toast('Senha do Administrador atualizada com sucesso!', 'ok');
     document.getElementById('adminCurPass').value = '';
     document.getElementById('adminNewPass').value = '';
@@ -3231,10 +3288,11 @@ function setEmpresaLogoPreview2(dataUrl){
 
 function contratoSituacao(emp){
   if(emp.suspenso) return {cls:'bad', txt:'Suspensa', sub:'suspensa manualmente'};
-  if(emp.contratoVencido) return {cls:'bad', txt:'Vencida', sub:'venceu em ' + brDate(emp.contratoFim)};
+  if(emp.contratoVencido) return {cls:'bad', txt: emp.teste ? 'Teste vencido' : 'Vencida', sub:'venceu em ' + brDate(emp.contratoFim)};
   const d = emp.diasRestantes;
   if(d === null || d === undefined || !emp.contratoFim) return {cls:'none', txt:'Sem validade', sub:'uso sem prazo'};
   if(d < 0) return {cls:'warn', txt:'Em carência', sub:'venceu em ' + brDate(emp.contratoFim)};
+  if(emp.teste) return {cls:'warn', txt: d === 0 ? 'TESTE · termina hoje' : 'TESTE · ' + d + (d === 1 ? ' dia' : ' dias'), sub:'teste até ' + brDate(emp.contratoFim)};
   if(d <= 30) return {cls:'warn', txt: d === 0 ? 'Vence hoje' : (d === 1 ? 'Vence amanhã' : 'Vence em ' + d + ' dias'), sub:'até ' + brDate(emp.contratoFim)};
   return {cls:'ok', txt:'Ativa · ' + d + ' dias', sub:'até ' + brDate(emp.contratoFim)};
 }
@@ -3247,6 +3305,28 @@ function updateContratoInfo(){
   el.textContent = d < 0 ? (d + car >= 0 ? 'Venceu, em carência: o acesso fecha em ' + (d + car) + ' dia(s).' : 'Contrato vencido: o acesso já está bloqueado.')
     : (d === 0 ? 'Vence hoje (vale até o fim do dia).' : 'Ativo, vence em ' + d + ' dia(s). Vale até o fim do dia ' + brDate(fim) + '.');
 }
+document.getElementById('btnRelatorioAgora').onclick = async ()=>{
+  const nome = document.getElementById('empresaFormNome').value.trim();
+  if(!nome){ toast('Salve a empresa primeiro.', 'err'); return; }
+  const b = document.getElementById('btnRelatorioAgora'); b.disabled = true; b.textContent = 'Enviando...';
+  try{
+    const r = await fetchAdminAction(getScriptUrl(), 'relatorioAgora', { nome });
+    if(r.error) throw new Error(r.error);
+    toast('Relatório de ' + r.mes + ' enviado (' + r.total + ' documentos).', 'ok');
+  }catch(e){ toast('Não enviou: ' + (e.message || 'falha'), 'err'); }
+  finally{ b.disabled = false; b.textContent = 'Enviar relatório do mês passado agora'; }
+};
+document.getElementById('btnEmpresaTeste7').onclick = ()=>{
+  const d = new Date(); d.setDate(d.getDate() + 7);
+  const p = n => String(n).padStart(2,'0');
+  document.getElementById('empresaFormContratoIni').value = todayLocalISO();
+  document.getElementById('empresaFormContratoFim').value = d.getFullYear() + '-' + p(d.getMonth()+1) + '-' + p(d.getDate());
+  document.getElementById('empresaFormAvisoDias').value = '7';
+  document.getElementById('empresaFormCarencia').value = '0';
+  document.getElementById('empresaFormTeste').checked = true;
+  updateContratoInfo();
+  toast('Teste de 7 dias preenchido — clique em "Salvar empresa".', 'ok');
+};
 ['empresaFormContratoIni','empresaFormContratoFim','empresaFormCarencia'].forEach(id => { const e = document.getElementById(id); if(e) e.addEventListener('change', updateContratoInfo); });
 function docsResumo(emp){
   const d = (Array.isArray(emp.documentos) && emp.documentos.length) ? emp.documentos : DOCS_CATALOGO.map(x => x.key);
@@ -3271,6 +3351,8 @@ function resetEmpresaForm(){
   document.getElementById('empresaFormContratoFim').value = '';
   document.getElementById('empresaFormAvisoDias').value = '30';
   document.getElementById('empresaFormCarencia').value = '0';
+  document.getElementById('empresaFormTeste').checked = false;
+  document.getElementById('empresaFormRelatorio').checked = false;
   updateContratoInfo();
   document.getElementById('empresaFormTitle').textContent = 'Nova empresa';
   document.getElementById('empresaFormColorPrimary').value = '#C8272A';
@@ -3406,6 +3488,8 @@ function loadEmpresaIntoForm(nome){
   document.getElementById('empresaFormContratoFim').value = emp.contratoFim || '';
   document.getElementById('empresaFormAvisoDias').value = String(emp.avisoDias || 30);
   document.getElementById('empresaFormCarencia').value = String(emp.carenciaDias || 0);
+  document.getElementById('empresaFormTeste').checked = !!emp.teste;
+  document.getElementById('empresaFormRelatorio').checked = !!emp.relatorioMensal;
   updateContratoInfo();
   document.getElementById('empresaFormTitle').textContent = 'Editar empresa: ' + emp.nome;
   document.getElementById('empresaFormColorPrimary').value = emp.themeColor || '#C8272A';
@@ -3440,7 +3524,7 @@ document.getElementById('btnEmpresaFormSave').onclick = async ()=>{
     const emailAtivo = document.getElementById('empresaFormEmailAtivo').checked;
     const emailDestino = document.getElementById('empresaFormEmailDestino').value.trim();
     if(emailAtivo && !emailDestino){ toast('Informe o e-mail de destino ou desligue o envio por e-mail.', 'err'); btn.disabled = false; btn.textContent = oldTxt; return; }
-    const payload = Object.assign({action:'saveEmpresa', nome, documentos, avisoGestor: aviso, suspenso: document.getElementById('empresaFormSuspenso').checked, suspensoMsg: document.getElementById('empresaFormSuspensoMsg').value.trim(), contratoInicio: document.getElementById('empresaFormContratoIni').value, contratoFim: document.getElementById('empresaFormContratoFim').value, avisoDias: +document.getElementById('empresaFormAvisoDias').value, carenciaDias: +document.getElementById('empresaFormCarencia').value, themeColor, themeColor2, ptPrefix, emailAtivo, emailDestino, driveEmails: document.getElementById('empresaFormDriveEmails').value.trim()}, currentAdminCreds());
+    const payload = Object.assign({action:'saveEmpresa', nome, documentos, teste: document.getElementById('empresaFormTeste').checked, relatorioMensal: document.getElementById('empresaFormRelatorio').checked, avisoGestor: aviso, suspenso: document.getElementById('empresaFormSuspenso').checked, suspensoMsg: document.getElementById('empresaFormSuspensoMsg').value.trim(), contratoInicio: document.getElementById('empresaFormContratoIni').value, contratoFim: document.getElementById('empresaFormContratoFim').value, avisoDias: +document.getElementById('empresaFormAvisoDias').value, carenciaDias: +document.getElementById('empresaFormCarencia').value, themeColor, themeColor2, ptPrefix, emailAtivo, emailDestino, driveEmails: document.getElementById('empresaFormDriveEmails').value.trim()}, currentAdminCreds());
     // só manda o campo da logo quando o admin realmente mexeu nela
     // (escolheu uma nova ou clicou em "Remover logo") — null = não mexeu.
     if(empresaFormLogoDataUrl !== null) payload.logoDataUrl = empresaFormLogoDataUrl;
@@ -3490,7 +3574,7 @@ function docsAtivos(){
 
 /* ============ SUPORTE ============ */
 const SUPORTE_WHATS = '5571996033896';
-const APP_VERSION = '3.3';
+const APP_VERSION = '4.0';
 const SUPORTE_FAQ = [
   ['Como envio um documento?', 'Preencha o documento (PT, checklist de veículo ou de escada) e toque em Enviar. Escolha "Enviar agora" ou "Guardar e enviar depois". Em "Meus documentos" você vê o que já foi enviado.'],
   ['Estou sem internet, e agora?', 'Pode preencher normalmente. O documento fica guardado no aparelho e é enviado sozinho quando a internet voltar. Em "Meus documentos" aparece como "Aguardando envio".'],
@@ -3527,15 +3611,43 @@ function openSuporte(){
   $('suporteView').style.display = 'block';
   loadMeusChamados();
 }
+function convHtml(c, comoAdmin){
+  const msgs = (c.conversa || []).map(m => `<div class="m ${m.de === 'suporte' ? 's' : 'u'}"><small>${escHtml(m.nome || '')} · ${new Date(m.ts).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}</small>${escHtml(m.texto)}</div>`).join('');
+  return (msgs ? `<div class="conv">${msgs}</div>` : '') +
+    `<div class="conv-reply"><textarea data-reply="${escHtml(c.id)}" placeholder="${comoAdmin ? 'Responder ao usuário...' : 'Escrever mensagem para o suporte...'}" maxlength="1000"></textarea><button type="button" data-send="${escHtml(c.id)}">Enviar</button></div>`;
+}
+function bindConv(box, cache, rerender){
+  box.querySelectorAll('button[data-send]').forEach(b => b.onclick = async ()=>{
+    const id = b.getAttribute('data-send');
+    const ta = box.querySelector('textarea[data-reply="' + id + '"]');
+    const texto = (ta.value || '').trim();
+    if(!texto){ ta.focus(); return; }
+    b.disabled = true; b.textContent = '...';
+    try{
+      const r = await api('responderChamado', { id, texto });
+      if(r.error) throw new Error(r.error);
+      const i = cache.findIndex(x => x.id === id); if(i >= 0) cache[i] = r.chamado;
+      toast('Mensagem enviada.', 'ok');
+      rerender();
+    }catch(e){ toast(e.message || 'Não foi possível enviar.', 'err'); b.disabled = false; b.textContent = 'Enviar'; }
+  });
+}
+let meusChamados = [];
+function renderMeusChamados(){
+  const box = $('supMine');
+  box.innerHTML = meusChamados.length ? meusChamados.slice(0, 10).map(c => `<div class="sup-card"><div class="h"><div><b>${escHtml(c.tipo)}</b><div class="meta">${escHtml(c.data)}</div></div><span class="sup-pill ${c.status === 'resolvido' ? 'o' : 'a'}">${c.status === 'resolvido' ? 'Resolvido' : (c.conversa && c.conversa.some(m => m.de === 'suporte') ? 'Respondido' : 'Em análise')}</span></div>
+      <div class="tx">${escHtml(c.descricao)}</div>${convHtml(c, false)}</div>`).join('')
+    : '<p class="hint">Você ainda não abriu nenhum chamado.</p>';
+  bindConv(box, meusChamados, renderMeusChamados);
+}
 async function loadMeusChamados(){
   const box = $('supMine');
   box.innerHTML = '<p class="hint">Carregando...</p>';
   try{
     const data = await api('listChamados');
     if(data.error) throw new Error(data.error);
-    const list = data.chamados || [];
-    box.innerHTML = list.length ? list.slice(0, 10).map(c => `<div class="sup-card"><div class="h"><div><b>${escHtml(c.tipo)}</b><div class="meta">${escHtml(c.data)}</div></div><span class="sup-pill ${c.status === 'resolvido' ? 'o' : 'a'}">${c.status === 'resolvido' ? 'Resolvido' : 'Em análise'}</span></div></div>`).join('')
-      : '<p class="hint">Você ainda não abriu nenhum chamado.</p>';
+    meusChamados = data.chamados || [];
+    renderMeusChamados();
   }catch(err){
     box.innerHTML = '<p class="hint">Não foi possível carregar seus chamados agora (sem internet?). Você ainda pode falar pelo WhatsApp.</p>';
   }
@@ -3619,8 +3731,10 @@ function renderChamados(){
       <div class="meta" style="margin-top:6px;"><b>${escHtml(c.tipo)}</b></div>
       <div class="tx">${escHtml(c.descricao)}</div>
       <div class="tec">App v${escHtml(c.versao || '?')} · ${escHtml(c.aparelho || '')}${c.erro ? '<br>Último erro de envio: ' + escHtml(c.erro) : ''}</div>
+      ${convHtml(c, true)}
       <div class="acts">${wa ? `<a href="https://wa.me/55${wa}" target="_blank" rel="noopener">Responder no WhatsApp</a>` : ''}${c.print ? `<a href="${escHtml(c.print)}" target="_blank" rel="noopener">Ver print</a>` : ''}<button type="button" data-id="${escHtml(c.id)}" data-st="${c.status === 'resolvido' ? 'aberto' : 'resolvido'}">${c.status === 'resolvido' ? 'Reabrir' : 'Marcar resolvido'}</button></div></div>`;
   }).join('');
+  bindConv($('chamadosList'), chamadosCache, renderChamados);
   $('chamadosList').querySelectorAll('button[data-id]').forEach(b => b.onclick = async ()=>{
     b.disabled = true;
     try{
@@ -3633,6 +3747,38 @@ function renderChamados(){
 }
 $('chamadosBack').onclick = goHome;
 $('chamadosRefresh').onclick = loadChamados;
+
+/* ============ BACKUP (Administrador › Configurações) ============ */
+let backupRestoreId = '';
+function fmtKB(n){ return (n/1024).toFixed(n < 10240 ? 1 : 0) + ' KB'; }
+async function loadBackups(){
+  const box = $('backupList'); if(!box) return;
+  try{
+    const data = await api('listBackups');
+    if(data.error) throw new Error(data.error);
+    const u = data.ultimo || {};
+    $('backupUltimo').innerHTML = u.quando ? '<b>Último backup:</b> ' + escHtml(new Date(u.quando).toLocaleString('pt-BR')) + ' · ' + (u.chaves||0) + ' registros <span class="pill ok" style="font-size:10px;">OK</span>' : '<b>Nenhum backup ainda.</b> Toque em "Fazer backup agora".';
+    box.innerHTML = (data.backups||[]).slice(0, 8).map(b => `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-top:1px solid #EDF0F6;font-size:12.5px;"><span>${escHtml(b.quando)} · ${fmtKB(b.tamanho)}</span><button type="button" class="rm-btn" data-bk="${escHtml(b.id)}" data-bkn="${escHtml(b.quando)}" style="width:auto;padding:5px 10px;font-size:12px;">Restaurar</button></div>`).join('');
+    box.querySelectorAll('[data-bk]').forEach(b => b.onclick = ()=>{ backupRestoreId = b.getAttribute('data-bk'); $('backupRestoreTitle').textContent = 'Restaurar o backup de ' + b.getAttribute('data-bkn') + '?'; $('backupRestorePass').value = ''; $('backupRestoreBox').style.display = 'block'; });
+  }catch(err){ $('backupUltimo').textContent = 'Não foi possível ler os backups: ' + (err.message || 'sem conexão'); }
+}
+$('btnBackupNow').onclick = async ()=>{
+  const btn = $('btnBackupNow'), old = btn.textContent; btn.disabled = true; btn.textContent = 'Fazendo backup...';
+  try{ const r = await api('backupNow'); if(r.error) throw new Error(r.error); toast('Backup feito!', 'ok'); await loadBackups(); }
+  catch(e){ toast(e.message || 'Não foi possível fazer o backup.', 'err'); }
+  finally{ btn.disabled = false; btn.textContent = old; }
+};
+$('btnBackupRestoreCancel').onclick = ()=>{ $('backupRestoreBox').style.display = 'none'; };
+$('btnBackupRestoreGo').onclick = async ()=>{
+  const pass = $('backupRestorePass').value; if(!pass){ toast('Digite a senha do administrador.', 'err'); return; }
+  const btn = $('btnBackupRestoreGo'), old = btn.textContent; btn.disabled = true; btn.textContent = 'Restaurando...';
+  try{
+    const r = await api('restoreBackup', { fileId: backupRestoreId, confirmPasswordHash: await hashPass(pass) });
+    if(r.error) throw new Error(r.error);
+    toast('Backup restaurado (' + r.restauradas + ' registros).', 'ok'); $('backupRestoreBox').style.display = 'none'; await loadBackups();
+  }catch(e){ toast(e.message || 'Não foi possível restaurar.', 'err'); }
+  finally{ btn.disabled = false; btn.textContent = old; }
+};
 
 /* ============ QUESTIONÁRIOS (Administrador) ============ */
 let qEmpresasCache = [];
@@ -3875,7 +4021,8 @@ function buildPrintTemplate(){
     <div class="bar">ENCERRAMENTO</div>
     <table>
       <tr><td style="width:50%"><b>Responsável pela atividade:</b> ${T.respNome||''}<br>${sigImg('sigResp')}</td>
-          <td style="width:50%"><b>Técnico de Segurança do Trabalho:</b> ${T.tecNome||''}<br><div style="height:90px;border:1px solid #ccc;margin-top:4px;"></div></td></tr>
+          <td style="width:50%"><b>Técnico de Segurança do Trabalho:</b> ${T.tecNome||''}<br>${sigData['sigTec'] ? sigImg('sigTec') : '<div style="height:90px;border:1px solid #ccc;margin-top:4px;"></div>'}</td></tr>
+      ${(T.libNome || sigData['sigLib']) ? `<tr><td colspan="2"><b>Responsável pela liberação:</b> ${T.libNome||''}<br>${sigImg('sigLib')}</td></tr>` : ''}
       <tr><td colspan="2"><b>Observações de não conformidades:</b> ${T.naoConformidades||''}</td></tr>
       <tr><td colspan="2"><b>Ações gerais:</b> ${T.acoesGerais||''}</td></tr>
       <tr><td><b>Hora de encerramento:</b> ${T.encHora||''}</td><td><b>Motivo:</b> ${T.encMotivo||''}</td></tr>
@@ -4498,6 +4645,16 @@ function autoFlushPendingIfStale(){
 function todayISO(){ const d=new Date(); return d.toISOString().slice(0,10); }
 
 /* ============ COMPONENTE GENÉRICO DE PERGUNTA (reutilizado por Veículo/Escada) ============ */
+// Fotos tiradas nos itens não conformes (entram no PDF, ao lado do nome do item)
+function itemPhotosPrintHtml(store, questions){
+  const comFoto = questions.filter(([id]) => store.itens[id] && store.itens[id].foto);
+  if(!comFoto.length) return '';
+  const rows = comFoto.map(([id,txt]) => `<tr><td style="width:62%;vertical-align:top;">${txt}${store.itens[id].just ? '<br><i>Obs.: ' + store.itens[id].just + '</i>' : ''}</td><td style="text-align:center;"><img src="${store.itens[id].foto}" style="max-width:100%;max-height:150px;object-fit:contain;"></td></tr>`).join('');
+  return `<div class="bar">FOTOS DAS NÃO CONFORMIDADES</div><table>${rows}</table>`;
+}
+function naoConformesDe(store, questions, badVal){
+  return questions.filter(([id]) => store.itens[id] && store.itens[id].val === badVal).map(([id,txt]) => txt);
+}
 function genericQuestionRow(store, id, text, opts, badVal){
   const cur = store.itens[id] || {val:"", just:""};
   const showJust = cur.val === badVal;
@@ -4508,6 +4665,10 @@ function genericQuestionRow(store, id, text, opts, badVal){
     </div>
     <div class="justif ${showJust?'show':''}">
       <textarea placeholder="Observação / ação corretiva">${cur.just||''}</textarea>
+      <div class="qphoto">
+        <label class="qphoto-btn"><input type="file" accept="image/*" capture="environment" data-qphoto="${id}" style="display:none;">📷 ${cur.foto ? 'Trocar foto' : 'Tirar foto'}</label>
+        ${cur.foto ? `<img class="qphoto-prev" src="${cur.foto}" alt="Foto do item"><button type="button" class="qphoto-rm" data-qphoto-rm="${id}">Remover</button>` : ''}
+      </div>
     </div>
   </div>`;
 }
@@ -4535,13 +4696,30 @@ function bindQuestionGroup(containerSelector, store, saveFn){
         store.itens[qid].val = val;
         const justBox = qEl.querySelector('.justif');
         const badVal = qEl.getAttribute('data-badval');
-        if(val===badVal){ justBox.classList.add('show'); } else { justBox.classList.remove('show'); }
+        if(val===badVal){ justBox.classList.add('show'); } else { justBox.classList.remove('show'); if(store.itens[qid].foto){ delete store.itens[qid].foto; const qb = qEl.querySelector('.qphoto'); if(qb) qb.innerHTML = `<label class="qphoto-btn"><input type="file" accept="image/*" capture="environment" data-qphoto="${qid}" style="display:none;">📷 Tirar foto</label>`; bindQuestionGroup(containerSelector, store, saveFn); } }
         qEl.classList.remove('q-error');
         saveFn();
       };
     });
     const ta = qEl.querySelector('.justif textarea');
     if(ta) ta.oninput = ()=>{ if(!store.itens[qid]) store.itens[qid]={val:"",just:""}; store.itens[qid].just = ta.value; saveFn(); };
+    const fi = qEl.querySelector('input[data-qphoto]');
+    if(fi) fi.onchange = ()=>{
+      const f = fi.files && fi.files[0]; if(!f) return;
+      resizeImageFile(f, 800, (dataUrl)=>{
+        if(!store.itens[qid]) store.itens[qid] = {val:"",just:""};
+        store.itens[qid].foto = dataUrl; saveFn();
+        const box = qEl.querySelector('.qphoto');
+        box.innerHTML = `<label class="qphoto-btn"><input type="file" accept="image/*" capture="environment" data-qphoto="${qid}" style="display:none;">📷 Trocar foto</label><img class="qphoto-prev" src="${dataUrl}" alt="Foto do item"><button type="button" class="qphoto-rm" data-qphoto-rm="${qid}">Remover</button>`;
+        bindQuestionGroup(containerSelector, store, saveFn);
+      });
+    };
+    const rm = qEl.querySelector('[data-qphoto-rm]');
+    if(rm) rm.onclick = ()=>{
+      if(store.itens[qid]) delete store.itens[qid].foto; saveFn();
+      qEl.querySelector('.qphoto').innerHTML = `<label class="qphoto-btn"><input type="file" accept="image/*" capture="environment" data-qphoto="${qid}" style="display:none;">📷 Tirar foto</label>`;
+      bindQuestionGroup(containerSelector, store, saveFn);
+    };
   });
 }
 
@@ -4575,7 +4753,7 @@ async function generateAndSendDoc(opts){
       const payload = Object.assign({
         docId: histMeta.id, tipoDocumento: opts.tipoDocumento || opts.subjectLabel,
         ptNumero: opts.subjectLabel, ptData: opts.subjectDate || '', ptArea: opts.subjectArea || '',
-        resumo: opts.resumo || '', pdfBase64: base64, pdfNome: fileName
+        resumo: opts.resumo || '', naoConformes: opts.naoConformes || [], pdfBase64: base64, pdfNome: fileName
       }, currentEmpresaUsuario());
       const choice = await askSendChoice(opts.tipoDocumento || opts.subjectLabel);
       if(choice === 'later' && queuePendingSend(payload, histMeta)){
@@ -4748,6 +4926,7 @@ function buildPrintTemplateVeiculo(){
       <tr><td colspan="2">Assinatura do motorista:<br>${sigImg('sigMotorista')}</td></tr>
       <tr><td colspan="2">Observações: ${vState.obs||''}</td></tr>
     </table>
+    ${itemPhotosPrintHtml(vState, getQ('veiculoBasico').concat(getQ('veiculoManut')))}
     ${photosPrintHtml(vState.fotos)}
   `;
   document.getElementById('printTemplate').innerHTML = html;
@@ -4868,6 +5047,7 @@ function buildPrintTemplateEscada(){
     <table>
       <tr><td>Técnico responsável: ${eState.tecNome||''}<br><div style="height:90px;border:1px solid #ccc;margin-top:4px;"></div></td></tr>
     </table>
+    ${itemPhotosPrintHtml(eState, getQ('escada'))}
     ${photosPrintHtml(eState.fotos)}
   `;
   document.getElementById('printTemplate').innerHTML = html;
@@ -4894,6 +5074,7 @@ document.getElementById('btnSendVeiculo').onclick = ()=>{
     fileNameBase:`Checklist_Veiculo_${vState.placa||'sem-placa'}_${vState.data||''}`,
     subjectLabel:'Checklist Veículo', subjectDate:vState.data, subjectArea:vState.placa||vState.tipoVeiculo,
     resumo:`Motorista: ${vState.motorista1||'-'}`, resetFn:resetVeiculoForm,
+    naoConformes: naoConformesDe(vState, getQ('veiculoBasico').concat(getQ('veiculoManut')), 'IRREGULAR'),
     tipoDocumento:'Checklist de Veículo', tipoDoc:'veiculo'
   });
 };
@@ -4907,6 +5088,7 @@ document.getElementById('btnSendEscada').onclick = ()=>{
     fileNameBase:`Checklist_Escada_${eState.data||''}`,
     subjectLabel:'Checklist Escada Extensiva', subjectDate:eState.data, subjectArea:eState.responsavelNome||'',
     resumo:`Executante: ${eState.executanteNome||'-'}`, resetFn:resetEscadaForm,
+    naoConformes: naoConformesDe(eState, getQ('escada'), 'NAO_CONFORME'),
     tipoDocumento:'Checklist de Escada Extensiva', tipoDoc:'escada'
   });
 };
@@ -5181,6 +5363,35 @@ function renderPainel(){
     `<div class="stat"><b>${nAtivos}/${d.tecnicos.length}</b><span>colaboradores com envio</span></div>` +
     `<div class="stat${nSem ? ' alert' : ''}"><b>${nSem}</b><span>sem envio ${periodoLabel}</span></div>`;
 
+  // Gráficos
+  {
+    const gx = $('painelGraficos');
+    if(gx){
+      if(!docsPeriodo.length){ gx.innerHTML = ''; }
+      else {
+        const ini = new Date(nowS); ini.setHours(0,0,0,0);
+        const sem = [0,0,0,0];
+        d.docs.forEach(x => { const k = Math.floor((ini.getTime() + 86400000 - x.ts) / (7*86400000)); if(k >= 0 && k < 4) sem[3-k]++; });
+        const maxS = Math.max.apply(null, sem.concat([1]));
+        const lblS = ['há 3 sem.','há 2 sem.','sem. passada','esta semana'];
+        const tipos = {pt:0, veiculo:0, escada:0};
+        docsPeriodo.forEach(x => { const k = tipoKey(x.tipoDocumento); if(tipos[k] !== undefined) tipos[k]++; });
+        const maxT = Math.max.apply(null, Object.keys(tipos).map(k => tipos[k]).concat([1]));
+        const nc = {};
+        docsPeriodo.forEach(x => (x.naoConformes || []).forEach(t => { nc[t] = (nc[t] || 0) + 1; }));
+        const ncK = Object.keys(nc).sort((a,b) => nc[b]-nc[a]).slice(0,5);
+        const maxN = ncK.length ? nc[ncK[0]] : 1;
+        gx.innerHTML = '<div class="ds-h">Gráficos</div>' +
+          '<div class="gfx"><h4>Envios por semana (últimas 4)</h4><div class="gfx-cols">' +
+            sem.map((v,i) => `<div class="c"><b>${v}</b><i style="height:${Math.round(v/maxS*70)}px"></i><span>${lblS[i]}</span></div>`).join('') + '</div></div>' +
+          '<div class="gfx"><h4>Por tipo de documento ' + periodoLabel + '</h4>' +
+            Object.keys(tipos).map(k => `<div class="gfx-row"><span class="l">${TIPO_CHIP[k][0]}</span><div class="bar"><i style="width:${Math.round(tipos[k]/maxT*100)}%"></i></div><b>${tipos[k]}</b></div>`).join('') + '</div>' +
+          (ncK.length ? '<div class="gfx"><h4>Não conformidades mais comuns ' + periodoLabel + '</h4>' +
+            ncK.map(t => `<div class="gfx-row nc"><span class="l" title="${escHtml(t)}">${escHtml(t)}</span><div class="bar"><i style="width:${Math.round(nc[t]/maxN*100)}%"></i></div><b>${nc[t]}</b></div>`).join('') + '</div>' : '');
+      }
+    }
+  }
+
   // Técnicos
   if(!d.tecnicos.length){
     $('painelTecnicos').innerHTML = '<p class="empty">Nenhum colaborador cadastrado nesta empresa ainda.</p>';
@@ -5301,6 +5512,23 @@ function tileHtml(id, label, bg, fg, opts){
     (opts.sub ? `<span class="t"><b>${label}</b><small>${opts.sub}</small></span>` : `<b>${label}</b>`) + `</button>`;
 }
 
+async function loadTeamCard(){
+  const el = document.getElementById('teamCard'); if(!el) return;
+  const s = getSession() || {};
+  try{
+    const r = await api('listPainel', { empresa: s.empresa, dias: 30 });
+    if(r.error || !r.docs) return;
+    const el2 = document.getElementById('teamCard'); if(!el2) return;
+    const hoje = r.docs.filter(x => x.ts >= r.inicioHoje).length;
+    const limite = r.serverNow - 3 * 86400000;
+    const parados = (r.tecnicos || []).filter(t => !t.ultimoTs || t.ultimoTs < limite);
+    let h = '<h4>Hoje na sua equipe</h4><p><b>' + hoje + '</b> documento' + (hoje === 1 ? '' : 's') + ' enviado' + (hoje === 1 ? '' : 's') + ' hoje.</p>';
+    if(parados.length) h += '<p class="warn">⚠ Sem enviar há 3+ dias: ' + parados.slice(0,5).map(t => escHtml((t.nome || t.username).split(' ')[0])).join(', ') + (parados.length > 5 ? ' e mais ' + (parados.length - 5) : '') + '</p>';
+    else if((r.tecnicos || []).length) h += '<p>✓ Todos enviaram nos últimos 3 dias.</p>';
+    el2.className = 'team-card'; el2.innerHTML = h;
+  }catch(e){}
+}
+
 function renderHomeMenu(){
   const box = $('homeMenuItems');
   if(!box) return;
@@ -5324,6 +5552,9 @@ function renderHomeMenu(){
   const nAction = admin ? 0 : (listPtDrafts().length + loadPendingSend().length + loadQueue().length);
 
   let html = '';
+  if(admin && s.senhaPadrao){
+    html += '<div class="home-contract urgent" style="margin:0 0 14px;"><b>⚠ Troque a senha do administrador</b><p>Você ainda usa a senha padrão. Quem a conhecer tem acesso total.</p><button type="button" class="btn btn-primary" id="btnTrocarSenhaPadrao" style="width:100%;margin-top:10px;background:#A32D2D;">Trocar agora</button></div>';
+  }
   if(admin){
     html += '<div class="ds-sec">Gestão</div><div class="ds-grid">';
     html += tileHtml('usersCliente', 'Cliente', '#FFF1D6', '#8A4B00', {sub:'Gestores das empresas', icon:'empresas'});
@@ -5349,7 +5580,10 @@ function renderHomeMenu(){
     html += tileHtml('meusDocs', 'Meus documentos', '#DDF1EF', '#0F6B63', {badge: nAction > 0 ? String(nAction) : ''});
     html += '</div>';
   }
+  if(gestor) html = '<div id="teamCard"></div>' + html;
   box.innerHTML = html;
+  if(gestor) loadTeamCard();
+  { const bs = document.getElementById('btnTrocarSenhaPadrao'); if(bs) bs.onclick = openAdminAccountModal; }
   box.querySelectorAll('[data-home]').forEach(btn => { btn.onclick = ()=> homeAction(btn.getAttribute('data-home')); });
 
   // Últimos documentos (neste aparelho)
@@ -5394,9 +5628,10 @@ function renderHomeMenu(){
       const d = daysUntilISO(s.contratoFim), lim = s.contratoAvisoDias || 30, car = s.contratoCarencia || 0;
       if(d !== null && d >= 0 && d <= lim){
         show = true;
-        $('homeContractTitle').textContent = '⏳ ' + (d === 0 ? 'Contrato vence hoje' : d === 1 ? 'Contrato vence amanhã' : 'Contrato vence em ' + d + ' dias');
-        $('homeContractText').textContent = 'Seu acesso vai até ' + brDate(s.contratoFim) + '. Para renovar, fale com o DocSeg Digital.';
-        ctBox.classList.toggle('urgent', d <= 7);
+        const tst = !!s.empresaTeste;
+        $('homeContractTitle').textContent = '⏳ ' + (tst ? (d === 0 ? 'Período de teste termina hoje' : d === 1 ? 'Período de teste: resta 1 dia' : 'Período de teste: restam ' + d + ' dias') : (d === 0 ? 'Contrato vence hoje' : d === 1 ? 'Contrato vence amanhã' : 'Contrato vence em ' + d + ' dias'));
+        $('homeContractText').textContent = tst ? 'O teste vai até ' + brDate(s.contratoFim) + '. Para continuar usando, fale com o DocSeg Digital.' : 'Seu acesso vai até ' + brDate(s.contratoFim) + '. Para renovar, fale com o DocSeg Digital.';
+        ctBox.classList.toggle('urgent', !tst && d <= 7);
       } else if(d !== null && d < 0 && d + car >= 0){
         show = true;
         const resta = d + car;
@@ -5467,7 +5702,8 @@ async function parkCurrentPtAndGoHome(){
     empresa: state.empresaNome || '',
     savedAt: new Date().toISOString(),
     data: snapshot,
-    sig: sigData['sigResp'] || null // assinatura do responsável, se já feita
+    sig: sigData['sigResp'] || null, // assinatura do responsável, se já feita
+    sigs: { sigResp: sigData['sigResp'] || null, sigLib: sigData['sigLib'] || null, sigTec: sigData['sigTec'] || null }
   });
   savePtDraftsList(list);
   await resetForNewPT();
@@ -5484,7 +5720,8 @@ function resumePtDraft(id){
   savePtDraftsList(list);
   Object.assign(state, entry.data);
   saveDraft();
-  if(entry.sig){ sigData['sigResp'] = entry.sig; } else { delete sigData['sigResp']; }
+  { const sg = entry.sigs || { sigResp: entry.sig || null };
+    ['sigResp','sigLib','sigTec'].forEach(k => { if(sg[k]) sigData[k] = sg[k]; else delete sigData[k]; }); }
   saveSigData();
   current = 0;
   renderCurrentStep();
