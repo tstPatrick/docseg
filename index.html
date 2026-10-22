@@ -1839,12 +1839,28 @@ $('loginServer').onclick = ()=>{
   toast('Endereço do servidor atualizado.', 'ok');
 };
 
+// Confirmação própria do app (no lugar do confirm() do navegador, que mostra o endereço do site)
+function dsConfirm(msg, okLabel){
+  return new Promise(resolve=>{
+    const bg = document.createElement('div');
+    bg.style.cssText = 'position:fixed;inset:0;background:rgba(10,20,40,.55);display:flex;align-items:center;justify-content:center;z-index:99999;padding:24px;';
+    bg.innerHTML = '<div style="background:#fff;border-radius:18px;padding:22px 20px 16px;max-width:340px;width:100%;box-shadow:0 12px 40px rgba(0,0,0,.3);font-family:inherit;">' +
+      '<div style="font-size:16px;font-weight:700;color:#12254B;margin-bottom:18px;">' + msg + '</div>' +
+      '<div style="display:flex;gap:10px;justify-content:flex-end;">' +
+      '<button type="button" data-r="0" style="border:1.5px solid #D6D3CC;background:#fff;color:#3B475E;border-radius:10px;padding:10px 16px;font-size:14px;font-weight:600;cursor:pointer;">Cancelar</button>' +
+      '<button type="button" data-r="1" style="border:0;background:#1D3A6F;color:#fff;border-radius:10px;padding:10px 18px;font-size:14px;font-weight:700;cursor:pointer;">' + (okLabel || 'OK') + '</button></div></div>';
+    const done = v => { bg.remove(); resolve(v); };
+    bg.querySelectorAll('button').forEach(b => b.onclick = ()=> done(b.getAttribute('data-r') === '1'));
+    bg.onclick = e => { if(e.target === bg) done(false); };
+    document.body.appendChild(bg);
+  });
+}
 function logout(){
   localStorage.removeItem(SESSION_KEY);
   location.reload();
 }
 $('btnLogout').onclick = ()=>{
-  if(confirm('Sair do DocSeg Digital?')) logout();
+  dsConfirm('Sair do DocSeg Digital?', 'Sair').then(ok => { if(ok) logout(); });
 };
 
 /* Ao abrir o app já logado: confere com o servidor se o acesso continua valendo
