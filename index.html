@@ -3614,7 +3614,7 @@ function renderChamados(){
   const lista = chamadosCache.filter(c => (c.status === 'resolvido') === (chamadosAba === 'resolvido'));
   if(!lista.length){ $('chamadosList').innerHTML = '<p class="hint">Nenhum chamado ' + (chamadosAba === 'aberto' ? 'aberto' : 'resolvido') + '.</p>'; return; }
   $('chamadosList').innerHTML = lista.map(c => {
-    const wa = (c.whatsapp || '').replace(/\D/g, '');
+    const wa = String(c.whatsapp || '').replace(/\D/g, '');
     return `<div class="sup-card"><div class="h"><div><b>${escHtml(c.nome)}</b><div class="meta">${escHtml(c.empresa || '—')} · ${escHtml(c.perfil)} · ${escHtml(c.data)}</div></div><span class="sup-pill ${c.status === 'resolvido' ? 'o' : 'a'}">${c.status === 'resolvido' ? 'Resolvido' : 'Aberto'}</span></div>
       <div class="meta" style="margin-top:6px;"><b>${escHtml(c.tipo)}</b></div>
       <div class="tx">${escHtml(c.descricao)}</div>
