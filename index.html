@@ -989,8 +989,7 @@
     <p class="desc" style="margin-bottom:6px; border-top:1px solid var(--line); padding-top:14px;" id="userFormTitle">Novo usuário</p>
     <div class="field" id="userFormRoleWrap"><label>Perfil</label>
       <select id="userFormRole" style="width:100%;padding:11px 12px;border:1px solid #D6D3CC;border-radius:8px;font-size:15px;background:#fff;">
-        <option value="tecnico">Colaborador (preenche e envia documentos)</option>
-        <option value="gestor">Empresa / Gestor (acompanha o painel da empresa)</option>
+        <option value="gestor">Cliente (acompanha o painel da empresa)</option>
         <option value="admin">Administrador (acesso completo)</option>
       </select>
     </div>
@@ -1009,10 +1008,10 @@
       <select id="userFormEmpresaSelect" style="width:100%;padding:11px 12px;border:1px solid #D6D3CC;border-radius:8px;font-size:15px;background:#fff;">
         <option value="">Selecione a empresa cadastrada...</option>
       </select>
-      <p class="hint">Define a empresa do colaborador: logo, cor, perguntas, numeração e painel.</p>
+      <p class="hint">Define a empresa da pessoa: logo, cor, perguntas, numeração e painel.</p>
     </div>
     <div class="field"><label id="userFormPassLabel">Senha provisória</label><input type="password" id="userFormPassword" placeholder="Mínimo de 6 caracteres" autocomplete="new-password">
-      <p class="hint">Passe esta senha ao colaborador. No primeiro acesso o app pede para ele criar uma senha só dele.</p>
+      <p class="hint">Passe esta senha à pessoa. No primeiro acesso o app pede para criar uma senha só dele.</p>
     </div>
     <div class="field">
       <label>E-mail pessoal (opcional)</label>
@@ -1539,7 +1538,7 @@ function isAdmin(){ return getRole() === 'admin'; }
 function isGestor(){ return getRole() === 'gestor'; }
 function isManager(){ const r = getRole(); return r === 'admin' || r === 'gestor'; }
 function getScriptUrl(){ return (loadCfg().scriptUrl) || DEFAULT_SCRIPT_URL; }
-function roleLabel(r){ return r === 'admin' ? 'Administrador' : (r === 'gestor' ? 'Gestor' : 'Colaborador'); }
+function roleLabel(r){ return r === 'admin' ? 'Administrador' : (r === 'gestor' ? 'Cliente' : 'Colaborador'); }
 function escHtml(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function initialsOf(nome){
   const p = (nome||'').trim().split(/\s+/).filter(Boolean);
@@ -2891,11 +2890,14 @@ let editingUsername = null; // null = cadastrando novo; string = editando (login
 let userFormFoto = null;    // null = não mexeu na foto | '' = remover | texto "data:..." = foto nova
 let lastLoadedUsers = [];
 
-function userFormRoleValue(){ return isGestor() ? 'tecnico' : $('userFormRole').value; }
+// Modo da tela de usuários: 'cliente' (gestores da empresa; só o admin) ou 'colab' (colaboradores)
+let usersMode = 'colab';
+function userFormRoleValue(){ return (isGestor() || usersMode === 'colab') ? 'tecnico' : $('userFormRole').value; }
+function inUsersMode(u){ return usersMode === 'cliente' ? (u.role === 'gestor' || u.role === 'admin') : (u.role !== 'gestor' && u.role !== 'admin'); }
 
 function updateUserFormFieldsByRole(){
   const role = userFormRoleValue();
-  $('userFormRoleWrap').style.display = isGestor() ? 'none' : 'block';
+  $('userFormRoleWrap').style.display = (isGestor() || usersMode === 'colab') ? 'none' : 'block';
   $('userFormEmpresaSelectWrap').style.display = (role === 'admin' || isGestor()) ? 'none' : 'block';
   $('userFormFotoWrap').style.display = role === 'admin' ? 'none' : 'block';
 }
@@ -2941,16 +2943,23 @@ function resetUserForm(){
   $('userFormPassword').value = '';
   $('userFormPassword').placeholder = 'Mínimo de 6 caracteres';
   $('userFormPassLabel').textContent = 'Senha provisória';
-  $('userFormRole').value = 'tecnico';
+  $('userFormRole').value = usersMode === 'cliente' ? 'gestor' : 'tecnico';
   $('userFormEmail').value = '';
-  $('userFormTitle').textContent = isGestor() ? 'Novo colaborador' : 'Novo usuário';
+  $('userFormTitle').textContent = usersMode === 'cliente' ? 'Novo cliente' : 'Novo colaborador';
+  $('btnUserFormSave').textContent = usersMode === 'cliente' ? 'Salvar cliente' : 'Salvar colaborador';
   setUserFotoPreview('', '');
   updateUserFormFieldsByRole();
 }
-async function openUsersModal(){
+async function openUsersModal(mode){
   if(!isManager()){ toast('Acesso restrito.', 'err'); return; }
+  usersMode = (isGestor() || mode !== 'cliente') ? 'colab' : 'cliente';
   hideAllScreens();
-  $('usersTitle').textContent = isGestor() ? 'Colaboradores da empresa' : 'Usuários';
+  $('usersTitle').textContent = isGestor() ? 'Colaboradores da empresa' : (usersMode === 'cliente' ? 'Cliente' : 'Colaboradores');
+  $('usersDesc').textContent = usersMode === 'cliente'
+    ? 'O cliente é quem acompanha a empresa: vê o painel, baixa os PDFs, cadastra colaboradores e escreve avisos. Defina o login e a senha provisória; ele troca a senha no primeiro acesso.'
+    : 'Cada colaborador tem o seu login. Ele entra com o login e a senha provisória que você definir aqui e troca a senha no primeiro acesso.';
+  const optAdmin = [...$('userFormRole').options].find(o => o.value === 'admin');
+  if(usersMode === 'cliente' && !optAdmin){ const o = document.createElement('option'); o.value = 'admin'; o.textContent = 'Administrador (acesso completo)'; $('userFormRole').appendChild(o); }
   $('usersModal').classList.add('show');
   $('usersSearch').value = '';
   resetUserForm();
@@ -2968,12 +2977,13 @@ async function openUsersModal(){
   await populateUserFormEmpresaSelect();
   if(isGestor()) $('userFormEmpresaSelect').value = getSession().empresa || '';
 }
-$('navUsuarios').onclick = openUsersModal;
+$('navUsuarios').onclick = ()=> openUsersModal('colab');
 $('closeUsers').onclick = goHome;
 
 function renderUsersList(list){
   const box = $('usersList');
-  if(!list.length){ box.innerHTML = '<p class="hint">Nenhum usuário encontrado.</p>'; return; }
+  list = list.filter(inUsersMode);
+  if(!list.length){ box.innerHTML = '<p class="hint">Nenhum cadastro aqui ainda — use o formulário abaixo.</p>'; return; }
   const row = u => `
     <div class="urow">
       ${avatarHtml(u.nome || u.username, '', 40)}
@@ -2986,13 +2996,7 @@ function renderUsersList(list){
         <button type="button" class="rm-btn del-user" data-username="${escHtml(u.username)}" title="Excluir">✕</button>
       </div>
     </div>`;
-  if(!isAdmin()){ box.innerHTML = list.map(row).join(''); }
-  else {
-    const gest = list.filter(u => u.role === 'gestor');
-    const outros = list.filter(u => u.role !== 'gestor');
-    const sec = (t, arr) => arr.length ? `<div class="ds-sec" style="margin:14px 0 6px;">${t} (${arr.length})</div>` + arr.map(row).join('') : '';
-    box.innerHTML = sec('Empresas · gestores', gest) + sec('Colaboradores', outros);
-  }
+  box.innerHTML = list.map(row).join('');
   box.querySelectorAll('.edit-user').forEach(btn=> btn.onclick = ()=> loadUserIntoForm(btn.getAttribute('data-username')));
   box.querySelectorAll('.del-user').forEach(btn=> btn.onclick = ()=> deleteUserByUsername(btn.getAttribute('data-username')));
 }
@@ -3026,6 +3030,7 @@ function loadUserIntoForm(username){
   editingUsername = u.username;
   userFormFoto = null;
   $('userFormRole').value = u.role === 'consulta' ? 'tecnico' : u.role;
+  if(u.role === 'admin' && ![...$('userFormRole').options].some(o=>o.value==='admin')){ const o = document.createElement('option'); o.value='admin'; o.textContent='Administrador (acesso completo)'; $('userFormRole').appendChild(o); }
   updateUserFormFieldsByRole();
   $('userFormNome').value = u.nome || '';
   $('userFormUsername').value = u.username;
@@ -5038,7 +5043,8 @@ function renderHomeMenu(){
   let html = '';
   if(admin){
     html += '<div class="ds-sec">Gestão</div><div class="ds-grid">';
-    html += tileHtml('users', 'Usuários', '#DDF1EF', '#0F6B63');
+    html += tileHtml('usersCliente', 'Cliente', '#FFF1D6', '#8A4B00', {sub:'Gestores das empresas', icon:'empresas'});
+    html += tileHtml('users', 'Colaboradores', '#DDF1EF', '#0F6B63', {sub:'Quem preenche os documentos'});
     html += tileHtml('empresas', 'Empresas', '#FFF1D6', '#8A4B00');
     html += tileHtml('questionarios', 'Questionários', '#E6ECF8', '#1D3A6F', {sub:'PT e checklists', icon:'pt'});
     html += tileHtml('settings', 'Configurações', '#E8ECF2', '#3B475E');
@@ -5127,7 +5133,8 @@ function renderHomeMenu(){
   }
 }
 function homeAction(id){
-  if(id === 'users') openUsersModal();
+  if(id === 'usersCliente') openUsersModal('cliente');
+  else if(id === 'users') openUsersModal('colab');
   else if(id === 'empresa') openEmpresaGestorModal();
   else if(id === 'adminAccount') openAdminAccountModal();
   else if(id === 'empresas') openEmpresasModal();
