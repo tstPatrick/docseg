@@ -628,6 +628,16 @@
   .stat b{font-family:'Poppins',sans-serif; font-size:24px; font-weight:700; color:#12254B; line-height:1.1;}
   .stat span{font-size:11.5px; color:#566179; line-height:1.3;}
   .stat.alert b{color:#B26A00;}
+  .cb{max-width:84%;padding:8px 11px;border-radius:14px;font-size:13px;line-height:1.4;white-space:pre-wrap;word-break:break-word;}
+  .cb small{display:block;font-size:10px;opacity:.7;margin-top:3px;}
+  .cb.me{align-self:flex-end;background:#1D3A6F;color:#fff;border-bottom-right-radius:4px;}
+  .cb.o{align-self:flex-start;background:#fff;color:#12254B;border-bottom-left-radius:4px;box-shadow:0 1px 3px rgba(15,27,51,.08);}
+  .cb-wrap{display:flex;flex-direction:column;gap:7px;padding:4px 0 8px;}
+  .th-row{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:#fff;border:1.5px solid #E1E6EF;border-radius:14px;padding:10px 12px;margin-bottom:8px;font-family:inherit;cursor:pointer;color:#12254B;}
+  .th-row .m{flex:1;min-width:0;} .th-row .m b{display:block;font-size:14px;} .th-row .m span{display:block;color:#566179;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .th-row .n{background:#A32D2D;color:#fff;border-radius:10px;min-width:20px;height:20px;font-size:11px;font-weight:700;display:grid;place-items:center;padding:0 5px;}
+  .msg-in{display:flex;gap:6px;margin-top:8px;} .msg-in textarea{flex:1;min-width:0;border:1.5px solid #D6D3CC;border-radius:12px;padding:9px 11px;font:inherit;font-size:14px;resize:none;height:46px;} .msg-in button{border:0;background:#1D3A6F;color:#fff;border-radius:12px;padding:0 16px;font-weight:700;font-family:inherit;cursor:pointer;}
+  .quick{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;} .quick button{background:#EEF2FA;border:0;border-radius:14px;padding:6px 11px;font:12px inherit;font-family:inherit;color:#12254B;cursor:pointer;}
   .ab-err{background:#FDECEB;color:#A32D2D;border-radius:14px;padding:12px 13px;font-size:13px;line-height:1.45;}
   .ab-empty{text-align:center;padding:28px 14px;background:#fff;border-radius:16px;color:#566179;font-size:13px;} .ab-empty b{display:block;color:#12254B;font-size:15px;margin:6px 0 4px;}
   .ab-tabs{display:flex;gap:6px;overflow-x:auto;margin-bottom:12px;padding-bottom:2px;}
@@ -985,6 +995,25 @@
   <div class="sup-wrap">
     <div class="sup-tabs" id="chamadosTabs"></div>
     <div id="chamadosList"></div>
+  </div>
+</div>
+
+<!-- ===================== TELA: MENSAGENS ===================== -->
+<div id="msgView" class="ds" style="display:none;">
+  <div class="screen-topbar"><button type="button" id="msgBack" title="Voltar">←</button><b id="msgTitle">💬 Mensagens</b><button type="button" id="msgRefresh" title="Atualizar" style="margin-left:auto;">↻</button></div>
+  <div class="painel-wrap">
+    <div id="msgListBox">
+      <div id="msgNova" style="display:none;margin-bottom:10px;">
+        <select id="msgNovaSel" style="width:100%;height:46px;border:1.5px solid #D5DCE9;border-radius:12px;background:#fff;font-size:14px;padding:0 12px;"><option value="">+ Nova conversa com colaborador...</option></select>
+      </div>
+      <div id="msgThreads"></div>
+    </div>
+    <div id="msgThreadBox" style="display:none;">
+      <div class="ab-card" id="msgRef" style="display:none;margin-bottom:8px;"></div>
+      <div class="cb-wrap" id="msgBubbles"></div>
+      <div class="quick" id="msgQuick"></div>
+      <div class="msg-in"><textarea id="msgText" maxlength="500" placeholder="Escrever mensagem..."></textarea><button type="button" id="msgSend">Enviar</button></div>
+    </div>
   </div>
 </div>
 
@@ -1769,6 +1798,7 @@ async function initPushNotifications(session, mostrar){
     let r; try{ r = await (await fetch(scriptUrl, { method: 'POST', body: JSON.stringify({ action: 'saveFcmToken', username: session.username, passwordHash: session.passwordHash, fcmToken: token }) })).json(); }
     catch(e){ return fim(false, 'Sem conexão com o servidor. Tente de novo com internet.'); }
     if(!r || r.error) return fim(false, 'O servidor recusou: ' + ((r && r.error) || 'resposta inválida'));
+    if(!window.__fcmFg){ window.__fcmFg = 1; try{ messaging.onMessage(p => { const n = p.notification || {}, d = p.data || {}; toast((n.title || d.titulo || 'DocSeg Digital') + ': ' + (n.body || d.corpo || ''), 'ok'); try{ if(navigator.vibrate) navigator.vibrate(120); }catch(e){} try{ onMsgPush(); }catch(e){} }); }catch(e){} }
     return fim(true, 'Notificações ativadas neste aparelho!');
   }catch(e){
     console.warn('Não foi possível ativar notificações push:', e);
@@ -3714,7 +3744,7 @@ function docsAtivos(){
 
 /* ============ SUPORTE ============ */
 const SUPORTE_WHATS = '5571996033896';
-const APP_VERSION = '4.5.1';
+const APP_VERSION = '4.6';
 const SUPORTE_FAQ = [
   ['Como envio um documento?', 'Preencha o documento (PT, checklist de veículo ou de escada) e toque em Enviar. Escolha "Enviar agora" ou "Guardar e enviar depois". Em "Meus documentos" você vê o que já foi enviado.'],
   ['Estou sem internet, e agora?', 'Pode preencher normalmente. O documento fica guardado no aparelho e é enviado sozinho quando a internet voltar. Em "Meus documentos" aparece como "Aguardando envio".'],
@@ -5380,6 +5410,7 @@ function hideAllScreens(){
   document.getElementById('painelView').style.display = 'none';
   document.getElementById('locView').style.display = 'none';
   document.getElementById('abView').style.display = 'none';
+  document.getElementById('msgView').style.display = 'none'; clearInterval(msg.timer);
   document.getElementById('locBg').style.display = 'none'; document.getElementById('locSheet').style.display = 'none';
   document.getElementById('profileModal').classList.remove('show');
   stopPainelTimers();
@@ -5791,6 +5822,94 @@ async function loadAbertosCard(){
     if(tile && !tile.querySelector('.badge')) tile.insertAdjacentHTML('afterbegin', `<span class="badge">${r.abertos.length}</span>`);
   }catch(e){}
 }
+ICONS.msg = '<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>';
+const msg = { list:[], eu:'', thread:'', nome:'', ref:'', refTitulo:'', timer:null };
+function msgThreads(){
+  const g = {};
+  msg.list.forEach(m => { const k = m.outro; if(!g[k]) g[k] = { login:k, nome:m.outroNome || k, ultima:m, nao:0 }; g[k].ultima = m; if(m.para === msg.eu && !m.lida) g[k].nao++; });
+  return Object.values(g).sort((a, b) => b.ultima.ts - a.ultima.ts);
+}
+async function openMensagens(login, nome, abertoId, refTitulo){
+  const s = getSession(); if(!s || isAdmin()) return;
+  hideAllScreens();
+  $('msgView').style.display = 'block'; window.scrollTo(0,0);
+  msg.thread = login || ''; msg.nome = nome || ''; msg.ref = abertoId || ''; msg.refTitulo = refTitulo || '';
+  $('msgNova').style.display = isGestor() ? 'block' : 'none';
+  if(isGestor()) fillMsgNova();
+  await loadMsgs();
+  clearInterval(msg.timer); msg.timer = setInterval(()=>{ if($('msgView').style.display === 'block') loadMsgs(true); }, 15000);
+}
+async function fillMsgNova(){
+  const sel = $('msgNovaSel');
+  if(sel.options.length > 1) return;
+  try{
+    const r = await api('listUsers'); if(r.error) return;
+    (r.users || []).filter(u => u.role === 'tecnico').forEach(u => { const o = document.createElement('option'); o.value = u.username; o.textContent = u.nome || u.username; sel.appendChild(o); });
+  }catch(e){}
+}
+async function loadMsgs(silent){
+  try{
+    const r = await api('listMensagens'); if(r.error) throw new Error(r.error);
+    msg.list = r.mensagens || []; msg.eu = r.eu;
+    renderMsgs();
+    setMsgBadge(r.naoLidas || 0);
+  }catch(e){ if(!silent) $('msgThreads').innerHTML = '<div class="ab-err"><b>Não foi possível carregar</b><br>' + escHtml(e.message || 'falha de conexão') + ' — confira se a nova versão do Apps Script foi publicada.</div>'; }
+}
+function renderMsgs(){
+  if(msg.thread){ renderThread(); return; }
+  $('msgListBox').style.display = 'block'; $('msgThreadBox').style.display = 'none'; $('msgTitle').textContent = '💬 Mensagens';
+  const t = msgThreads();
+  $('msgThreads').innerHTML = t.length ? t.map(x => `<button type="button" class="th-row" data-l="${escHtml(x.login)}">${avatarHtml(x.nome, '', 40)}<div class="m"><b>${escHtml(x.nome)}</b><span>${x.ultima.de === msg.eu ? 'Você: ' : ''}${escHtml(x.ultima.texto)}</span></div>${x.nao ? `<span class="n">${x.nao}</span>` : ''}</button>`).join('')
+    : '<div class="ab-empty"><div style="font-size:34px;">💬</div><b>Nenhuma conversa ainda</b>' + (isGestor() ? 'Escolha um colaborador acima para começar.' : 'Quando o seu gestor enviar uma mensagem, ela aparece aqui.') + '</div>';
+  $('msgThreads').querySelectorAll('[data-l]').forEach(b => b.onclick = ()=>{ msg.thread = b.getAttribute('data-l'); const x = t.find(y => y.login === msg.thread); msg.nome = x ? x.nome : ''; msg.ref = ''; msg.refTitulo = ''; renderMsgs(); });
+}
+async function renderThread(){
+  $('msgListBox').style.display = 'none'; $('msgThreadBox').style.display = 'block';
+  const conv = msg.list.filter(m => m.outro === msg.thread);
+  const nome = msg.nome || (conv[0] && conv[0].outroNome) || msg.thread;
+  $('msgTitle').textContent = '💬 ' + nome;
+  const ref = $('msgRef');
+  if(msg.refTitulo){ ref.style.display = 'block'; ref.innerHTML = '📎 Sobre: ' + escHtml(msg.refTitulo); } else ref.style.display = 'none';
+  const box = $('msgBubbles');
+  const perto = box.scrollHeight - box.scrollTop <= box.clientHeight + 60;
+  box.innerHTML = conv.length ? conv.map(m => `<div class="cb ${m.de === msg.eu ? 'me' : 'o'}">${escHtml(m.texto)}<small>${m.de === msg.eu ? 'Você' : escHtml(m.deNome)} · ${new Date(m.ts).toLocaleString('pt-BR', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'})}</small></div>`).join('')
+    : '<p class="hint">Sem mensagens ainda. Escreva a primeira abaixo.</p>';
+  const rap = isGestor() ? ['Pode finalizar hoje?', 'Precisa de ajuda?', 'Obrigado!'] : ['Já estou finalizando.', 'Preciso de ajuda.', 'Ok, entendido.'];
+  $('msgQuick').innerHTML = rap.map(t => `<button type="button">${escHtml(t)}</button>`).join('');
+  $('msgQuick').querySelectorAll('button').forEach(b => b.onclick = ()=>{ $('msgText').value = b.textContent; $('msgText').focus(); });
+  if(conv.some(m => m.para === msg.eu && !m.lida)){
+    conv.forEach(m => { if(m.para === msg.eu) m.lida = true; });
+    api('marcarLidas', { com: msg.thread }).then(()=> loadMsgBadge()).catch(()=>{});
+  }
+  window.scrollTo(0, document.body.scrollHeight);
+}
+async function sendMsg(){
+  const ta = $('msgText'), texto = ta.value.trim();
+  if(!texto || !msg.thread) return;
+  const b = $('msgSend'); b.disabled = true; b.textContent = '...';
+  try{
+    const r = await api('enviarMensagem', { para: msg.thread, texto, abertoId: msg.ref });
+    if(r.error) throw new Error(r.error);
+    ta.value = '';
+    await loadMsgs(true);
+  }catch(e){ toast(e.message || 'Não foi possível enviar.', 'err'); }
+  b.disabled = false; b.textContent = 'Enviar';
+}
+function setMsgBadge(n){
+  document.querySelectorAll('#homeMenuItems [data-home="mensagens"] .badge').forEach(x => x.remove());
+  const tile = document.querySelector('#homeMenuItems [data-home="mensagens"]');
+  if(tile && n > 0) tile.insertAdjacentHTML('afterbegin', `<span class="badge">${n}</span>`);
+  const card = document.getElementById('msgCard');
+  if(card){ card.style.display = n > 0 ? 'block' : 'none'; if(n > 0){ card.innerHTML = `<h4>💬 ${n} mensagem${n > 1 ? 's' : ''} não lida${n > 1 ? 's' : ''}</h4><button type="button" class="ab-btn" id="btnAbrirMsgs">Abrir mensagens</button>`; const bt = document.getElementById('btnAbrirMsgs'); if(bt) bt.onclick = ()=> openMensagens(); } }
+}
+async function loadMsgBadge(){
+  try{ if(!getSession() || isAdmin()) return; const r = await api('listMensagens'); if(!r.error) setMsgBadge(r.naoLidas || 0); }catch(e){}
+}
+function onMsgPush(){ if($('msgView').style.display === 'block') loadMsgs(true); else loadMsgBadge(); }
+$('msgBack').onclick = ()=>{ if(msg.thread && $('msgThreadBox').style.display === 'block'){ msg.thread = ''; msg.ref = ''; msg.refTitulo = ''; renderMsgs(); } else goHome(); };
+$('msgRefresh').onclick = ()=> loadMsgs();
+$('msgSend').onclick = sendMsg;
+$('msgNovaSel').onchange = ()=>{ const sel = $('msgNovaSel'); if(!sel.value) return; msg.thread = sel.value; msg.nome = sel.options[sel.selectedIndex].textContent; msg.ref = ''; msg.refTitulo = ''; sel.value = ''; renderMsgs(); };
 const ab = { data:null, tipo:'', empresa:'' };
 function abTipoKey(x){ const k = tipoKey(x.tipoDocumento); return k === 'pt' || k === 'veiculo' || k === 'escada' ? k : 'outro'; }
 async function openAbertos(){
@@ -5837,15 +5956,16 @@ function renderAbView(){
     const h = abHoras(x.inicioTs, r.serverNow), red = h >= lim, pct = Math.min(100, Math.round(h / lim * 100));
     return `<div class="ab-pcard"><div class="t"><div><b>${escHtml(x.numero || x.tipoDocumento)} · ${escHtml(x.nome)}</b><div class="meta">${escHtml(x.tipoDocumento)}${x.area ? ' · ' + escHtml(x.area) : ''}</div></div><span class="ab-pill${red ? ' red' : ''}">${red ? '+' + lim + ' h' : abHa(x.inicioTs).replace('há ', '')}</span></div>
       <div class="bar${red ? ' red' : ''}"><i style="width:${pct}%"></i></div><div class="meta">Iniciado ${new Date(x.inicioTs).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})} · ainda não enviado</div>
-      <div class="acts"><button type="button" class="ab-btn" data-lem="${i}">🔔 Lembrar</button></div></div>`;
+      <div class="acts"><button type="button" class="ab-btn" data-lem="${i}">🔔 Lembrar</button><button type="button" class="ab-btn" data-msg="${i}">💬 Mensagem</button></div></div>`;
   }).join('');
+  $('abList').querySelectorAll('[data-msg]').forEach(b => b.onclick = ()=>{ const x = lista[parseInt(b.getAttribute('data-msg'), 10)]; openMensagens(x.login, x.nome, x.abertoId, (x.numero || x.tipoDocumento) + (x.area ? ' · ' + x.area : '')); });
   $('abList').querySelectorAll('[data-lem]').forEach(b => b.onclick = async ()=>{
     const x = lista[parseInt(b.getAttribute('data-lem'), 10)];
     b.disabled = true; const old = b.textContent; b.textContent = '...';
     try{
-      const rr = await api('lembrarColaborador', { login: x.login, documento: x.numero || x.tipoDocumento });
+      const rr = await api('lembrarColaborador', { login: x.login, documento: x.numero || x.tipoDocumento, abertoId: x.abertoId });
       if(rr.error) throw new Error(rr.error);
-      toast('Lembrete enviado para ' + (x.nome || '').split(' ')[0] + '.', 'ok');
+      toast(rr.push ? 'Lembrete enviado para ' + (x.nome || '').split(' ')[0] + '.' : (rr.aviso || 'Mensagem entregue dentro do app.'), 'ok');
     }catch(e){ toast(e.message || 'Não foi possível enviar.', 'err'); }
     b.disabled = false; b.textContent = old;
   });
@@ -5912,6 +6032,7 @@ function renderHomeMenu(){
   } else if(gestor){
     html += '<div class="ds-sec">Acompanhamento</div><div class="ds-grid">';
     html += tileHtml('abertos', 'Em aberto', '#FFF1D6', '#8A4B00', {sub:'Documentos não finalizados', icon:'aberto'});
+    html += tileHtml('mensagens', 'Mensagens', '#E6ECF8', '#1D3A6F', {sub:'Conversar com a equipe', icon:'msg'});
     html += tileHtml('painel', 'Painel', '#E6ECF8', '#12254B', {sub:'Quem enviou e quando'});
     html += tileHtml('localizacao', 'Localização das PTs', '#FDECEB', '#A32D2D', {sub:'Onde, início e término', icon:'pin'});
     html += tileHtml('users', 'Colaboradores', '#DDF1EF', '#0F6B63', {sub:'Cadastro e fotos'});
@@ -5924,14 +6045,15 @@ function renderHomeMenu(){
     if(dA.indexOf('veiculo') !== -1) html += tileHtml('veiculo', 'Checklist de Veículo', '#E3F4E6', '#1F6B2A');
     if(dA.indexOf('escada') !== -1) html += tileHtml('escada', 'Checklist de Escada', '#FFF1D6', '#8A4B00');
     html += tileHtml('meusDocs', 'Meus documentos', '#DDF1EF', '#0F6B63', {badge: nAction > 0 ? String(nAction) : ''});
+    html += tileHtml('mensagens', 'Mensagens', '#E6ECF8', '#1D3A6F', {sub:'Fale com o seu gestor', icon:'msg'});
     html += '</div>';
   }
   if(gestor) html = '<div id="abertosCard"></div><div id="teamCard"></div>' + html;
   if(!admin && !gestor) html = abertosMeusHtml() + html;
-  if(!admin) html = pushBannerHtml() + html;
+  if(!admin) html = '<div class="ab-card" id="msgCard" style="display:none;background:#E6ECF8;color:#12254B;border-color:rgba(18,37,75,.2);"></div>' + pushBannerHtml() + html;
   box.innerHTML = html;
   if(gestor){ loadAbertosCard(); loadTeamCard(); }
-  if(!admin) pushBannerBind();
+  if(!admin){ pushBannerBind(); loadMsgBadge(); }
   if(!admin && !gestor){ abertosMeusBind(); syncAbertos(); }
   { const bs = document.getElementById('btnTrocarSenhaPadrao'); if(bs) bs.onclick = openAdminAccountModal; }
   box.querySelectorAll('[data-home]').forEach(btn => { btn.onclick = ()=> homeAction(btn.getAttribute('data-home')); });
@@ -6015,6 +6137,7 @@ function homeAction(id){
   else if(id === 'painel') openPainel();
   else if(id === 'localizacao') openLoc();
   else if(id === 'abertos') openAbertos();
+  else if(id === 'mensagens') openMensagens();
   else if(id === 'perfil') openProfileModal();
   else if(id === 'suporte') openSuporte();
   else if(id === 'chamados') openChamados();

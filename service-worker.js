@@ -22,11 +22,15 @@ const messaging = firebase.messaging();
 
 // Mostra a notificação quando ela chega com o app fechado/minimizado.
 messaging.onBackgroundMessage((payload) => {
-  const title = (payload.notification && payload.notification.title) || 'DocSeg Digital';
+  const n = payload.notification || {}, d = payload.data || {};
+  const title = n.title || d.titulo || 'DocSeg Digital';
   const options = {
-    body: (payload.notification && payload.notification.body) || '',
+    body: n.body || d.corpo || '',
     icon: './icon-192.png',
-    badge: './icon-192.png'
+    badge: './icon-192.png',
+    tag: 'docseg-aviso',      // mesma "tag" do servidor: evita notificação repetida
+    renotify: true,
+    vibrate: [120, 60, 120]
   };
   self.registration.showNotification(title, options);
 });
@@ -44,7 +48,7 @@ self.addEventListener('notificationclick', (event) => {
   );
 });
 
-const CACHE_NAME = 'docseg-shell-v36';
+const CACHE_NAME = 'docseg-shell-v37';
 const APP_SHELL = [
   './',
   './index.html',
