@@ -1193,11 +1193,7 @@
       <input type="email" id="userFormEmail" placeholder="nome@email.com" autocomplete="off">
       <p class="hint">Só para contato e recuperação de acesso. Os documentos não são enviados para ele.</p>
     </div>
-    <div class="field">
-      <label>WhatsApp (opcional)</label>
-      <input type="tel" id="userFormWhats" placeholder="(71) 99999-9999" autocomplete="off">
-      <p class="hint">Usado pelo gestor para lembrar o colaborador de documentos em aberto.</p>
-    </div>
+
     <div class="field" id="userFormFotoWrap">
       <label>Foto (opcional)</label>
       <div class="photo-field">
@@ -1743,7 +1739,7 @@ const BOOTSTRAP_ADMIN_PASS = 'admin0110';
 
 /* ============ NOTIFICAÇÕES PUSH (lembrete diário da PT) ============ */
 const firebaseConfig = {
-  apiKey: "BPgYVvJ6OVui3WzovHWNkyhHjg-32cyBnwZmBmqAJq8jcrP__KugYElozOusKgZgG43qUiYvAye99HdB4gvpNUg",
+  apiKey: "AIzaSyCVR2JVprZe8wzXFdfUj5SR-zzENmi2V2Q",
   authDomain: "docseg-app.firebaseapp.com",
   projectId: "docseg-app",
   storageBucket: "docseg-app.firebasestorage.app",
@@ -1754,31 +1750,44 @@ const FCM_VAPID_KEY = "BPgYVvJ6OVui3WzovHWNkyhHjg-32cyBnwZmBmqAJq8jcrP__KugYEloz
 
 // Pede permissão de notificação e registra o token deste aparelho no servidor,
 // para que o lembrete diário (dias úteis, ~7h) consiga chegar até ele.
-async function initPushNotifications(session){
+async function initPushNotifications(session, mostrar){
+  // devolve {ok, msg}. Com mostrar=true, o resultado/erro é exibido ao usuário.
+  const fim = (ok, msg)=>{ try{ if(ok) localStorage.setItem('push_ok', '1'); else localStorage.removeItem('push_ok'); }catch(e){} if(mostrar) toast(msg, ok ? 'ok' : 'err'); return {ok, msg}; };
   try{
-    if(!('serviceWorker' in navigator) || !('Notification' in window)) return;
+    if(!('serviceWorker' in navigator) || !('Notification' in window)) return fim(false, 'Este navegador não suporta notificações. No iPhone, instale o app na tela inicial.');
+    if(Notification.permission === 'denied') return fim(false, 'As notificações estão bloqueadas. Libere nas configurações do celular (notificações do app/navegador) e tente de novo.');
     if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const permission = await Notification.requestPermission();
-    if(permission !== 'granted') return;
+    if(permission !== 'granted') return fim(false, 'Permissão de notificação não concedida.');
     const reg = await navigator.serviceWorker.ready;
     const messaging = firebase.messaging();
-    const token = await messaging.getToken({ vapidKey: FCM_VAPID_KEY, serviceWorkerRegistration: reg });
-    if(!token) return;
+    let token = '';
+    try{ token = await messaging.getToken({ vapidKey: FCM_VAPID_KEY, serviceWorkerRegistration: reg }); }
+    catch(e){ return fim(false, 'O Firebase recusou o registro: ' + (e && e.message ? e.message : e)); }
+    if(!token) return fim(false, 'Não foi possível obter o código de notificação deste aparelho.');
     const scriptUrl = (loadCfg().scriptUrl) || DEFAULT_SCRIPT_URL;
-    await fetch(scriptUrl, {
-      method: 'POST',
-      body: JSON.stringify({
-        action: 'saveFcmToken',
-        username: session.username,
-        passwordHash: session.passwordHash,
-        fcmToken: token
-      })
-    });
+    let r; try{ r = await (await fetch(scriptUrl, { method: 'POST', body: JSON.stringify({ action: 'saveFcmToken', username: session.username, passwordHash: session.passwordHash, fcmToken: token }) })).json(); }
+    catch(e){ return fim(false, 'Sem conexão com o servidor. Tente de novo com internet.'); }
+    if(!r || r.error) return fim(false, 'O servidor recusou: ' + ((r && r.error) || 'resposta inválida'));
+    return fim(true, 'Notificações ativadas neste aparelho!');
   }catch(e){
-    // Notificações são um extra — nunca devem travar o app se falharem
-    // (ex.: navegador sem suporte, usuário negou a permissão, sem internet).
     console.warn('Não foi possível ativar notificações push:', e);
+    return fim(false, 'Erro ao ativar: ' + (e && e.message ? e.message : e));
   }
+}
+function pushBannerHtml(){
+  try{ if(localStorage.getItem('push_ok') === '1' && Notification.permission === 'granted') return ''; }catch(e){}
+  if(!('Notification' in window)) return '';
+  return '<div class="ab-card" id="pushBanner" style="background:#E6ECF8;color:#12254B;border-color:rgba(18,37,75,.2);"><h4>🔔 Notificações desligadas</h4><div style="font-size:12.5px;margin-bottom:8px;">Ative para receber lembretes e avisos neste aparelho.</div><button type="button" class="ab-btn" id="btnAtivarPush">Ativar notificações</button></div>';
+}
+function pushBannerBind(){
+  const b = document.getElementById('btnAtivarPush'); if(!b) return;
+  b.onclick = async ()=>{
+    b.disabled = true; b.textContent = 'Ativando...';
+    const r = await initPushNotifications(getSession(), true);
+    if(r.ok){ const bn = document.getElementById('pushBanner'); if(bn) bn.remove(); }
+    else { b.disabled = false; b.textContent = 'Tentar de novo'; let m = document.getElementById('pushMsg'); if(!m){ m = document.createElement('div'); m.id = 'pushMsg'; m.style.cssText = 'font-size:12px;color:#A32D2D;margin-top:8px;word-break:break-word;'; b.parentNode.appendChild(m); } m.textContent = r.msg; }
+  };
 }
 
 const SESSION_KEY = 'docseg_session';
@@ -3221,7 +3230,6 @@ function resetUserForm(){
   $('userFormPassLabel').textContent = 'Senha provisória';
   $('userFormRole').value = usersMode === 'cliente' ? 'gestor' : 'tecnico';
   $('userFormEmail').value = '';
-  $('userFormWhats').value = '';
   $('userFormTitle').textContent = usersMode === 'cliente' ? 'Novo cliente' : 'Novo colaborador';
   $('btnUserFormSave').textContent = usersMode === 'cliente' ? 'Salvar cliente' : 'Salvar colaborador';
   setUserFotoPreview('', '');
@@ -3322,7 +3330,6 @@ function loadUserIntoForm(username){
   $('userFormPassword').placeholder = 'Deixe em branco para manter a senha atual';
   $('userFormPassLabel').textContent = 'Nova senha provisória (opcional)';
   $('userFormEmail').value = u.email || '';
-  $('userFormWhats').value = u.whatsapp || '';
   setUserFotoPreview(u.nome || u.username, '');
   $('userFormTitle').textContent = 'Editar: ' + (u.nome || u.username) + (u.hasFoto ? ' (já tem foto)' : '');
   $('usersModal').querySelector('.modal').scrollTo({top: $('userFormTitle').offsetTop - 70, behavior:'smooth'});
@@ -3364,7 +3371,7 @@ $('btnUserFormSave').onclick = async ()=>{
   const btn = $('btnUserFormSave');
   btn.disabled = true; const oldTxt = btn.textContent; btn.textContent = 'Salvando...';
   try{
-    const payload = Object.assign({action:'saveUser', username, role, nome, empresa, email, whatsapp: $('userFormWhats').value.trim()}, currentAdminCreds());
+    const payload = Object.assign({action:'saveUser', username, role, nome, empresa, email}, currentAdminCreds());
     if(password) payload.passwordHash = await hashPass(password);
     const resp = await fetch(scriptUrl, {method:'POST', body: JSON.stringify(payload)});
     const data = await resp.json();
@@ -3707,7 +3714,7 @@ function docsAtivos(){
 
 /* ============ SUPORTE ============ */
 const SUPORTE_WHATS = '5571996033896';
-const APP_VERSION = '4.4';
+const APP_VERSION = '4.5.1';
 const SUPORTE_FAQ = [
   ['Como envio um documento?', 'Preencha o documento (PT, checklist de veículo ou de escada) e toque em Enviar. Escolha "Enviar agora" ou "Guardar e enviar depois". Em "Meus documentos" você vê o que já foi enviado.'],
   ['Estou sem internet, e agora?', 'Pode preencher normalmente. O documento fica guardado no aparelho e é enviado sozinho quando a internet voltar. Em "Meus documentos" aparece como "Aguardando envio".'],
@@ -5828,11 +5835,9 @@ function renderAbView(){
   }
   $('abList').innerHTML = lista.map((x, i) => {
     const h = abHoras(x.inicioTs, r.serverNow), red = h >= lim, pct = Math.min(100, Math.round(h / lim * 100));
-    const zap = String(x.whatsapp || '').replace(/\D/g, '');
-    const msg = encodeURIComponent('Olá ' + (x.nome || '').split(' ')[0] + ', o documento "' + (x.numero || x.tipoDocumento) + '" foi iniciado ' + abHa(x.inicioTs) + ' e ainda está em aberto. Pode finalizar e enviar? Obrigado!');
     return `<div class="ab-pcard"><div class="t"><div><b>${escHtml(x.numero || x.tipoDocumento)} · ${escHtml(x.nome)}</b><div class="meta">${escHtml(x.tipoDocumento)}${x.area ? ' · ' + escHtml(x.area) : ''}</div></div><span class="ab-pill${red ? ' red' : ''}">${red ? '+' + lim + ' h' : abHa(x.inicioTs).replace('há ', '')}</span></div>
       <div class="bar${red ? ' red' : ''}"><i style="width:${pct}%"></i></div><div class="meta">Iniciado ${new Date(x.inicioTs).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})} · ainda não enviado</div>
-      <div class="acts"><button type="button" class="ab-btn" data-lem="${i}">🔔 Lembrar</button><a class="ab-btn" target="_blank" rel="noopener" href="https://wa.me/${zap ? '55' + zap : ''}?text=${msg}">WhatsApp</a></div></div>`;
+      <div class="acts"><button type="button" class="ab-btn" data-lem="${i}">🔔 Lembrar</button></div></div>`;
   }).join('');
   $('abList').querySelectorAll('[data-lem]').forEach(b => b.onclick = async ()=>{
     const x = lista[parseInt(b.getAttribute('data-lem'), 10)];
@@ -5923,8 +5928,10 @@ function renderHomeMenu(){
   }
   if(gestor) html = '<div id="abertosCard"></div><div id="teamCard"></div>' + html;
   if(!admin && !gestor) html = abertosMeusHtml() + html;
+  if(!admin) html = pushBannerHtml() + html;
   box.innerHTML = html;
   if(gestor){ loadAbertosCard(); loadTeamCard(); }
+  if(!admin) pushBannerBind();
   if(!admin && !gestor){ abertosMeusBind(); syncAbertos(); }
   { const bs = document.getElementById('btnTrocarSenhaPadrao'); if(bs) bs.onclick = openAdminAccountModal; }
   box.querySelectorAll('[data-home]').forEach(btn => { btn.onclick = ()=> homeAction(btn.getAttribute('data-home')); });

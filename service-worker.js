@@ -10,7 +10,7 @@ importScripts('https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js
 importScripts('https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging-compat.js');
 
 firebase.initializeApp({
-  apiKey: "BPgYVvJ6OVui3WzovHWNkyhHjg-32cyBnwZmBmqAJq8jcrP__KugYElozOusKgZgG43qUiYvAye99HdB4gvpNUg",
+  apiKey: "AIzaSyCVR2JVprZe8wzXFdfUj5SR-zzENmi2V2Q",
   authDomain: "docseg-app.firebaseapp.com",
   projectId: "docseg-app",
   storageBucket: "docseg-app.firebasestorage.app",
@@ -44,7 +44,7 @@ self.addEventListener('notificationclick', (event) => {
   );
 });
 
-const CACHE_NAME = 'docseg-shell-v34';
+const CACHE_NAME = 'docseg-shell-v36';
 const APP_SHELL = [
   './',
   './index.html',
