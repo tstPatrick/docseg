@@ -628,6 +628,18 @@
   .stat b{font-family:'Poppins',sans-serif; font-size:24px; font-weight:700; color:#12254B; line-height:1.1;}
   .stat span{font-size:11.5px; color:#566179; line-height:1.3;}
   .stat.alert b{color:#B26A00;}
+  .ab-card{border-radius:16px;padding:12px 13px;margin:0 0 14px;background:#FFF1D6;color:#8A4B00;border:1px solid rgba(138,75,0,.25);}
+  .ab-card.red{background:#FDECEB;color:#A32D2D;border-color:rgba(163,45,45,.25);}
+  .ab-card h4{margin:0 0 6px;font-size:13.5px;}
+  .ab-row{display:flex;align-items:center;gap:8px;background:#fff;color:#12254B;border-radius:12px;padding:9px 10px;margin-top:7px;font-size:12.5px;}
+  .ab-row .m{flex:1;min-width:0;} .ab-row .m b{display:block;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;} .ab-row .m span{color:#566179;font-size:11.5px;}
+  .ab-row button,.ab-btn{border:0;border-radius:10px;padding:7px 11px;font:700 12px inherit;font-family:inherit;background:#1D3A6F;color:#fff;cursor:pointer;white-space:nowrap;text-decoration:none;display:inline-block;}
+  .ab-pill{font-size:10.5px;font-weight:700;border-radius:8px;padding:3px 8px;white-space:nowrap;background:#FFF1D6;color:#8A4B00;}
+  .ab-pill.red{background:#FDECEB;color:#A32D2D;}
+  .ab-pcard{background:#fff;border:1px solid #E1E6EF;border-radius:14px;padding:11px 12px;margin-bottom:9px;font-size:12.5px;}
+  .ab-pcard .t{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;} .ab-pcard .t b{font-size:13.5px;} .ab-pcard .meta{color:#566179;font-size:11.5px;}
+  .ab-pcard .bar{height:6px;border-radius:3px;background:#EEF1F7;margin:8px 0 2px;overflow:hidden;} .ab-pcard .bar i{display:block;height:100%;background:#C88A00;} .ab-pcard .bar.red i{background:#A32D2D;}
+  .ab-pcard .acts{display:flex;gap:7px;margin-top:9px;} .ab-pcard .acts button,.ab-pcard .acts a{flex:1;text-align:center;background:#fff;color:#12254B;border:1.5px solid #1D3A6F;} .ab-pcard .acts button:disabled{opacity:.45;}
   .loc-sum{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:10px;}
   .loc-sum button{border:1.5px solid #E1E6EF;background:#fff;border-radius:14px;padding:10px 6px;text-align:center;font-family:inherit;cursor:pointer;color:#12254B;}
   .loc-sum button.on{border-color:#1D3A6F;background:#E6ECF8;}
@@ -1002,6 +1014,7 @@
       <button type="button" data-d="30">30 dias</button>
     </div>
     <div class="painel-stats" id="painelStats"></div>
+    <div id="painelAbertos"></div>
     <div id="painelGraficos"></div>
     <div class="ds-h">Colaboradores</div>
     <div id="painelTecnicos"></div>
@@ -1160,6 +1173,11 @@
       <label>E-mail pessoal (opcional)</label>
       <input type="email" id="userFormEmail" placeholder="nome@email.com" autocomplete="off">
       <p class="hint">Só para contato e recuperação de acesso. Os documentos não são enviados para ele.</p>
+    </div>
+    <div class="field">
+      <label>WhatsApp (opcional)</label>
+      <input type="tel" id="userFormWhats" placeholder="(71) 99999-9999" autocomplete="off">
+      <p class="hint">Usado pelo gestor para lembrar o colaborador de documentos em aberto.</p>
     </div>
     <div class="field" id="userFormFotoWrap">
       <label>Foto (opcional)</label>
@@ -1321,6 +1339,8 @@
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;margin-top:8px;"><input type="checkbox" id="empresaFormTeste" style="width:18px;height:18px;"> Esta empresa está em período de teste</label>
     </div>
     <div class="field" style="margin-bottom:8px;">
+      <label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px;">Alerta de documento parado (horas)</label>
+      <input type="number" id="empresaFormAlertaHoras" min="1" max="720" value="24" style="width:100%;height:44px;border:1.5px solid #D5DCE9;border-radius:10px;padding:0 12px;margin-bottom:10px;">
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;"><input type="checkbox" id="empresaFormRelatorio" style="width:18px;height:18px;"> Enviar relatório mensal por e-mail (PDF)</label>
       <p class="hint" style="margin:4px 0 6px;">Todo dia 1º, resumo do mês anterior. Vai para o e-mail de destino da empresa ou, se vazio, para os gestores.</p>
       <button type="button" class="btn btn-ghost" id="btnRelatorioAgora" style="width:100%;">Enviar relatório do mês passado agora</button>
@@ -1517,12 +1537,35 @@ function makeEmptyState(){
     respNome:"", libNome:"", tecNome:"", tecCarimbo:"",
     naoConformidades:"", acoesGerais:"",
     encHora:"", encMotivo:"",
-    fotos:[]
+    fotos:[], abertoId:"", abertoInicio:0
   };
 }
 const state = makeEmptyState();
 
-function saveDraft(){ try{ localStorage.setItem('pt_draft', JSON.stringify(state)); }catch(e){} }
+/* ---- Documento em aberto: avisa o servidor (para o gestor ver) ---- */
+const ABERTO_NOMES = {pt:'Permissão de Trabalho (PT)', veiculo:'Checklist de Veículo', escada:'Checklist de Escada Extensiva'};
+function abertoInfo(tipo, st){
+  if(tipo === 'pt') return { touched: !!(st.area || st.descricaoAtividade || st.respNome || st.colaboradorNome || (st.tipoTrabalho || []).length), numero: st.ptNumero || '', area: st.area || '', titulo: 'PT Nº ' + (st.ptNumero || '—') + (st.area ? ' · ' + st.area : '') };
+  if(tipo === 'veiculo') return { touched: !!(st.placa || st.marcaModelo || st.motorista1 || Object.keys(st.itens || {}).length), numero: 'Checklist Veículo', area: st.placa || st.tipoVeiculo || '', titulo: 'Checklist de Veículo' + (st.placa ? ' · ' + st.placa : '') };
+  return { touched: !!(st.executanteNome || Object.keys(st.itens || {}).length), numero: 'Checklist Escada', area: st.executanteNome || '', titulo: 'Checklist de Escada' };
+}
+function markAberto(tipo, st){
+  if(!st.abertoId && abertoInfo(tipo, st).touched){ st.abertoId = 'ab' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); st.abertoInicio = Date.now(); }
+}
+const _pingT = {};
+function pingAberto(tipo, st){
+  try{
+    if(typeof isManager !== 'function' || isManager() || !getSession() || !st.abertoId) return;
+    clearTimeout(_pingT[tipo]);
+    _pingT[tipo] = setTimeout(()=>{
+      if(!navigator.onLine || !st.abertoId) return;
+      const inf = abertoInfo(tipo, st);
+      api('docAberto', { abertoId: st.abertoId, tipoDocumento: ABERTO_NOMES[tipo], numero: inf.numero, area: inf.area, inicioTs: st.abertoInicio }).catch(()=>{});
+    }, 4000);
+  }catch(e){}
+}
+function fechaAberto(id){ if(id && navigator.onLine){ try{ api('docFechado', { abertoId: id }).catch(()=>{}); }catch(e){} } }
+function saveDraft(){ markAberto('pt', state); try{ localStorage.setItem('pt_draft', JSON.stringify(state)); }catch(e){} pingAberto('pt', state); }
 function loadDraft(){ try{ const d=localStorage.getItem('pt_draft'); if(d){ Object.assign(state, JSON.parse(d)); } }catch(e){} }
 
 /* ============ QUESTION SETS (padrões de fábrica) ============ */
@@ -1759,7 +1802,7 @@ function sessionFromServer(uname, passHash, r){
     username: r.username || uname, nome: r.nome || '', role, empresa: r.empresa || '', foto: r.foto || '',
     passwordHash: passHash, mustChange: !!r.mustChange, termsOk: r.termsOk !== false, termsVersion: r.termsVersion || '',
     cfg: r.cfg || null, perguntas: r.perguntas || null,
-    empresaAviso: r.empresaAviso || '', empresaAvisoGestor: r.empresaAvisoGestor || '', contratoFim: r.contratoFim || '', empresaTeste: !!r.empresaTeste, senhaPadrao: !!r.senhaPadrao, contratoAvisoDias: r.contratoAvisoDias || 0, contratoCarencia: r.contratoCarencia || 0, empresaLogoDataUrl: r.empresaLogoDataUrl || '',
+    empresaAviso: r.empresaAviso || '', empresaAvisoGestor: r.empresaAvisoGestor || '', contratoFim: r.contratoFim || '', empresaTeste: !!r.empresaTeste, empresaAlertaHoras: r.alertaHoras || 24, senhaPadrao: !!r.senhaPadrao, contratoAvisoDias: r.contratoAvisoDias || 0, contratoCarencia: r.contratoCarencia || 0, empresaLogoDataUrl: r.empresaLogoDataUrl || '',
     empresaLogoDataUrl2: r.empresaLogoDataUrl2 || '',
     empresaThemeColor: r.empresaThemeColor || '', empresaThemeColor2: r.empresaThemeColor2 || '',
     empresaPtPrefix: r.empresaPtPrefix || '',
@@ -3136,6 +3179,7 @@ function resetUserForm(){
   $('userFormPassLabel').textContent = 'Senha provisória';
   $('userFormRole').value = usersMode === 'cliente' ? 'gestor' : 'tecnico';
   $('userFormEmail').value = '';
+  $('userFormWhats').value = '';
   $('userFormTitle').textContent = usersMode === 'cliente' ? 'Novo cliente' : 'Novo colaborador';
   $('btnUserFormSave').textContent = usersMode === 'cliente' ? 'Salvar cliente' : 'Salvar colaborador';
   setUserFotoPreview('', '');
@@ -3236,6 +3280,7 @@ function loadUserIntoForm(username){
   $('userFormPassword').placeholder = 'Deixe em branco para manter a senha atual';
   $('userFormPassLabel').textContent = 'Nova senha provisória (opcional)';
   $('userFormEmail').value = u.email || '';
+  $('userFormWhats').value = u.whatsapp || '';
   setUserFotoPreview(u.nome || u.username, '');
   $('userFormTitle').textContent = 'Editar: ' + (u.nome || u.username) + (u.hasFoto ? ' (já tem foto)' : '');
   $('usersModal').querySelector('.modal').scrollTo({top: $('userFormTitle').offsetTop - 70, behavior:'smooth'});
@@ -3277,7 +3322,7 @@ $('btnUserFormSave').onclick = async ()=>{
   const btn = $('btnUserFormSave');
   btn.disabled = true; const oldTxt = btn.textContent; btn.textContent = 'Salvando...';
   try{
-    const payload = Object.assign({action:'saveUser', username, role, nome, empresa, email}, currentAdminCreds());
+    const payload = Object.assign({action:'saveUser', username, role, nome, empresa, email, whatsapp: $('userFormWhats').value.trim()}, currentAdminCreds());
     if(password) payload.passwordHash = await hashPass(password);
     const resp = await fetch(scriptUrl, {method:'POST', body: JSON.stringify(payload)});
     const data = await resp.json();
@@ -3397,6 +3442,7 @@ function resetEmpresaForm(){
   document.getElementById('empresaFormCarencia').value = '0';
   document.getElementById('empresaFormTeste').checked = false;
   document.getElementById('empresaFormRelatorio').checked = false;
+  document.getElementById('empresaFormAlertaHoras').value = '24';
   updateContratoInfo();
   document.getElementById('empresaFormTitle').textContent = 'Nova empresa';
   document.getElementById('empresaFormColorPrimary').value = '#C8272A';
@@ -3534,6 +3580,7 @@ function loadEmpresaIntoForm(nome){
   document.getElementById('empresaFormCarencia').value = String(emp.carenciaDias || 0);
   document.getElementById('empresaFormTeste').checked = !!emp.teste;
   document.getElementById('empresaFormRelatorio').checked = !!emp.relatorioMensal;
+  document.getElementById('empresaFormAlertaHoras').value = String(emp.alertaHoras || 24);
   updateContratoInfo();
   document.getElementById('empresaFormTitle').textContent = 'Editar empresa: ' + emp.nome;
   document.getElementById('empresaFormColorPrimary').value = emp.themeColor || '#C8272A';
@@ -3568,7 +3615,7 @@ document.getElementById('btnEmpresaFormSave').onclick = async ()=>{
     const emailAtivo = document.getElementById('empresaFormEmailAtivo').checked;
     const emailDestino = document.getElementById('empresaFormEmailDestino').value.trim();
     if(emailAtivo && !emailDestino){ toast('Informe o e-mail de destino ou desligue o envio por e-mail.', 'err'); btn.disabled = false; btn.textContent = oldTxt; return; }
-    const payload = Object.assign({action:'saveEmpresa', nome, documentos, teste: document.getElementById('empresaFormTeste').checked, relatorioMensal: document.getElementById('empresaFormRelatorio').checked, avisoGestor: aviso, suspenso: document.getElementById('empresaFormSuspenso').checked, suspensoMsg: document.getElementById('empresaFormSuspensoMsg').value.trim(), contratoInicio: document.getElementById('empresaFormContratoIni').value, contratoFim: document.getElementById('empresaFormContratoFim').value, avisoDias: +document.getElementById('empresaFormAvisoDias').value, carenciaDias: +document.getElementById('empresaFormCarencia').value, themeColor, themeColor2, ptPrefix, emailAtivo, emailDestino, driveEmails: document.getElementById('empresaFormDriveEmails').value.trim()}, currentAdminCreds());
+    const payload = Object.assign({action:'saveEmpresa', nome, documentos, teste: document.getElementById('empresaFormTeste').checked, relatorioMensal: document.getElementById('empresaFormRelatorio').checked, alertaHoras: +document.getElementById('empresaFormAlertaHoras').value || 24, avisoGestor: aviso, suspenso: document.getElementById('empresaFormSuspenso').checked, suspensoMsg: document.getElementById('empresaFormSuspensoMsg').value.trim(), contratoInicio: document.getElementById('empresaFormContratoIni').value, contratoFim: document.getElementById('empresaFormContratoFim').value, avisoDias: +document.getElementById('empresaFormAvisoDias').value, carenciaDias: +document.getElementById('empresaFormCarencia').value, themeColor, themeColor2, ptPrefix, emailAtivo, emailDestino, driveEmails: document.getElementById('empresaFormDriveEmails').value.trim()}, currentAdminCreds());
     // só manda o campo da logo quando o admin realmente mexeu nela
     // (escolheu uma nova ou clicou em "Remover logo") — null = não mexeu.
     if(empresaFormLogoDataUrl !== null) payload.logoDataUrl = empresaFormLogoDataUrl;
@@ -3618,7 +3665,7 @@ function docsAtivos(){
 
 /* ============ SUPORTE ============ */
 const SUPORTE_WHATS = '5571996033896';
-const APP_VERSION = '4.1';
+const APP_VERSION = '4.2';
 const SUPORTE_FAQ = [
   ['Como envio um documento?', 'Preencha o documento (PT, checklist de veículo ou de escada) e toque em Enviar. Escolha "Enviar agora" ou "Guardar e enviar depois". Em "Meus documentos" você vê o que já foi enviado.'],
   ['Estou sem internet, e agora?', 'Pode preencher normalmente. O documento fica guardado no aparelho e é enviado sozinho quando a internet voltar. Em "Meus documentos" aparece como "Aguardando envio".'],
@@ -4173,7 +4220,7 @@ async function finalizeAndSend(){
       const payload = Object.assign({
         docId: histMeta.id, tipoDocumento: 'Permissão de Trabalho (PT)',
         ptNumero: state.ptNumero || 'S/N', ptData: state.data || '', ptArea: state.area || '',
-        ptHoraIni: state.horario || '', ptHoraFim: state.encHora || '', ptMotivo: state.encMotivo || '',
+        abertoId: state.abertoId || '', ptHoraIni: state.horario || '', ptHoraFim: state.encHora || '', ptMotivo: state.encMotivo || '',
         resumo: resumo, pdfBase64: base64, pdfNome: fileName
       }, currentEmpresaUsuario());
       const choice = await askSendChoice('Permissão de Trabalho (PT)');
@@ -4798,7 +4845,7 @@ async function generateAndSendDoc(opts){
       const payload = Object.assign({
         docId: histMeta.id, tipoDocumento: opts.tipoDocumento || opts.subjectLabel,
         ptNumero: opts.subjectLabel, ptData: opts.subjectDate || '', ptArea: opts.subjectArea || '',
-        resumo: opts.resumo || '', naoConformes: opts.naoConformes || [], pdfBase64: base64, pdfNome: fileName
+        resumo: opts.resumo || '', abertoId: opts.abertoId || '', naoConformes: opts.naoConformes || [], pdfBase64: base64, pdfNome: fileName
       }, currentEmpresaUsuario());
       const choice = await askSendChoice(opts.tipoDocumento || opts.subjectLabel);
       if(choice === 'later' && queuePendingSend(payload, histMeta)){
@@ -4848,10 +4895,10 @@ const VEICULO_MANUT_DEFAULT = [
 ];
 function makeEmptyVState(){
   return { data:"", tipoVeiculo:"", marcaModelo:"", placa:"", motorista1:"", motorista2:"",
-    itens:{}, obs:"", acoes:[{item:"",desc:"",resp:"",dataAcao:"",conclusao:""}], tecNome:"", tecCarimbo:"", fotos:[] };
+    itens:{}, obs:"", acoes:[{item:"",desc:"",resp:"",dataAcao:"",conclusao:""}], tecNome:"", tecCarimbo:"", fotos:[], abertoId:"", abertoInicio:0 };
 }
 let vState = makeEmptyVState();
-function saveVDraft(){ try{ localStorage.setItem('veiculo_draft', JSON.stringify(vState)); }catch(e){} }
+function saveVDraft(){ markAberto('veiculo', vState); try{ localStorage.setItem('veiculo_draft', JSON.stringify(vState)); }catch(e){} pingAberto('veiculo', vState); }
 function loadVDraft(){ try{ const d=localStorage.getItem('veiculo_draft'); if(d) Object.assign(vState, JSON.parse(d)); }catch(e){} }
 
 function renderVeiculoPage(){
@@ -5013,10 +5060,10 @@ const ESCADA_ITEMS_DEFAULT = [
   ['e20','As pontas dos bicos de papagaio encontram-se em perfeito estado?']
 ];
 function makeEmptyEState(){
-  return { data:"", executanteNome:"", itens:{}, obs:"", ciente:false, tecCarimbo:"", fotos:[] };
+  return { data:"", executanteNome:"", itens:{}, obs:"", ciente:false, tecCarimbo:"", fotos:[], abertoId:"", abertoInicio:0 };
 }
 let eState = makeEmptyEState();
-function saveEDraft(){ try{ localStorage.setItem('escada_draft', JSON.stringify(eState)); }catch(e){} }
+function saveEDraft(){ markAberto('escada', eState); try{ localStorage.setItem('escada_draft', JSON.stringify(eState)); }catch(e){} pingAberto('escada', eState); }
 function loadEDraft(){ try{ const d=localStorage.getItem('escada_draft'); if(d) Object.assign(eState, JSON.parse(d)); }catch(e){} }
 
 function renderEscadaPage(){
@@ -5120,7 +5167,7 @@ document.getElementById('btnSendVeiculo').onclick = ()=>{
     subjectLabel:'Checklist Veículo', subjectDate:vState.data, subjectArea:vState.placa||vState.tipoVeiculo,
     resumo:`Motorista: ${vState.motorista1||'-'}`, resetFn:resetVeiculoForm,
     naoConformes: naoConformesDe(vState, getQ('veiculoBasico').concat(getQ('veiculoManut')), 'IRREGULAR'),
-    tipoDocumento:'Checklist de Veículo', tipoDoc:'veiculo'
+    abertoId: vState.abertoId || '', tipoDocumento:'Checklist de Veículo', tipoDoc:'veiculo'
   });
 };
 document.getElementById('btnSendEscada').onclick = ()=>{
@@ -5134,7 +5181,7 @@ document.getElementById('btnSendEscada').onclick = ()=>{
     subjectLabel:'Checklist Escada Extensiva', subjectDate:eState.data, subjectArea:eState.responsavelNome||'',
     resumo:`Executante: ${eState.executanteNome||'-'}`, resetFn:resetEscadaForm,
     naoConformes: naoConformesDe(eState, getQ('escada'), 'NAO_CONFORME'),
-    tipoDocumento:'Checklist de Escada Extensiva', tipoDoc:'escada'
+    abertoId: eState.abertoId || '', tipoDocumento:'Checklist de Escada Extensiva', tipoDoc:'escada'
   });
 };
 
@@ -5386,6 +5433,7 @@ async function loadPainel(silent){
     painel.data = r;
     painel.offset = r.serverNow - Date.now();   // usa o relógio do servidor (não do celular)
     renderPainel();
+    loadAbertosPainel();
   }catch(e){
     if(!painel.data) box.innerHTML = '<p class="empty" style="color:#A32D2D;">Erro ao carregar: ' + escHtml(e.message || 'falha de conexão') + '</p>';
     else toast('Não foi possível atualizar agora.', 'err');
@@ -5636,6 +5684,91 @@ $('locPeriodo').querySelectorAll('button').forEach(b => b.onclick = ()=>{
   loc.dias = parseInt(b.getAttribute('data-d'), 10); if(loc.data) renderLoc();
 });
 
+function abHa(ts){
+  const m = Math.max(0, Math.round((Date.now() - ts) / 60000));
+  if(m < 60) return 'há ' + Math.max(m, 1) + ' min';
+  const h = Math.floor(m / 60);
+  return h < 24 ? 'há ' + h + ' h' : 'há ' + Math.floor(h / 24) + ' d';
+}
+function abHoras(ts, now){ return ((now || Date.now()) - ts) / 3600000; }
+function abLimite(){ return ((getSession() || {}).empresaAlertaHoras) || 24; }
+/* Colaborador: usa os rascunhos que estão no celular */
+function meusAbertos(){
+  const out = [], dA = docsAtivos();
+  listPtDrafts().forEach(d => { if(dA.indexOf('pt') !== -1) out.push({ titulo: 'PT Nº ' + d.ptNumero + ' · ' + d.local, ts: (d.data && d.data.abertoInicio) || new Date(d.savedAt).getTime(), resume: d.id }); });
+  [['pt', state], ['veiculo', vState], ['escada', eState]].forEach(([t, st]) => {
+    if(dA.indexOf(t) === -1) return;
+    const inf = abertoInfo(t, st);
+    if(inf.touched) out.push({ titulo: inf.titulo, ts: st.abertoInicio || Date.now(), go: t });
+  });
+  out.sort((a, b) => a.ts - b.ts);
+  return out;
+}
+function abertosMeusHtml(){
+  const l = meusAbertos(); if(!l.length) return '';
+  const lim = abLimite(), red = l.some(x => abHoras(x.ts) >= lim);
+  return `<div class="ab-card${red ? ' red' : ''}" id="abMeus"><h4>⏳ Você tem ${l.length} documento${l.length > 1 ? 's' : ''} em aberto</h4>` +
+    l.map((x, i) => `<div class="ab-row"><div class="m"><b>${escHtml(x.titulo)}</b><span>Iniciado ${abHa(x.ts)}</span></div>${abHoras(x.ts) >= lim ? '<span class="ab-pill red">parado</span>' : ''}<button type="button" data-abi="${i}">Continuar</button></div>`).join('') + '</div>';
+}
+function abertosMeusBind(){
+  const box = document.getElementById('abMeus'); if(!box) return;
+  const l = meusAbertos();
+  box.querySelectorAll('[data-abi]').forEach(b => b.onclick = ()=>{
+    const x = l[parseInt(b.getAttribute('data-abi'), 10)]; if(!x) return;
+    if(x.resume) resumePtDraft(x.resume); else openDocScreen(x.go);
+  });
+}
+/* Gestor */
+let abertosGestor = null;
+async function loadAbertosGestor(empresa){
+  const r = await api('listAbertos', empresa ? { empresa } : {});
+  if(r.error) throw new Error(r.error);
+  abertosGestor = r; return r;
+}
+async function loadAbertosCard(){
+  const el = document.getElementById('abertosCard'); if(!el) return;
+  try{
+    const r = await loadAbertosGestor((getSession() || {}).empresa);
+    const el2 = document.getElementById('abertosCard'); if(!el2 || !r.abertos.length) return;
+    const lim = r.alertaHoras || 24, red = r.abertos.some(x => abHoras(x.inicioTs, r.serverNow) >= lim);
+    el2.className = 'ab-card' + (red ? ' red' : '');
+    el2.innerHTML = `<h4>⚠ ${r.abertos.length} documento${r.abertos.length > 1 ? 's' : ''} em aberto na equipe</h4>` +
+      r.abertos.slice(0, 3).map(x => `<div class="ab-row"><div class="m"><b>${escHtml((x.nome || '').split(' ')[0])} · ${escHtml(x.numero || x.tipoDocumento)}</b><span>${escHtml(x.area || x.tipoDocumento)} · ${abHa(x.inicioTs)}</span></div><span class="ab-pill${abHoras(x.inicioTs, r.serverNow) >= lim ? ' red' : ''}">${abHoras(x.inicioTs, r.serverNow) >= lim ? '+' + lim + ' h' : abHa(x.inicioTs).replace('há ', '')}</span></div>`).join('') +
+      (r.abertos.length > 3 ? `<div style="font-size:12px;margin-top:6px;">e mais ${r.abertos.length - 3}…</div>` : '') +
+      '<div style="margin-top:9px;"><button type="button" class="ab-btn" id="abVerPainel">Ver no painel</button></div>';
+    const bt = document.getElementById('abVerPainel'); if(bt) bt.onclick = openPainel;
+    const tile = document.querySelector('#homeMenuItems [data-home="painel"]');
+    if(tile && !tile.querySelector('.badge')) tile.insertAdjacentHTML('afterbegin', `<span class="badge">${r.abertos.length}</span>`);
+  }catch(e){}
+}
+function renderAbertosPainel(){
+  const el = $('painelAbertos'); if(!el) return;
+  const r = abertosGestor;
+  if(!r || !r.abertos.length){ el.innerHTML = ''; return; }
+  const lim = r.alertaHoras || 24;
+  el.innerHTML = '<div class="ds-h">Em aberto (' + r.abertos.length + ')</div>' + r.abertos.map((x, i) => {
+    const h = abHoras(x.inicioTs, r.serverNow), red = h >= lim, pct = Math.min(100, Math.round(h / lim * 100));
+    const zap = String(x.whatsapp || '').replace(/\D/g, '');
+    const msg = encodeURIComponent('Olá ' + (x.nome || '').split(' ')[0] + ', o documento "' + (x.numero || x.tipoDocumento) + '" foi iniciado ' + abHa(x.inicioTs) + ' e ainda está em aberto. Pode finalizar e enviar? Obrigado!');
+    return `<div class="ab-pcard"><div class="t"><div><b>${escHtml(x.numero || x.tipoDocumento)} · ${escHtml(x.nome)}</b><div class="meta">${escHtml(x.tipoDocumento)}${x.area ? ' · ' + escHtml(x.area) : ''}</div></div><span class="ab-pill${red ? ' red' : ''}">${red ? '+' + lim + ' h' : abHa(x.inicioTs).replace('há ', '')}</span></div>
+      <div class="bar${red ? ' red' : ''}"><i style="width:${pct}%"></i></div><div class="meta">Iniciado ${new Date(x.inicioTs).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})} · ainda não enviado</div>
+      <div class="acts"><button type="button" class="ab-btn" data-lem="${i}" ${x.push ? '' : 'title="Notificação não disponível para este colaborador"'}>Lembrar</button><a class="ab-btn" target="_blank" rel="noopener" href="https://wa.me/${zap ? '55' + zap : ''}?text=${msg}">WhatsApp</a></div></div>`;
+  }).join('');
+  el.querySelectorAll('[data-lem]').forEach(b => b.onclick = async ()=>{
+    const x = r.abertos[parseInt(b.getAttribute('data-lem'), 10)];
+    b.disabled = true; const old = b.textContent; b.textContent = '...';
+    try{
+      const rr = await api('lembrarColaborador', { login: x.login, documento: x.numero || x.tipoDocumento });
+      if(rr.error) throw new Error(rr.error);
+      toast('Lembrete enviado para ' + (x.nome || '').split(' ')[0] + '.', 'ok');
+    }catch(e){ toast(e.message || 'Não foi possível enviar.', 'err'); }
+    b.disabled = false; b.textContent = old;
+  });
+}
+async function loadAbertosPainel(){
+  try{ await loadAbertosGestor(isAdmin() ? painel.empresa : ''); renderAbertosPainel(); }catch(e){}
+}
+
 async function loadTeamCard(){
   const el = document.getElementById('teamCard'); if(!el) return;
   const s = getSession() || {};
@@ -5706,9 +5839,11 @@ function renderHomeMenu(){
     html += tileHtml('meusDocs', 'Meus documentos', '#DDF1EF', '#0F6B63', {badge: nAction > 0 ? String(nAction) : ''});
     html += '</div>';
   }
-  if(gestor) html = '<div id="teamCard"></div>' + html;
+  if(gestor) html = '<div id="abertosCard"></div><div id="teamCard"></div>' + html;
+  if(!admin && !gestor) html = abertosMeusHtml() + html;
   box.innerHTML = html;
-  if(gestor) loadTeamCard();
+  if(gestor){ loadAbertosCard(); loadTeamCard(); }
+  if(!admin && !gestor) abertosMeusBind();
   { const bs = document.getElementById('btnTrocarSenhaPadrao'); if(bs) bs.onclick = openAdminAccountModal; }
   box.querySelectorAll('[data-home]').forEach(btn => { btn.onclick = ()=> homeAction(btn.getAttribute('data-home')); });
 
@@ -5860,6 +5995,7 @@ function resumePtDraft(id){
 
 function deletePtDraft(id){
   if(!confirm('Excluir esta PT salva? Essa ação não pode ser desfeita.')) return;
+  { const alvo = listPtDrafts().find(d=>d.id===id); if(alvo && alvo.data) fechaAberto(alvo.data.abertoId); }
   savePtDraftsList(listPtDrafts().filter(d=>d.id!==id));
   renderDraftsScreen();
 }
