@@ -628,6 +628,11 @@
   .stat b{font-family:'Poppins',sans-serif; font-size:24px; font-weight:700; color:#12254B; line-height:1.1;}
   .stat span{font-size:11.5px; color:#566179; line-height:1.3;}
   .stat.alert b{color:#B26A00;}
+  .ab-err{background:#FDECEB;color:#A32D2D;border-radius:14px;padding:12px 13px;font-size:13px;line-height:1.45;}
+  .ab-empty{text-align:center;padding:28px 14px;background:#fff;border-radius:16px;color:#566179;font-size:13px;} .ab-empty b{display:block;color:#12254B;font-size:15px;margin:6px 0 4px;}
+  .ab-tabs{display:flex;gap:6px;overflow-x:auto;margin-bottom:12px;padding-bottom:2px;}
+  .ab-tabs button{flex:0 0 auto;border:1.5px solid #E1E6EF;background:#fff;border-radius:20px;padding:6px 12px;font:600 12.5px inherit;font-family:inherit;color:#566179;cursor:pointer;}
+  .ab-tabs button.on{background:#1D3A6F;border-color:#1D3A6F;color:#fff;}
   .ab-card{border-radius:16px;padding:12px 13px;margin:0 0 14px;background:#FFF1D6;color:#8A4B00;border:1px solid rgba(138,75,0,.25);}
   .ab-card.red{background:#FDECEB;color:#A32D2D;border-color:rgba(163,45,45,.25);}
   .ab-card h4{margin:0 0 6px;font-size:13.5px;}
@@ -983,6 +988,21 @@
   </div>
 </div>
 
+<!-- ===================== TELA: DOCUMENTOS EM ABERTO ===================== -->
+<div id="abView" class="ds" style="display:none;">
+  <div class="screen-topbar"><button type="button" id="abBack" title="Voltar">←</button><b>⏳ Em aberto</b><button type="button" id="abRefresh" title="Atualizar" style="margin-left:auto;">↻</button></div>
+  <div class="painel-wrap">
+    <div class="field" id="abEmpresaRow" style="display:none;">
+      <label for="abEmpresa" style="font-weight:600;font-size:13px;">Empresa</label>
+      <select id="abEmpresa" style="width:100%;height:48px;border:1.5px solid #D5DCE9;border-radius:12px;background:#fff;font-size:15px;padding:0 12px;"></select>
+    </div>
+    <p class="hint" id="abUpd" style="margin:0 0 8px;"></p>
+    <div class="painel-stats" id="abStats"></div>
+    <div class="ab-tabs" id="abTabs" style="margin-top:12px;"></div>
+    <div id="abList"></div>
+  </div>
+</div>
+
 <!-- ===================== TELA: LOCALIZAÇÃO DAS PTs ===================== -->
 <div id="locView" class="ds" style="display:none;">
   <div class="screen-topbar"><button type="button" id="locBack" title="Voltar">←</button><b>Localização das PTs</b><button type="button" id="locRefresh" title="Atualizar" style="margin-left:auto;">↻</button></div>
@@ -1014,7 +1034,6 @@
       <button type="button" data-d="30">30 dias</button>
     </div>
     <div class="painel-stats" id="painelStats"></div>
-    <div id="painelAbertos"></div>
     <div id="painelGraficos"></div>
     <div class="ds-h">Colaboradores</div>
     <div id="painelTecnicos"></div>
@@ -3665,7 +3684,7 @@ function docsAtivos(){
 
 /* ============ SUPORTE ============ */
 const SUPORTE_WHATS = '5571996033896';
-const APP_VERSION = '4.2';
+const APP_VERSION = '4.3';
 const SUPORTE_FAQ = [
   ['Como envio um documento?', 'Preencha o documento (PT, checklist de veículo ou de escada) e toque em Enviar. Escolha "Enviar agora" ou "Guardar e enviar depois". Em "Meus documentos" você vê o que já foi enviado.'],
   ['Estou sem internet, e agora?', 'Pode preencher normalmente. O documento fica guardado no aparelho e é enviado sozinho quando a internet voltar. Em "Meus documentos" aparece como "Aguardando envio".'],
@@ -5330,6 +5349,7 @@ function hideAllScreens(){
   document.getElementById('auditModal').classList.remove('show');
   document.getElementById('painelView').style.display = 'none';
   document.getElementById('locView').style.display = 'none';
+  document.getElementById('abView').style.display = 'none';
   document.getElementById('locBg').style.display = 'none'; document.getElementById('locSheet').style.display = 'none';
   document.getElementById('profileModal').classList.remove('show');
   stopPainelTimers();
@@ -5433,7 +5453,6 @@ async function loadPainel(silent){
     painel.data = r;
     painel.offset = r.serverNow - Date.now();   // usa o relógio do servidor (não do celular)
     renderPainel();
-    loadAbertosPainel();
   }catch(e){
     if(!painel.data) box.innerHTML = '<p class="empty" style="color:#A32D2D;">Erro ao carregar: ' + escHtml(e.message || 'falha de conexão') + '</p>';
     else toast('Não foi possível atualizar agora.', 'err');
@@ -5607,6 +5626,7 @@ function tileHtml(id, label, bg, fg, opts){
     (opts.sub ? `<span class="t"><b>${label}</b><small>${opts.sub}</small></span>` : `<b>${label}</b>`) + `</button>`;
 }
 
+ICONS.aberto = '<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
 ICONS.pin = '<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>';
 const loc = { dias:1, filtro:'todas', data:null, empresa:'' };
 function locConcluida(x){ return /^conclu[ií]do$/i.test(x.motivo || ''); }
@@ -5735,27 +5755,64 @@ async function loadAbertosCard(){
     el2.innerHTML = `<h4>⚠ ${r.abertos.length} documento${r.abertos.length > 1 ? 's' : ''} em aberto na equipe</h4>` +
       r.abertos.slice(0, 3).map(x => `<div class="ab-row"><div class="m"><b>${escHtml((x.nome || '').split(' ')[0])} · ${escHtml(x.numero || x.tipoDocumento)}</b><span>${escHtml(x.area || x.tipoDocumento)} · ${abHa(x.inicioTs)}</span></div><span class="ab-pill${abHoras(x.inicioTs, r.serverNow) >= lim ? ' red' : ''}">${abHoras(x.inicioTs, r.serverNow) >= lim ? '+' + lim + ' h' : abHa(x.inicioTs).replace('há ', '')}</span></div>`).join('') +
       (r.abertos.length > 3 ? `<div style="font-size:12px;margin-top:6px;">e mais ${r.abertos.length - 3}…</div>` : '') +
-      '<div style="margin-top:9px;"><button type="button" class="ab-btn" id="abVerPainel">Ver no painel</button></div>';
-    const bt = document.getElementById('abVerPainel'); if(bt) bt.onclick = openPainel;
-    const tile = document.querySelector('#homeMenuItems [data-home="painel"]');
+      '<div style="margin-top:9px;"><button type="button" class="ab-btn" id="abVerPainel">Ver todos</button></div>';
+    const bt = document.getElementById('abVerPainel'); if(bt) bt.onclick = openAbertos;
+    const tile = document.querySelector('#homeMenuItems [data-home="abertos"]');
     if(tile && !tile.querySelector('.badge')) tile.insertAdjacentHTML('afterbegin', `<span class="badge">${r.abertos.length}</span>`);
   }catch(e){}
 }
-function renderAbertosPainel(){
-  const el = $('painelAbertos'); if(!el) return;
-  const r = abertosGestor;
-  if(!r || !r.abertos.length){ el.innerHTML = ''; return; }
+const ab = { data:null, tipo:'', empresa:'' };
+function abTipoKey(x){ const k = tipoKey(x.tipoDocumento); return k === 'pt' || k === 'veiculo' || k === 'escada' ? k : 'outro'; }
+async function openAbertos(){
+  if(!isManager()) return;
+  hideAllScreens();
+  $('abView').style.display = 'block'; window.scrollTo(0,0);
+  ab.data = null; ab.tipo = '';
+  if(isAdmin()){
+    $('abEmpresaRow').style.display = 'block';
+    const sel = $('abEmpresa');
+    try{ if(!lastLoadedEmpresas.length){ const r = await fetchAdminAction(getScriptUrl(), 'listEmpresas'); if(!r.error) lastLoadedEmpresas = r.empresas || []; } }catch(e){}
+    sel.innerHTML = lastLoadedEmpresas.map(e => `<option value="${escHtml(e.nome)}">${escHtml(e.nome)}</option>`).join('');
+    ab.empresa = sel.value;
+  } else { $('abEmpresaRow').style.display = 'none'; ab.empresa = (getSession() || {}).empresa || ''; }
+  loadAbView();
+}
+async function loadAbView(){
+  if(!ab.data) $('abList').innerHTML = '<p class="empty">Carregando...</p>';
+  try{
+    ab.data = await loadAbertosGestor(ab.empresa);
+    $('abUpd').textContent = 'atualizado ' + new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+    renderAbView();
+  }catch(e){
+    const msg = (e.message || 'falha de conexão') + ' — se o problema continuar, confira se a nova versão do Apps Script foi publicada.';
+    $('abList').innerHTML = '<div class="ab-err"><b>Não foi possível carregar</b><br>' + escHtml(msg) + '</div>';
+  }
+}
+function renderAbView(){
+  const r = ab.data; if(!r) return;
   const lim = r.alertaHoras || 24;
-  el.innerHTML = '<div class="ds-h">Em aberto (' + r.abertos.length + ')</div>' + r.abertos.map((x, i) => {
+  const todos = r.abertos;
+  const parados = todos.filter(x => abHoras(x.inicioTs, r.serverNow) >= lim).length;
+  const nCol = new Set(todos.map(x => x.login)).size;
+  $('abStats').innerHTML = `<div class="stat${todos.length ? ' alert' : ''}"><b>${todos.length}</b><span>em aberto</span></div><div class="stat${parados ? ' alert' : ''}"><b>${parados}</b><span>parados +${lim} h</span></div><div class="stat"><b>${nCol}</b><span>colaboradores</span></div>`;
+  const tabs = [['', 'Todos'], ['pt', 'PT'], ['veiculo', 'Veículo'], ['escada', 'Escada']];
+  $('abTabs').innerHTML = tabs.map(t => `<button type="button" data-t="${t[0]}" class="${ab.tipo === t[0] ? 'on' : ''}">${t[1]}${t[0] ? ' (' + todos.filter(x => abTipoKey(x) === t[0]).length + ')' : ''}</button>`).join('');
+  $('abTabs').querySelectorAll('button').forEach(b => b.onclick = ()=>{ ab.tipo = b.getAttribute('data-t'); renderAbView(); });
+  const lista = todos.filter(x => !ab.tipo || abTipoKey(x) === ab.tipo);
+  if(!lista.length){
+    $('abList').innerHTML = '<div class="ab-empty"><div style="font-size:34px;">✅</div><b>Nenhum documento em aberto</b>Quando um colaborador começar um documento e não enviar, ele aparece aqui.</div>';
+    return;
+  }
+  $('abList').innerHTML = lista.map((x, i) => {
     const h = abHoras(x.inicioTs, r.serverNow), red = h >= lim, pct = Math.min(100, Math.round(h / lim * 100));
     const zap = String(x.whatsapp || '').replace(/\D/g, '');
     const msg = encodeURIComponent('Olá ' + (x.nome || '').split(' ')[0] + ', o documento "' + (x.numero || x.tipoDocumento) + '" foi iniciado ' + abHa(x.inicioTs) + ' e ainda está em aberto. Pode finalizar e enviar? Obrigado!');
     return `<div class="ab-pcard"><div class="t"><div><b>${escHtml(x.numero || x.tipoDocumento)} · ${escHtml(x.nome)}</b><div class="meta">${escHtml(x.tipoDocumento)}${x.area ? ' · ' + escHtml(x.area) : ''}</div></div><span class="ab-pill${red ? ' red' : ''}">${red ? '+' + lim + ' h' : abHa(x.inicioTs).replace('há ', '')}</span></div>
       <div class="bar${red ? ' red' : ''}"><i style="width:${pct}%"></i></div><div class="meta">Iniciado ${new Date(x.inicioTs).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})} · ainda não enviado</div>
-      <div class="acts"><button type="button" class="ab-btn" data-lem="${i}" ${x.push ? '' : 'title="Notificação não disponível para este colaborador"'}>Lembrar</button><a class="ab-btn" target="_blank" rel="noopener" href="https://wa.me/${zap ? '55' + zap : ''}?text=${msg}">WhatsApp</a></div></div>`;
+      <div class="acts"><button type="button" class="ab-btn" data-lem="${i}">🔔 Lembrar</button><a class="ab-btn" target="_blank" rel="noopener" href="https://wa.me/${zap ? '55' + zap : ''}?text=${msg}">WhatsApp</a></div></div>`;
   }).join('');
-  el.querySelectorAll('[data-lem]').forEach(b => b.onclick = async ()=>{
-    const x = r.abertos[parseInt(b.getAttribute('data-lem'), 10)];
+  $('abList').querySelectorAll('[data-lem]').forEach(b => b.onclick = async ()=>{
+    const x = lista[parseInt(b.getAttribute('data-lem'), 10)];
     b.disabled = true; const old = b.textContent; b.textContent = '...';
     try{
       const rr = await api('lembrarColaborador', { login: x.login, documento: x.numero || x.tipoDocumento });
@@ -5765,9 +5822,9 @@ function renderAbertosPainel(){
     b.disabled = false; b.textContent = old;
   });
 }
-async function loadAbertosPainel(){
-  try{ await loadAbertosGestor(isAdmin() ? painel.empresa : ''); renderAbertosPainel(); }catch(e){}
-}
+$('abBack').onclick = goHome;
+$('abRefresh').onclick = loadAbView;
+$('abEmpresa').onchange = ()=>{ ab.empresa = $('abEmpresa').value; ab.data = null; loadAbView(); };
 
 async function loadTeamCard(){
   const el = document.getElementById('teamCard'); if(!el) return;
@@ -5819,12 +5876,14 @@ function renderHomeMenu(){
     html += tileHtml('empresas', 'Empresas', '#FFF1D6', '#8A4B00');
     html += tileHtml('questionarios', 'Questionários', '#E6ECF8', '#1D3A6F', {sub:'PT e checklists', icon:'pt'});
     html += tileHtml('localizacao', 'Localização das PTs', '#FDECEB', '#A32D2D', {sub:'Onde, início e término', icon:'pin'});
+    html += tileHtml('abertos', 'Em aberto', '#FFF1D6', '#8A4B00', {sub:'Documentos não finalizados', icon:'aberto'});
     html += tileHtml('chamados', 'Suporte', '#FDECEB', '#A32D2D', {sub:'Chamados dos usuários', icon:'suporte'});
     html += tileHtml('settings', 'Configurações', '#E8ECF2', '#3B475E');
     html += tileHtml('adminAccount', 'Senha do admin', '#FDECEB', '#A32D2D', {icon:'conta'});
     html += '</div>';
   } else if(gestor){
     html += '<div class="ds-sec">Acompanhamento</div><div class="ds-grid">';
+    html += tileHtml('abertos', 'Em aberto', '#FFF1D6', '#8A4B00', {sub:'Documentos não finalizados', icon:'aberto'});
     html += tileHtml('painel', 'Painel', '#E6ECF8', '#12254B', {sub:'Quem enviou e quando'});
     html += tileHtml('localizacao', 'Localização das PTs', '#FDECEB', '#A32D2D', {sub:'Onde, início e término', icon:'pin'});
     html += tileHtml('users', 'Colaboradores', '#DDF1EF', '#0F6B63', {sub:'Cadastro e fotos'});
@@ -5925,6 +5984,7 @@ function homeAction(id){
   else if(id === 'meusDocs') openMeusDocsScreen();
   else if(id === 'painel') openPainel();
   else if(id === 'localizacao') openLoc();
+  else if(id === 'abertos') openAbertos();
   else if(id === 'perfil') openProfileModal();
   else if(id === 'suporte') openSuporte();
   else if(id === 'chamados') openChamados();
