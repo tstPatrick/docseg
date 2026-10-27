@@ -1564,7 +1564,7 @@ const state = makeEmptyState();
 /* ---- Documento em aberto: avisa o servidor (para o gestor ver) ---- */
 const ABERTO_NOMES = {pt:'Permissão de Trabalho (PT)', veiculo:'Checklist de Veículo', escada:'Checklist de Escada Extensiva'};
 function abertoInfo(tipo, st){
-  if(tipo === 'pt') return { touched: !!(st.area || st.descricaoAtividade || st.respNome || st.colaboradorNome || (st.tipoTrabalho || []).length), numero: st.ptNumero || '', area: st.area || '', titulo: 'PT Nº ' + (st.ptNumero || '—') + (st.area ? ' · ' + st.area : '') };
+  if(tipo === 'pt') return { touched: !!(st.area || st.descricaoAtividade || st.respNome || st.colaboradorNome || (st.tipoTrabalho || []).length), numero: st.ptNumero ? 'PT Nº ' + st.ptNumero : 'PT', area: st.area || '', titulo: 'PT Nº ' + (st.ptNumero || '—') + (st.area ? ' · ' + st.area : '') };
   if(tipo === 'veiculo') return { touched: !!(st.placa || st.marcaModelo || st.motorista1 || Object.keys(st.itens || {}).length), numero: 'Checklist Veículo', area: st.placa || st.tipoVeiculo || '', titulo: 'Checklist de Veículo' + (st.placa ? ' · ' + st.placa : '') };
   return { touched: !!(st.executanteNome || Object.keys(st.itens || {}).length), numero: 'Checklist Escada', area: st.executanteNome || '', titulo: 'Checklist de Escada' };
 }
@@ -1572,15 +1572,38 @@ function markAberto(tipo, st){
   if(!st.abertoId && abertoInfo(tipo, st).touched){ st.abertoId = 'ab' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); st.abertoInicio = Date.now(); }
 }
 const _pingT = {};
-function pingAberto(tipo, st){
+function enviaAberto(payload){
+  if(!navigator.onLine) return Promise.resolve();
+  return api('docAberto', payload).then(r => { if(r && r.error) console.warn('docAberto:', r.error); }).catch(()=>{});
+}
+function pingAberto(tipo, st, agora){
   try{
     if(typeof isManager !== 'function' || isManager() || !getSession() || !st.abertoId) return;
+    // guarda os valores AGORA: o formulário pode ser zerado (ex.: "Salvar e sair") antes do envio
+    const inf = abertoInfo(tipo, st);
+    const payload = { abertoId: st.abertoId, tipoDocumento: ABERTO_NOMES[tipo], numero: inf.numero, area: inf.area, inicioTs: st.abertoInicio };
     clearTimeout(_pingT[tipo]);
-    _pingT[tipo] = setTimeout(()=>{
-      if(!navigator.onLine || !st.abertoId) return;
-      const inf = abertoInfo(tipo, st);
-      api('docAberto', { abertoId: st.abertoId, tipoDocumento: ABERTO_NOMES[tipo], numero: inf.numero, area: inf.area, inicioTs: st.abertoInicio }).catch(()=>{});
-    }, 4000);
+    if(agora){ enviaAberto(payload); return; }
+    _pingT[tipo] = setTimeout(()=> enviaAberto(payload), 3000);
+  }catch(e){}
+}
+/* Reenvia ao servidor tudo o que está em aberto neste celular (cobre rascunhos antigos e envios que falharam) */
+let _syncAbertoEm = 0;
+function syncAbertos(){
+  try{
+    if(typeof isManager !== 'function' || isManager() || !getSession() || !navigator.onLine) return;
+    if(Date.now() - _syncAbertoEm < 60000) return; _syncAbertoEm = Date.now();
+    const lista = listPtDrafts(); let mudou = false;
+    lista.forEach(d => {
+      const st = d.data || {};
+      if(!st.abertoId){ st.abertoId = 'ab' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); st.abertoInicio = new Date(d.savedAt).getTime(); d.data = st; mudou = true; }
+      enviaAberto({ abertoId: st.abertoId, tipoDocumento: ABERTO_NOMES.pt, numero: 'PT Nº ' + (d.ptNumero || '—'), area: d.local || '', inicioTs: st.abertoInicio });
+    });
+    if(mudou) savePtDraftsList(lista);
+    [['pt', state, saveDraft], ['veiculo', vState, saveVDraft], ['escada', eState, saveEDraft]].forEach(([t, st, sv]) => {
+      markAberto(t, st);
+      if(st.abertoId){ sv(); pingAberto(t, st, true); }
+    });
   }catch(e){}
 }
 function fechaAberto(id){ if(id && navigator.onLine){ try{ api('docFechado', { abertoId: id }).catch(()=>{}); }catch(e){} } }
@@ -3684,7 +3707,7 @@ function docsAtivos(){
 
 /* ============ SUPORTE ============ */
 const SUPORTE_WHATS = '5571996033896';
-const APP_VERSION = '4.3';
+const APP_VERSION = '4.4';
 const SUPORTE_FAQ = [
   ['Como envio um documento?', 'Preencha o documento (PT, checklist de veículo ou de escada) e toque em Enviar. Escolha "Enviar agora" ou "Guardar e enviar depois". Em "Meus documentos" você vê o que já foi enviado.'],
   ['Estou sem internet, e agora?', 'Pode preencher normalmente. O documento fica guardado no aparelho e é enviado sozinho quando a internet voltar. Em "Meus documentos" aparece como "Aguardando envio".'],
@@ -5902,7 +5925,7 @@ function renderHomeMenu(){
   if(!admin && !gestor) html = abertosMeusHtml() + html;
   box.innerHTML = html;
   if(gestor){ loadAbertosCard(); loadTeamCard(); }
-  if(!admin && !gestor) abertosMeusBind();
+  if(!admin && !gestor){ abertosMeusBind(); syncAbertos(); }
   { const bs = document.getElementById('btnTrocarSenhaPadrao'); if(bs) bs.onclick = openAdminAccountModal; }
   box.querySelectorAll('[data-home]').forEach(btn => { btn.onclick = ()=> homeAction(btn.getAttribute('data-home')); });
 
@@ -6028,6 +6051,7 @@ async function parkCurrentPtAndGoHome(){
     sigs: { sigResp: sigData['sigResp'] || null, sigLib: sigData['sigLib'] || null, sigTec: sigData['sigTec'] || null }
   });
   savePtDraftsList(list);
+  if(snapshot.abertoId) enviaAberto({ abertoId: snapshot.abertoId, tipoDocumento: ABERTO_NOMES.pt, numero: 'PT Nº ' + (state.ptNumero || '—'), area: state.area || '', inicioTs: snapshot.abertoInicio });
   await resetForNewPT();
   toast('PT salva. Continue depois em "📁 Meus documentos".', 'ok');
   goHome();
