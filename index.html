@@ -655,7 +655,7 @@
   .ab-pcard{background:#fff;border:1px solid #E1E6EF;border-radius:14px;padding:11px 12px;margin-bottom:9px;font-size:12.5px;}
   .ab-pcard .t{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;} .ab-pcard .t b{font-size:13.5px;} .ab-pcard .meta{color:#566179;font-size:11.5px;}
   .ab-pcard .bar{height:6px;border-radius:3px;background:#EEF1F7;margin:8px 0 2px;overflow:hidden;} .ab-pcard .bar i{display:block;height:100%;background:#C88A00;} .ab-pcard .bar.red i{background:#A32D2D;}
-  .ab-pcard .acts{display:flex;gap:7px;margin-top:9px;} .ab-pcard .acts button,.ab-pcard .acts a{flex:1;text-align:center;background:#fff;color:#12254B;border:1.5px solid #1D3A6F;} .ab-pcard .acts button:disabled{opacity:.45;}
+  .ab-pcard .acts{display:flex;gap:7px;margin-top:9px;} .ab-pcard .acts button,.ab-pcard .acts a{flex:1;min-width:0;padding:8px 4px;text-align:center;background:#fff;color:#12254B;border:1.5px solid #1D3A6F;} .ab-pcard .acts button:disabled{opacity:.45;}
   .loc-sum{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:10px;}
   .loc-sum button{border:1.5px solid #E1E6EF;background:#fff;border-radius:14px;padding:10px 6px;text-align:center;font-family:inherit;cursor:pointer;color:#12254B;}
   .loc-sum button.on{border-color:#1D3A6F;background:#E6ECF8;}
@@ -827,6 +827,9 @@
   .lib-stamp img{display:block; max-width:100%; height:56px; object-fit:contain; border-bottom:1px solid #1D3A6F; margin-bottom:4px;}
   .lib-stamp .l{font-size:12px; line-height:1.45;}
   .lib-pin{width:100%; height:52px; border:1.5px solid #D5DCE9; border-radius:12px; text-align:center; font-size:24px; letter-spacing:10px;}
+  .lib-entendi{margin-left:auto; border:0; background:#E3F4E6; color:#1F6B2A; border-radius:999px; padding:6px 12px; font:700 12.5px inherit; font-family:inherit; cursor:pointer;}
+  .md-pill.lib-aguardando{background:#FFF1D6; color:#8A4B00;} .md-pill.lib-apto{background:#E3F4E6; color:#1F6B2A;} .md-pill.lib-nao_apto{background:#FDECEB; color:#A32D2D;}
+  .md-pill.lib-reenviada{background:#E6ECF8; color:#1D3A6F;} .md-pill.lib-nao_executada{background:#E8ECF2; color:#3B475E;}
   .lib-small{font-size:12.5px; color:#566179; line-height:1.45; margin:8px 0 0;}
   .lib-err{color:#A32D2D; font-size:13px; font-weight:700; margin-top:8px; display:none;}
 </style>
@@ -4894,7 +4897,9 @@ function renderMeusDocsScreen(){
   all.forEach(r=> counts[r.status] = (counts[r.status]||0) + 1);
   const nAction = counts.andamento + counts.pendente + counts.fila;
   if(sumBox) sumBox.innerHTML = `<div><b>${counts.todos}</b><span>Total</span></div><div class="g"><b>${counts.enviado}</b><span>Enviados</span></div><div class="o"><b>${nAction}</b><span>Pendentes</span></div>`;
-  const chips = [['todos','Todos'], ['andamento','Em andamento'], ['pendente','Aguardando'], ['fila','Na fila'], ['enviado','Enviados']];
+  const libDocs = libTodos();
+  counts.liberacao = libDocs.length;
+  const chips = [['todos','Todos']].concat(libCfg().ativo || libDocs.length ? [['liberacao','Liberação']] : [], [['andamento','Em andamento'], ['pendente','Aguardando'], ['fila','Na fila'], ['enviado','Enviados']]);
   if(chipsBox){
     chipsBox.innerHTML = chips.map(([key,label]) =>
       `<button type="button" class="md-chip${meusDocsFilter===key?' on':''}" data-filter="${key}">${label}<i>${counts[key]||0}</i></button>`
@@ -4904,6 +4909,7 @@ function renderMeusDocsScreen(){
     });
   }
   renderDocsTabbar(nAction);
+  if(meusDocsFilter === 'liberacao'){ renderMeusDocsLiberacao(box, libDocs); return; }
   const list = meusDocsFilter==='todos' ? all : all.filter(r=>r.status===meusDocsFilter);
   if(!list.length){
     box.innerHTML = '<div class="md-empty">Nenhum documento aqui.</div>';
@@ -4946,6 +4952,27 @@ function openMeusDocsScreen(){
   renderMeusDocsScreen();
   document.getElementById('meusDocsView').style.display = 'block';
   window.scrollTo(0,0);
+  if(libCfg().ativo) libLoadMinhas().then(()=>{ if(document.getElementById('meusDocsView').style.display === 'block') renderMeusDocsScreen(); });
+}
+const LIB_MD_LABEL = { aguardando:'⏳ Aguardando liberação', apto:'✅ Apto', nao_apto:'⛔ Não apto', reenviada:'🔁 Corrigida e reenviada', nao_executada:'⏹ Não executada' };
+function renderMeusDocsLiberacao(box, docs){
+  if(!docs.length){ box.innerHTML = '<div class="md-empty">Nenhum documento passou por liberação ainda.</div>'; return; }
+  const acao = x => x.status === 'aguardando' || x.status === 'nao_apto';
+  const ordem = docs.filter(acao).concat(docs.filter(x => !acao(x)));
+  let html = '', ultimo = null;
+  ordem.forEach((x, i) => {
+    const rot = acao(x) ? 'Precisa de ação' : mdDayLabel(new Date(x.decididoTs || x.ts).toISOString());
+    if(rot !== ultimo){ html += `<div class="md-day">${rot}</div>`; ultimo = rot; }
+    const sub = x.status === 'nao_apto' ? 'Motivo: ' + x.motivo
+      : x.status === 'aguardando' ? (x.offline ? 'Na fila de envio' : 'Enviado ' + timeAgo(x.ts, Date.now()))
+      : x.decididoPor ? (x.status === 'apto' ? 'Liberado por ' : 'Avaliado por ') + x.decididoPor + ' · ' + libHora(x.decididoTs) : '';
+    const ic = ['pt', 'veiculo', 'escada'].indexOf(x.tipo) !== -1 ? x.tipo : 'pt';
+    html += `<div class="md-card"><div class="md-ic ${ic}">${ICONS[ic]}</div>` +
+      `<div class="md-m"><b>${escHtml(libTitulo(x))}${x.revisao ? ' · R' + x.revisao : ''}</b><span class="t">${escHtml([x.area, sub].filter(Boolean).join(' · '))}</span><span class="md-pill lib-${x.status}">${LIB_MD_LABEL[x.status] || ''}</span></div>` +
+      `<div class="md-act"><button type="button" class="md-btn p" data-libmd="${i}">Abrir</button></div></div>`;
+  });
+  box.innerHTML = html;
+  box.querySelectorAll('[data-libmd]').forEach(b => b.onclick = ()=> libAbrirTec(ordem[parseInt(b.getAttribute('data-libmd'), 10)].id));
 }
 // Rede de segurança: nenhum documento deve ficar esquecido na fila. Se
 // sobrou algo de um dia anterior (técnico escolheu "aguardar" e não voltou
@@ -6103,7 +6130,7 @@ function renderAbView(){
     const h = abHoras(x.inicioTs, r.serverNow), red = h >= lim, pct = Math.min(100, Math.round(h / lim * 100));
     return `<div class="ab-pcard"><div class="t"><div><b>${escHtml(x.numero || x.tipoDocumento)} · ${escHtml(x.nome)}</b><div class="meta">${escHtml(x.tipoDocumento)}${x.area ? ' · ' + escHtml(x.area) : ''}</div></div><span class="ab-pill${red ? ' red' : ''}">${red ? '+' + lim + ' h' : abHa(x.inicioTs).replace('há ', '')}</span></div>
       <div class="bar${red ? ' red' : ''}"><i style="width:${pct}%"></i></div><div class="meta">Iniciado ${new Date(x.inicioTs).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})} · ainda não enviado</div>
-      <div class="acts"><button type="button" class="ab-btn" data-lem="${i}">🔔 Lembrar</button><button type="button" class="ab-btn" data-msg="${i}">💬 Mensagem</button><button type="button" class="ab-btn" data-abx="${i}" style="background:#fff;color:#A32D2D;border:1px solid rgba(163,45,45,.35);">✕ Remover aviso</button></div></div>`;
+      <div class="acts"><button type="button" class="ab-btn" data-lem="${i}">🔔 Lembrar</button><button type="button" class="ab-btn" data-msg="${i}">💬 Mensagem</button><button type="button" class="ab-btn" data-abx="${i}" style="color:#A32D2D;border-color:rgba(163,45,45,.45);">✕ Remover</button></div></div>`;
   }).join('');
   $('abList').querySelectorAll('[data-msg]').forEach(b => b.onclick = ()=>{ const x = lista[parseInt(b.getAttribute('data-msg'), 10)]; openMensagens(x.login, x.nome, x.abertoId, (x.numero || x.tipoDocumento) + (x.area ? ' · ' + x.area : '')); });
   $('abList').querySelectorAll('[data-abx]').forEach(b => b.onclick = ()=> abRemoverAviso(lista[parseInt(b.getAttribute('data-abx'), 10)], loadAbView));
@@ -6476,9 +6503,27 @@ function libSaveSnap(docId, snap){
   try{ localStorage.setItem(LIB_SNAP_KEY, JSON.stringify(all)); }catch(e){}
 }
 // Situação da liberação no histórico deste aparelho (o "status" de envio continua "enviado").
-function libMarcarHist(id, st){
-  const list = loadHistory(), h = list.find(y => y.id === id);
-  if(h && h.lib !== st){ h.lib = st; saveHistoryList(list); }
+// Guarda também os dados da avaliação, para a aba "Liberação" de Meus documentos
+// mostrar o documento mesmo depois que ele sai da lista do servidor (3 dias).
+function libMarcarHist(x){
+  const list = loadHistory(), h = list.find(y => y.id === x.id);
+  if(!h) return;
+  const info = JSON.stringify(x);
+  if(h.lib !== x.status || JSON.stringify(h.libInfo) !== info){ h.lib = x.status; h.libInfo = JSON.parse(info); saveHistoryList(list); }
+}
+const LIB_VISTOS_KEY = 'lib_vistos';
+function libVistos(){ try{ return JSON.parse(localStorage.getItem(LIB_VISTOS_KEY) || '[]'); }catch(e){ return []; } }
+function libMarcarVisto(ids){
+  const v = libVistos().concat(ids).filter((id, i, a) => a.indexOf(id) === i).slice(-200);
+  try{ localStorage.setItem(LIB_VISTOS_KEY, JSON.stringify(v)); }catch(e){}
+}
+// Todos os documentos com liberação: os do servidor e os guardados neste aparelho.
+function libTodos(){
+  const m = {};
+  loadHistory().forEach(h => { if(h.lib) m[h.id] = Object.assign({ id: h.id, tipo: h.tipo, tipoDocumento: h.tipoLabel, numero: h.numero, area: h.area, ts: Date.parse(h.ts), naoConformes: [] }, h.libInfo || {}, { status: (h.libInfo && h.libInfo.status) || h.lib }); });
+  lib.lista.forEach(x => { m[x.id] = x; });
+  if(lib.local && !m[lib.local.id]) m[lib.local.id] = lib.local;
+  return Object.values(m).sort((a, b) => (b.decididoTs || b.ts || 0) - (a.decididoTs || a.ts || 0));
 }
 function libDelSnap(docId){ const all = libLoadSnaps(); delete all[docId]; try{ localStorage.setItem(LIB_SNAP_KEY, JSON.stringify(all)); }catch(e){} }
 
@@ -6494,7 +6539,7 @@ async function libLoadMinhas(){
     const r = await api('minhasLiberacoes');
     if(r && r.ok){
       lib.lista = r.liberacoes || [];
-      lib.lista.forEach(x => { if(x.status !== 'aguardando') libMarcarHist(x.id, x.status); });
+      lib.lista.forEach(libMarcarHist);
       if(lib.local && lib.lista.some(x => x.id === lib.local.id)) lib.local = null;
     }
   }catch(e){}
@@ -6507,17 +6552,23 @@ async function libLoadCardTec(){
   const box = $('libCard'); if(!box) return;
   await libLoadMinhas();
   const box2 = $('libCard'); if(!box2) return;
-  const agora = Date.now();
-  const vis = lib.lista.filter(x => x.status === 'aguardando' || (x.status === 'nao_apto') || (x.status === 'apto' && agora - x.decididoTs < 12 * 3600000));
-  if(lib.local && !vis.some(x => x.id === lib.local.id)) vis.unshift(lib.local);
-  if(!vis.length){ box2.innerHTML = ''; return; }
-  const temNao = vis.some(x => x.status === 'nao_apto'), temEsp = vis.some(x => x.status === 'aguardando');
-  box2.innerHTML = `<div class="lib-card${temNao ? ' red' : (temEsp ? '' : ' ok')}"><h4>${temNao ? '⛔ Documento não liberado' : (temEsp ? '⏳ Aguardando liberação' : '✅ Documentos liberados')}</h4>` +
-    vis.map(x => libRowHtml(x, x.status === 'aguardando' ? (x.offline ? 'Sem internet — será enviado quando a conexão voltar' : 'Enviado ' + timeAgo(x.ts, agora) + ' · não inicie ainda') :
-      x.status === 'nao_apto' ? 'Motivo: ' + x.motivo : 'Liberado por ' + x.decididoPor + ' · ' + libHora(x.decididoTs))).join('') + '</div>';
+  const agora = Date.now(), vistos = libVistos(), todos = lib.lista.slice();
+  if(lib.local && !todos.some(x => x.id === lib.local.id)) todos.unshift(lib.local);
+  // "Não apto" e "Aguardando" ficam até resolver; os liberados saem com "Entendi"
+  // (ou ao abrir o documento, ou depois de 12 h) e continuam em Meus documentos › Liberação.
+  const nao = todos.filter(x => x.status === 'nao_apto'), esp = todos.filter(x => x.status === 'aguardando');
+  const ok = todos.filter(x => x.status === 'apto' && agora - x.decididoTs < 12 * 3600000 && vistos.indexOf(x.id) === -1);
+  const card = (cls, titulo, lista, sub, extra) => lista.length ? `<div class="lib-card${cls}"><h4>${titulo}${extra || ''}</h4>` + lista.map(x => libRowHtml(x, sub(x))).join('') + '</div>' : '';
+  box2.innerHTML =
+    card(' red', nao.length > 1 ? '⛔ Documentos não liberados' : '⛔ Documento não liberado', nao, x => 'Motivo: ' + x.motivo) +
+    card('', '⏳ Aguardando liberação', esp, x => x.offline ? 'Sem internet — será enviado quando a conexão voltar' : 'Enviado ' + timeAgo(x.ts, agora) + ' · não inicie ainda') +
+    card(' ok', ok.length > 1 ? '✅ Documentos liberados' : '✅ Documento liberado', ok, x => 'Liberado por ' + x.decididoPor + ' · ' + libHora(x.decididoTs),
+      '<button type="button" class="lib-entendi" id="libEntendi">Entendi ✓</button>');
   box2.querySelectorAll('[data-lib]').forEach(b => b.onclick = ()=> libAbrirTec(b.getAttribute('data-lib')));
+  if($('libEntendi')) $('libEntendi').onclick = ()=>{ libMarcarVisto(ok.map(x => x.id)); libLoadCardTec(); toast('Guardado em Meus documentos › Liberação.', 'ok'); };
 }
 function libAbrirTec(id){
+  libMarcarVisto([id]);
   hideAllScreens();
   lib.modo = 'tec'; lib.atual = id;
   $('libTitle').textContent = 'Liberação';
@@ -6527,7 +6578,7 @@ function libAbrirTec(id){
   libLoadMinhas().then(()=>{ if(lib.modo === 'tec' && $('libView').style.display === 'block') libRenderTec(); });
 }
 function libRenderTec(){
-  const x = lib.lista.find(y => y.id === lib.atual) || (lib.local && lib.local.id === lib.atual ? lib.local : null);
+  const x = libTodos().find(y => y.id === lib.atual);
   const box = $('libBody');
   if(!x){ box.innerHTML = '<div class="ab-empty"><b>Carregando…</b></div>'; return; }
   const agora = Date.now(), titulo = escHtml(libTitulo(x)) + (x.revisao ? ' · Revisão ' + x.revisao : '');
@@ -6560,7 +6611,7 @@ function libRenderTec(){
     try{
       const r = await api('encerrarLiberacao', { id: x.id });
       if(r.error) throw new Error(r.error);
-      libDelSnap(x.id); x.status = 'nao_executada'; libMarcarHist(x.id, 'nao_executada');
+      libDelSnap(x.id); x.status = 'nao_executada'; libMarcarHist(x);
       toast('Documento encerrado como "Não executada".', 'ok'); libRenderTec();
     }catch(e){ toast(e.message || 'Não foi possível encerrar.', 'err'); }
   };
