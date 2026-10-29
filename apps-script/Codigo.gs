@@ -1248,8 +1248,11 @@ function docFechado(data) {
   var sh = abertosSheet();
   var r = acharAberto_(sh, id);
   if (r) {
-    var dono = normUser(sh.getRange(r, 2).getValue());
-    if (caller.role !== "admin" && dono !== caller.username) return jsonOut({ error: "não autorizado" });
+    var linha = sh.getRange(r, 1, 1, ABERTOS_HEADERS.length).getValues()[0];
+    var dono = normUser(linha[1]);
+    // O gestor da empresa também pode tirar um aviso que ficou preso.
+    var gestorDaEmpresa = caller.role === "gestor" && sameEmpresa(linha[3], caller.empresa);
+    if (caller.role !== "admin" && dono !== caller.username && !gestorDaEmpresa) return jsonOut({ error: "não autorizado" });
     removerAberto_(id);
   }
   return jsonOut({ ok: true });
