@@ -102,6 +102,9 @@ function sendBatchDocuments(data) {
 }
 
 /* ============ DOCUMENTOS CONTRATADOS (opcionais por empresa) ============ */
+// Documento novo: incluir a chave em DOC_TIPOS, o nome em DOC_NOMES e o
+// reconhecimento em tipoDocKey. A liberação (Apto / Não apto), as pastas
+// "Não Aptos" e o carimbo passam a valer para ele sem mais nada aqui.
 var DOC_TIPOS = ["pt", "veiculo", "escada"];
 var DOC_NOMES = { pt: "Permissão de Trabalho", veiculo: "Checklist de Veículo", escada: "Checklist de Escada" };
 function tipoDocKey(t) {

@@ -2582,11 +2582,12 @@ function sigCanvasHtml(id, placeholder){
 /* ============ CARIMBO DO TÉCNICO (retângulo em branco — compartilhado PT/Veículo/Escada) ============ */
 // Espaço em branco, maior, reservado para carimbar (fisicamente, depois de
 // impresso) ou colar o carimbo do técnico — sem upload de imagem pelo app.
-function carimboBoxHtml(){
-  return `<div class="field">
-    <label>Carimbo do Técnico de Segurança do Trabalho</label>
-    <div class="carimbo-box" style="border:1px solid var(--line);border-radius:10px;height:170px;background:#fff;margin-top:4px;"></div>
-  </div>`;
+// Quadro do Técnico de Segurança no PDF. Com a liberação ligada, o carimbo de
+// quem liberou entra aqui (ver libMontarPdf); sem liberação, fica livre para
+// assinar e carimbar no papel.
+function quadroTecnicoHtml(tipo){
+  return libExigida(tipo) ? '<div data-carimbo-alvo style="height:150px;margin-top:4px;"></div>'
+    : '<div style="height:90px;border:1px solid #ccc;margin-top:4px;"></div>';
 }
 
 /* ============ FOTOS ANEXADAS (compartilhado PT/Veículo/Escada) ============ */
@@ -2656,11 +2657,6 @@ function renderFinal(){
     <div class="field"><label>Responsável pela atividade *</label><input type="text" id="f_respNome" value="${state.respNome}" placeholder="Nome">
       <p class="field-err-msg" id="err_f_respNome" style="display:none;">⚠ Campo obrigatório</p></div>
     <div class="field"><label>Assinatura do responsável</label>${sigCanvasHtml('sigResp','Assine aqui')}</div>
-    <div class="field"><label>Responsável pela liberação</label><input type="text" id="f_libNome" value="${state.libNome||''}" placeholder="Nome de quem libera a PT (opcional)"></div>
-    <div class="field"><label>Assinatura de quem libera</label>${sigCanvasHtml('sigLib','Assine aqui (opcional)')}</div>
-    <div class="field"><label>Técnico de Segurança do Trabalho</label><input type="text" id="f_tecNome" value="${state.tecNome}" placeholder="Nome do técnico que está preenchendo"></div>
-    <div class="field"><label>Assinatura do Técnico de Segurança</label>${sigCanvasHtml('sigTec','Assine aqui (opcional)')}</div>
-    ${carimboBoxHtml()}
     <div class="field"><label>Observações de não conformidades durante as atividades</label><textarea id="f_naoConf">${state.naoConformidades}</textarea></div>
     <div class="field"><label>Ações gerais</label><textarea id="f_acoes">${state.acoesGerais}</textarea></div>
     <div class="row2">
@@ -2872,8 +2868,8 @@ function bindStepEvents(stepKey){
     f_ptNumero:['ptNumero'], f_data:['data'], f_horario:['horario'], f_area:['area'],
     f_descricao:['descricaoAtividade'], f_ferrOutros:['ferramentasOutros'],
     f_protColetiva:['alturaProtecaoColetiva'], f_episOutros:['episOutros'],
-    f_colabNome:['colaboradorNome'], f_respNome:['respNome'], f_libNome:['libNome'],
-    f_naoConf:['naoConformidades'], f_acoes:['acoesGerais'], f_encHora:['encHora'], f_encMotivo:['encMotivo'], f_tecNome:['tecNome'],
+    f_colabNome:['colaboradorNome'], f_respNome:['respNome'],
+    f_naoConf:['naoConformidades'], f_acoes:['acoesGerais'], f_encHora:['encHora'], f_encMotivo:['encMotivo'],
     f_tipoCabo:['outrasAtividades','tipoCabo']
   };
   Object.keys(bindMap).forEach(id=>{
@@ -4314,8 +4310,7 @@ function buildPrintTemplate(){
     <div class="bar">ENCERRAMENTO</div>
     <table>
       <tr><td style="width:50%"><b>Responsável pela atividade:</b> ${T.respNome||''}<br>${sigImg('sigResp')}</td>
-          <td style="width:50%"><b>Técnico de Segurança do Trabalho:</b> ${T.tecNome||''}<br>${sigData['sigTec'] ? sigImg('sigTec') : '<div style="height:90px;border:1px solid #ccc;margin-top:4px;"></div>'}</td></tr>
-      ${(T.libNome || sigData['sigLib']) ? `<tr><td colspan="2"><b>Responsável pela liberação:</b> ${T.libNome||''}<br>${sigImg('sigLib')}</td></tr>` : ''}
+          <td style="width:50%"><b>Técnico de Segurança do Trabalho:</b><br>${quadroTecnicoHtml('pt')}</td></tr>
       <tr><td colspan="2"><b>Observações de não conformidades:</b> ${T.naoConformidades||''}</td></tr>
       <tr><td colspan="2"><b>Ações gerais:</b> ${T.acoesGerais||''}</td></tr>
       <tr><td><b>Hora de encerramento:</b> ${T.encHora||''}</td><td><b>Motivo:</b> ${T.encMotivo||''}</td></tr>
@@ -4351,6 +4346,7 @@ function paginateCanvasToPdf(pdf, canvas, marks){
   const sorted = marks.slice().sort((a,b)=>a-b);
 
   let cutPx = 0, first = true;
+  const cortes = [];
   while(cutPx < canvas.height - 1){
     const target = Math.min(cutPx + pageHpx, canvas.height);
     let nextCut = target;
@@ -4370,8 +4366,23 @@ function paginateCanvasToPdf(pdf, canvas, marks){
     if(!first) pdf.addPage();
     pdf.addImage(sliceData, 'JPEG', 0, 0, imgW, sliceHmm);
     first = false;
+    cortes.push([cutPx, nextCut]);
     cutPx = nextCut;
   }
+  return cortes;
+}
+// Grava no próprio PDF (palavras-chave) onde ficou o quadro do Técnico de
+// Segurança — página e posição em mm — para o carimbo entrar ali na liberação.
+function marcarQuadroCarimbo(pdf, node, canvas, cortes){
+  const alvo = node.querySelector('[data-carimbo-alvo]');
+  if(!alvo) return;
+  const nr = node.getBoundingClientRect(), r = alvo.getBoundingClientRect();
+  const sx = canvas.width / node.offsetWidth, sy = canvas.height / node.offsetHeight, pxPorMm = canvas.width / 210;
+  const topo = (r.top - nr.top) * sy;
+  const p = cortes.findIndex(([a, b]) => topo >= a && topo < b);
+  if(p < 0) return;
+  const mm = v => Math.round(v / pxPorMm * 10) / 10;
+  pdf.setProperties({ keywords: 'docseg-carimbo:' + JSON.stringify({ p, x: mm((r.left - nr.left) * sx), y: mm(topo - cortes[p][0]), w: mm(r.width * sx), h: mm(r.height * sy) }) });
 }
 
 async function finalizeAndSend(){
@@ -4403,7 +4414,7 @@ async function finalizeAndSend(){
 
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF('p','mm','a4');
-    paginateCanvasToPdf(pdf, canvas, rowMarks);
+    marcarQuadroCarimbo(pdf, node, canvas, paginateCanvasToPdf(pdf, canvas, rowMarks));
     const fileName = `PT_${slugFileName(state.respNome)}_${state.data||''}.pdf`;
     // Não baixa mais automaticamente no aparelho a cada PT enviada — o PDF
     // fica salvo no Histórico, de onde dá pra abrir (e baixar, se quiser)
@@ -5043,7 +5054,7 @@ async function generateAndSendDoc(opts){
     node.style.left = '-9999px';
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF('p','mm','a4');
-    paginateCanvasToPdf(pdf, canvas, rowMarks);
+    marcarQuadroCarimbo(pdf, node, canvas, paginateCanvasToPdf(pdf, canvas, rowMarks));
     const fileName = `${opts.fileNameBase}.pdf`;
     // Idem PT: não baixa mais automático — fica disponível no Histórico.
     const cfg = loadCfg();
@@ -5168,10 +5179,6 @@ function renderVeiculoPage(){
     </div></div>
 
     <div class="section active"><div class="section-head">Responsáveis e observações</div><div class="section-body">
-      <div class="field"><label>Técnico em segurança do trabalho</label>
-        <div class="fixed-value${vState.tecNome?'':' fixed-value-missing'}">${vState.tecNome || '⚠ Não configurado — peça ao Administrador para cadastrar seu nome em "Usuários"'}</div>
-      </div>
-      ${carimboBoxHtml()}
       <div class="field"><label>Assinatura do motorista</label>${sigCanvasHtml('sigMotorista','Assine aqui')}</div>
       <div class="field"><label>Observações</label><textarea id="v_obs">${vState.obs}</textarea></div>
       ${photoPickerHtml(vState)}
@@ -5236,7 +5243,7 @@ function buildPrintTemplateVeiculo(){
     ${acoesRows ? `<div class="bar">AÇÃO REQUERIDA</div><table><tr><th>Item</th><th>Descrição</th><th>Responsável</th><th>Data</th><th>Conclusão</th></tr>${acoesRows}</table>` : ''}
     <div class="bar">RESPONSÁVEIS E OBSERVAÇÕES</div>
     <table>
-      <tr><td colspan="2">Técnico em segurança: ${vState.tecNome||''}<br><div style="height:90px;border:1px solid #ccc;margin-top:4px;"></div></td></tr>
+      <tr><td colspan="2">Técnico em segurança:<br>${quadroTecnicoHtml('veiculo')}</td></tr>
       <tr><td colspan="2">Assinatura do motorista:<br>${sigImg('sigMotorista')}</td></tr>
       <tr><td colspan="2">Observações: ${vState.obs||''}</td></tr>
     </table>
@@ -5309,13 +5316,6 @@ function renderEscadaPage(){
       <div class="field"><label>Assinatura do executante</label>${sigCanvasHtml('sigExecutante','Assine aqui')}</div>
       ${photoPickerHtml(eState)}
     </div></div>
-
-    <div class="section active"><div class="section-head">Técnico de segurança do trabalho</div><div class="section-body">
-      <div class="field"><label>Técnico responsável</label>
-        <div class="fixed-value${eState.tecNome?'':' fixed-value-missing'}">${eState.tecNome || '⚠ Não configurado — peça ao Administrador para cadastrar seu nome em "Usuários"'}</div>
-      </div>
-      ${carimboBoxHtml()}
-    </div></div>
   `;
   document.getElementById('escadaSections').innerHTML = html;
   bindEscadaEvents();
@@ -5359,7 +5359,7 @@ function buildPrintTemplateEscada(){
     </table>
     <div class="bar">TÉCNICO DE SEGURANÇA DO TRABALHO</div>
     <table>
-      <tr><td>Técnico responsável: ${eState.tecNome||''}<br><div style="height:90px;border:1px solid #ccc;margin-top:4px;"></div></td></tr>
+      <tr><td>Técnico responsável:<br>${quadroTecnicoHtml('escada')}</td></tr>
     </table>
     ${itemPhotosPrintHtml(eState, getQ('escada'))}
     ${photosPrintHtml(eState.fotos)}
@@ -5382,7 +5382,6 @@ document.getElementById('btnSendVeiculo').onclick = ()=>{
   const missingFields = validateRequiredFields(['v_placa','v_mot1']);
   const missingQ = validateQuestionGroup('#veiculoSections', vState);
   if(missingFields > 0 || missingQ > 0){ toast('Responda/preencha todos os itens em destaque antes de continuar.', 'err'); scrollToFirstError(); return; }
-  if(!vState.tecNome){ toast('Técnico de segurança não configurado — peça ao Administrador para cadastrar seu nome em "Usuários" antes de enviar.', 'err'); return; }
   generateAndSendDoc({
     btnId:'btnSendVeiculo', buildFn:buildPrintTemplateVeiculo,
     fileNameBase:`Checklist_Veiculo_${vState.placa||'sem-placa'}_${vState.data||''}`,
@@ -5396,7 +5395,6 @@ document.getElementById('btnSendEscada').onclick = ()=>{
   const missingFields = validateRequiredFields(['e_exec']);
   const missingQ = validateQuestionGroup('#escadaSections', eState);
   if(missingFields > 0 || missingQ > 0){ toast('Responda/preencha todos os itens em destaque antes de continuar.', 'err'); scrollToFirstError(); return; }
-  if(!eState.tecNome){ toast('Técnico de segurança não configurado — peça ao Administrador para cadastrar seu nome em "Usuários" antes de enviar.', 'err'); return; }
   generateAndSendDoc({
     btnId:'btnSendEscada', buildFn:buildPrintTemplateEscada,
     fileNameBase:`Checklist_Escada_${eState.data||''}`,
@@ -6405,7 +6403,15 @@ document.getElementById('btnSaveExitPt').onclick = parkCurrentPtAndGoHome;
    hora ou com o carimbo + PIN). O PDF final, com o quadro "Liberação da
    atividade", é montado no aparelho do gestor (pdf-lib) e só então vai
    para a pasta da empresa no Drive. */
-const LIB_DOCS = [['pt','Permissão de Trabalho (PT)'],['veiculo','Checklist de Veículo'],['escada','Checklist de Escada']];
+/* Documento novo no futuro: para seguir o mesmo padrão de liberação, basta
+   1) acrescentá-lo em DOCS_CATALOGO (aparece sozinho em "Liberação de documentos"
+      no cadastro da empresa);
+   2) no modelo do PDF, usar quadroTecnicoHtml('<chave>') no lugar do Técnico de
+      Segurança — sem campos de técnico/carimbo na tela de preenchimento;
+   3) enviar com generateAndSendDoc({ ..., tipoDoc:'<chave>', store: <estado> });
+   4) no servidor (apps-script/Codigo.gs), incluir a chave em DOC_TIPOS, DOC_NOMES
+      e tipoDocKey. */
+const LIB_DOCS_ROTULO = { pt: 'Permissão de Trabalho (PT)' };
 const LIB_MOTIVOS = ['Item não conforme','Falta de EPI','Equipe incompleta','Foto insuficiente','Colaborador não apto','Outro'];
 const LIB_SNAP_KEY = 'lib_snaps';
 const PT_NUM_GUARDADO_KEY = 'pt_num_guardado';
@@ -6702,6 +6708,18 @@ function libCarimboTxt(c){
 async function libAbrirDecisao(x, decisao){
   const s = getSession() || {}, c = s.carimbo || {}, modo = libCfg().modo || 'escolha';
   const temCarimbo = !!(c.temAssinatura && c.temPin && c.nome);
+  // O PDF sempre leva o carimbo completo (assinatura, nome, função e registro),
+  // também quando a pessoa assina na hora: sem esses dados não dá para liberar.
+  if(!(c.nome && c.funcao && c.registro)){
+    $('libDecBody').innerHTML = `<button class="modal-close" id="libDecClose">←</button><h2 style="font-family:'Poppins',sans-serif;">Cadastre o seu carimbo</h2>` +
+      '<p class="desc">Para avaliar, o PDF leva o seu carimbo completo: assinatura, nome, função e nº de registro. Cadastre uma vez no perfil e depois é só liberar.</p>' +
+      '<button type="button" class="lib-btn pri" id="libIrCarimbo">Cadastrar meu carimbo</button><button type="button" class="lib-btn ghost" id="libCancelar">Cancelar</button>';
+    $('libDecModal').classList.add('show');
+    const fechar = ()=> $('libDecModal').classList.remove('show');
+    $('libDecClose').onclick = fechar; $('libCancelar').onclick = fechar;
+    $('libIrCarimbo').onclick = ()=>{ fechar(); openCarimboModal(); };
+    return;
+  }
   let forma = modo === 'hora' ? 'hora' : (modo === 'carimbo' ? 'carimbo' : (temCarimbo ? 'carimbo' : 'hora'));
   let motivo = '';
   const nao = decisao === 'nao_apto', ct = libCarimboTxt(c);
@@ -6713,7 +6731,7 @@ async function libAbrirDecisao(x, decisao){
       '<label style="display:flex;align-items:center;gap:8px;font-size:13px;"><input type="checkbox" id="libReenviar" checked style="width:18px;height:18px;"> Permitir que o colaborador corrija e reenvie</label>' : '') +
     (modo === 'escolha' ? '<div class="lib-seg" id="libSeg"><button type="button" data-f="hora">✍️ Assinar agora</button><button type="button" data-f="carimbo">🔖 Meu carimbo</button></div>' : '<div style="height:12px"></div>') +
     `<div id="libFormaHora"><canvas class="lib-sig" id="libSigCanvas"></canvas><div style="display:flex;justify-content:space-between;margin-top:6px;"><span class="hint" style="margin:0;">Assine com o dedo no quadro</span><button type="button" class="btn btn-ghost" id="libSigLimpar" style="padding:4px 10px;font-size:12px;">Limpar</button></div>` +
-      `<div class="lib-box" style="margin-top:10px;background:#F6F8FB;"><div class="lib-kv"><span>Nome</span><b>${escHtml(ct.nome)}</b>${ct.reg ? `<span>Registro</span><span>${escHtml(ct.reg)}</span>` : ''}<span>Data/hora</span><span>agora</span></div></div></div>` +
+      `<div class="lib-box" style="margin-top:10px;background:#F6F8FB;"><div class="lib-kv"><span>Nome</span><b>${escHtml(ct.nome)}</b><span>Função</span><span>${escHtml(ct.funcao)}</span><span>Registro</span><span>${escHtml(ct.reg)}</span></div></div></div>` +
     `<div id="libFormaCarimbo">${temCarimbo ? `<div class="lib-stamp" id="libStampPrev"><div class="l">Carregando carimbo…</div></div><p style="text-align:center;font-weight:700;margin:14px 0 6px;">Digite seu PIN para confirmar</p><input type="password" inputmode="numeric" maxlength="6" class="lib-pin" id="libPin" autocomplete="off">`
       : '<div class="lib-box" style="text-align:center;">Você ainda não cadastrou o carimbo e o PIN.<button type="button" class="lib-btn pri" id="libIrCarimbo">Cadastrar meu carimbo</button></div>'}</div>` +
     '<div class="lib-err" id="libDecErr"></div>' +
@@ -6785,80 +6803,95 @@ async function hashPinLib(pin){
 function libB64ToBytes(b64){ const bin = atob(b64), out = new Uint8Array(bin.length); for(let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i); return out; }
 function libBytesToB64(bytes){ let bin = ''; for(let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000)); return btoa(bin); }
 
-// Acrescenta ao PDF enviado uma página "LIBERAÇÃO DA ATIVIDADE" com a decisão,
-// quem avaliou, quando e a assinatura (ou o carimbo).
+// O carimbo (ou a assinatura na hora, com o nome) entra no quadro do Técnico de
+// Segurança do próprio PDF. Só no "Não apto" — ou num PDF antigo, sem o quadro
+// marcado — entra também a página "Liberação da atividade" com o motivo.
+const CARIMBO_W = 180, CARIMBO_H = 105; // tamanho do carimbo no PDF (pontos), igual em todos os documentos
 async function libMontarPdf(base64, x, d){
   if(!window.PDFLib) throw new Error('Sem conexão para carregar o gerador de PDF. Verifique a internet e tente de novo.');
   const { PDFDocument, StandardFonts, rgb } = window.PDFLib;
   const doc = await PDFDocument.load(libB64ToBytes(base64));
-  const page = doc.addPage([595.28, 841.89]);
   const fN = await doc.embedFont(StandardFonts.Helvetica), fB = await doc.embedFont(StandardFonts.HelveticaBold);
   // As fontes padrão do PDF só têm o alfabeto latino: tira emoji e afins.
   const t = v => String(v == null ? '' : v).replace(/[–—]/g, '-').replace(/[“”]/g, '"').replace(/[‘’]/g, "'").replace(/[^\x20-\x7E\xA0-\xFF]/g, '').trim();
-  const navy = rgb(0.07, 0.145, 0.294), cinza = rgb(0.33, 0.36, 0.42), preto = rgb(0.1, 0.1, 0.12);
-  const verde = rgb(0.12, 0.42, 0.23), vermelho = rgb(0.64, 0.18, 0.18);
-  const W = 595.28, M = 42;
-  let y = 790;
+  const navy = rgb(0.07, 0.145, 0.294), cinza = rgb(0.33, 0.36, 0.42), preto = rgb(0.1, 0.1, 0.12), vermelho = rgb(0.64, 0.18, 0.18);
   const quebra = (txt, font, size, larg) => {
     const linhas = []; let atual = '';
     t(txt).split(/\s+/).forEach(p => { const prova = atual ? atual + ' ' + p : p; if(font.widthOfTextAtSize(prova, size) > larg && atual){ linhas.push(atual); atual = p; } else atual = prova; });
     if(atual) linhas.push(atual);
     return linhas;
   };
-  const campo = (rotulo, valor, larg) => {
-    page.drawText(t(rotulo), { x: M + 14, y, size: 9, font: fN, color: cinza });
-    y -= 13;
-    quebra(valor, fB, 11, larg || (W - 2 * M - 28)).forEach(l => { page.drawText(l, { x: M + 14, y, size: 11, font: fB, color: preto }); y -= 14; });
-    y -= 6;
-  };
-  const topo = y;
-  page.drawRectangle({ x: M, y: y - 30, width: W - 2 * M, height: 30, color: navy });
-  page.drawText('LIBERAÇÃO DA ATIVIDADE', { x: M + 14, y: y - 20, size: 14, font: fB, color: rgb(1, 1, 1) });
-  page.drawText(t(libTitulo(x) + (x.revisao ? ' - Revisão ' + x.revisao : '')), { x: W - M - 14 - fN.widthOfTextAtSize(t(libTitulo(x) + (x.revisao ? ' - Revisão ' + x.revisao : '')), 10), y: y - 19, size: 10, font: fN, color: rgb(1, 1, 1) });
-  y -= 56;
-  const nao = d.decisao === 'nao_apto';
-  page.drawText('Situação', { x: M + 14, y, size: 9, font: fN, color: cinza });
-  y -= 26;
-  page.drawText(nao ? 'NÃO APTO' : 'APTO', { x: M + 14, y, size: 26, font: fB, color: nao ? vermelho : verde });
-  y -= 18;
-  page.drawText(nao ? 'A atividade NÃO está liberada.' : 'Atividade liberada para execução.', { x: M + 14, y, size: 10, font: fN, color: nao ? vermelho : verde });
-  y -= 26;
-  const colTop = y, larg = 270;
-  campo('Documento', x.tipo === 'pt' ? x.tipoDocumento + ' Nº ' + (x.numero || 'S/N') : x.tipoDocumento, larg);
-  campo('Enviado por', x.nome + ' em ' + libHora(x.ts), larg);
-  if(x.area) campo('Local', x.area, larg);
-  campo(nao ? 'Avaliado em' : 'Liberado em', new Date(d.quando).toLocaleString('pt-BR', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'}), larg);
-  campo('Forma', d.forma === 'carimbo' ? 'Carimbo digital + PIN' : 'Assinatura na hora', larg);
-  const fimEsq = y;
-  // Carimbo / assinatura (à direita)
-  const cx = M + 320, cw = W - M - 14 - cx;
-  let cy = colTop + 12;
-  const ch = 150;
-  page.drawRectangle({ x: cx, y: cy - ch, width: cw, height: ch, borderColor: navy, borderWidth: 1.6 });
+  let img = null;
   try{
     const bytes = libB64ToBytes(d.assinatura.split(',')[1] || '');
-    const img = /^data:image\/jpe?g/.test(d.assinatura) ? await doc.embedJpg(bytes) : await doc.embedPng(bytes);
-    const k = Math.min((cw - 20) / img.width, 64 / img.height);
-    page.drawImage(img, { x: cx + (cw - img.width * k) / 2, y: cy - 12 - img.height * k, width: img.width * k, height: img.height * k });
+    img = /^data:image\/jpe?g/.test(d.assinatura) ? await doc.embedJpg(bytes) : await doc.embedPng(bytes);
   }catch(e){ /* sem imagem: fica só o texto */ }
-  page.drawLine({ start: { x: cx + 10, y: cy - 82 }, end: { x: cx + cw - 10, y: cy - 82 }, thickness: 0.8, color: navy });
   const ct = libCarimboTxt(d.carimbo);
-  let ly = cy - 98;
-  [[ct.nome.toUpperCase(), fB, 10], [ct.funcao, fN, 9], [ct.reg, fN, 9]].forEach(([txt, f, sz]) => {
-    if(!txt) return;
-    quebra(txt, f, sz, cw - 20).slice(0, 2).forEach(l => { page.drawText(l, { x: cx + 10, y: ly, size: sz, font: f, color: navy }); ly -= sz + 3; });
-  });
-  y = Math.min(fimEsq, cy - ch - 16);
-  if(nao){
-    page.drawRectangle({ x: M + 8, y: y - 8, width: W - 2 * M - 16, height: 1, color: rgb(0.85, 0.85, 0.88) });
-    y -= 26;
-    campo('Motivo', d.motivo);
-    if(d.fazer) campo('O que precisa ser feito', d.fazer);
+  // Desenha o carimbo na caixa (bx, by = canto de baixo à esquerda, em pontos)
+  const carimbo = (page, bx, by, bw, bh) => {
+    page.drawRectangle({ x: bx, y: by, width: bw, height: bh, borderColor: navy, borderWidth: 1.4 });
+    const linhas = [[ct.nome.toUpperCase(), fB, 9], [ct.funcao, fN, 8], [ct.reg, fN, 8]].filter(([txt]) => txt);
+    const altTexto = linhas.reduce((s, [, , sz]) => s + sz + 2.5, 0);
+    const altImg = Math.max(18, bh - altTexto - 22);
+    if(img){
+      const k = Math.min((bw - 16) / img.width, altImg / img.height);
+      page.drawImage(img, { x: bx + (bw - img.width * k) / 2, y: by + bh - 6 - altImg + (altImg - img.height * k) / 2, width: img.width * k, height: img.height * k });
+    }
+    const yLinha = by + bh - 10 - altImg;
+    page.drawLine({ start: { x: bx + 8, y: yLinha }, end: { x: bx + bw - 8, y: yLinha }, thickness: 0.7, color: navy });
+    let ly = yLinha - 11;
+    linhas.forEach(([txt, f, sz]) => { const l = quebra(txt, f, sz, bw - 16)[0] || ''; page.drawText(l, { x: bx + 8, y: ly, size: sz, font: f, color: navy }); ly -= sz + 2.5; });
+  };
+
+  let pos = null;
+  try{ const m = /docseg-carimbo:(\{.*\})/.exec(doc.getKeywords() || ''); if(m) pos = JSON.parse(m[1]); }catch(e){}
+  const alvo = pos && pos.p >= 0 && pos.p < doc.getPageCount() ? doc.getPage(pos.p) : null;
+  if(alvo){
+    const k = 72 / 25.4, H = alvo.getSize().height;
+    const bw = Math.min(pos.w * k, CARIMBO_W), bh = Math.min(pos.h * k, CARIMBO_H);
+    carimbo(alvo, pos.x * k + (pos.w * k - bw) / 2, H - (pos.y + pos.h) * k + (pos.h * k - bh) / 2, bw, bh);
   }
-  y -= 4;
-  page.drawRectangle({ x: M, y: y, width: W - 2 * M, height: topo - y, borderColor: rgb(0.27, 0.27, 0.3), borderWidth: 1 });
-  y -= 18;
-  page.drawText(t('Código de verificação: ' + x.id + ' · Avaliado pelo DocSeg Digital'), { x: M, y, size: 8.5, font: fN, color: cinza });
+  const nao = d.decisao === 'nao_apto';
+  if(nao || !alvo){
+    const page = doc.addPage([595.28, 841.89]);
+    const W = 595.28, M = 42;
+    let y = 790;
+    const campo = (rotulo, valor, larg) => {
+      page.drawText(t(rotulo), { x: M + 14, y, size: 9, font: fN, color: cinza });
+      y -= 13;
+      quebra(valor, fB, 11, larg || (W - 2 * M - 28)).forEach(l => { page.drawText(l, { x: M + 14, y, size: 11, font: fB, color: preto }); y -= 14; });
+      y -= 6;
+    };
+    const topo = y, titulo = t(libTitulo(x) + (x.revisao ? ' - Revisão ' + x.revisao : ''));
+    page.drawRectangle({ x: M, y: y - 30, width: W - 2 * M, height: 30, color: navy });
+    page.drawText('LIBERAÇÃO DA ATIVIDADE', { x: M + 14, y: y - 20, size: 14, font: fB, color: rgb(1, 1, 1) });
+    page.drawText(titulo, { x: W - M - 14 - fN.widthOfTextAtSize(titulo, 10), y: y - 19, size: 10, font: fN, color: rgb(1, 1, 1) });
+    y -= 56;
+    page.drawText('Situação', { x: M + 14, y, size: 9, font: fN, color: cinza });
+    y -= 26;
+    page.drawText(nao ? 'NÃO APTO' : 'APTO', { x: M + 14, y, size: 26, font: fB, color: nao ? vermelho : rgb(0.12, 0.42, 0.23) });
+    y -= 18;
+    page.drawText(nao ? 'A atividade NÃO está liberada.' : 'Atividade liberada para execução.', { x: M + 14, y, size: 10, font: fN, color: nao ? vermelho : rgb(0.12, 0.42, 0.23) });
+    y -= 26;
+    const colTop = y, larg = 270;
+    campo('Documento', x.tipo === 'pt' ? x.tipoDocumento + ' Nº ' + (x.numero || 'S/N') : x.tipoDocumento, larg);
+    campo('Enviado por', x.nome + ' em ' + libHora(x.ts), larg);
+    if(x.area) campo('Local', x.area, larg);
+    campo(nao ? 'Avaliado em' : 'Liberado em', new Date(d.quando).toLocaleString('pt-BR', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'}), larg);
+    const cw = CARIMBO_W, ch = CARIMBO_H, cx = W - M - 14 - cw;
+    carimbo(page, cx, colTop + 12 - ch, cw, ch);
+    y = Math.min(y, colTop + 12 - ch - 16);
+    if(nao){
+      page.drawRectangle({ x: M + 8, y: y - 8, width: W - 2 * M - 16, height: 1, color: rgb(0.85, 0.85, 0.88) });
+      y -= 26;
+      campo('Motivo', d.motivo);
+      if(d.fazer) campo('O que precisa ser feito', d.fazer);
+    }
+    y -= 4;
+    page.drawRectangle({ x: M, y: y, width: W - 2 * M, height: topo - y, borderColor: rgb(0.27, 0.27, 0.3), borderWidth: 1 });
+    y -= 18;
+    page.drawText(t('Código de verificação: ' + x.id + ' · Avaliado pelo DocSeg Digital'), { x: M, y, size: 8.5, font: fN, color: cinza });
+  }
   return libBytesToB64(await doc.save());
 }
 
@@ -6908,6 +6941,8 @@ $('carSave').onclick = async ()=>{
   err('');
   const nome = $('carNome').value.trim();
   if(!nome) return err('Informe o nome que aparece no carimbo.');
+  if(!$('carFuncao').value.trim()) return err('Informe a função (ex: Técnico de Segurança do Trabalho).');
+  if(!$('carRegistro').value.trim()) return err('Informe o nº do registro.');
   const p1 = $('carPin1').value.trim(), p2 = $('carPin2').value.trim(), senha = $('carSenha').value;
   if(p1 || p2){
     if(!/^\d{4,6}$/.test(p1)) return err('O PIN precisa ter de 4 a 6 números.');
@@ -6942,7 +6977,7 @@ $('carSave').onclick = async ()=>{
 function paintEmpresaLib(l){
   l = l || {};
   $('empresaFormLibAtivo').checked = !!l.ativo;
-  $('empresaFormLibDocs').innerHTML = LIB_DOCS.map(([k, label]) => `<label style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #EDF0F6;font-size:14px;"><input type="checkbox" data-libdoc="${k}" style="width:20px;height:20px;" ${(l.docs || (l.ativo ? [] : ['pt'])).indexOf(k) !== -1 ? 'checked' : ''}>${label}</label>`).join('');
+  $('empresaFormLibDocs').innerHTML = DOCS_CATALOGO.map(({ key: k, label }) => [k, LIB_DOCS_ROTULO[k] || label]).map(([k, label]) => `<label style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #EDF0F6;font-size:14px;"><input type="checkbox" data-libdoc="${k}" style="width:20px;height:20px;" ${(l.docs || (l.ativo ? [] : ['pt'])).indexOf(k) !== -1 ? 'checked' : ''}>${label}</label>`).join('');
   $('empresaFormLibModo').value = l.modo || 'escolha';
   $('empresaFormLibLembrete').value = String(l.lembreteMin || 15);
   const upd = ()=>{ $('empresaFormLibBox').style.display = $('empresaFormLibAtivo').checked ? 'block' : 'none'; };
