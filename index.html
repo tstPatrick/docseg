@@ -651,6 +651,7 @@
   .ab-row button,.ab-btn{border:0;border-radius:10px;padding:7px 11px;font:700 12px inherit;font-family:inherit;background:#1D3A6F;color:#fff;cursor:pointer;white-space:nowrap;text-decoration:none;display:inline-block;}
   .ab-pill{font-size:10.5px;font-weight:700;border-radius:8px;padding:3px 8px;white-space:nowrap;background:#FFF1D6;color:#8A4B00;}
   .ab-pill.red{background:#FDECEB;color:#A32D2D;}
+  .ab-row button.ab-x,.ab-x{width:30px;height:30px;padding:0;border-radius:50%;border:1px solid rgba(163,45,45,.35);background:#fff;color:#A32D2D;font-size:15px;font-weight:700;line-height:1;flex-shrink:0;cursor:pointer;}
   .ab-pcard{background:#fff;border:1px solid #E1E6EF;border-radius:14px;padding:11px 12px;margin-bottom:9px;font-size:12.5px;}
   .ab-pcard .t{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;} .ab-pcard .t b{font-size:13.5px;} .ab-pcard .meta{color:#566179;font-size:11.5px;}
   .ab-pcard .bar{height:6px;border-radius:3px;background:#EEF1F7;margin:8px 0 2px;overflow:hidden;} .ab-pcard .bar i{display:block;height:100%;background:#C88A00;} .ab-pcard .bar.red i{background:#A32D2D;}
@@ -5959,10 +5960,11 @@ async function loadAbertosCard(){
     const lim = r.alertaHoras || 24, red = r.abertos.some(x => abHoras(x.inicioTs, r.serverNow) >= lim);
     el2.className = 'ab-card' + (red ? ' red' : '');
     el2.innerHTML = `<h4>⚠ ${r.abertos.length} documento${r.abertos.length > 1 ? 's' : ''} em aberto na equipe</h4>` +
-      r.abertos.slice(0, 3).map(x => `<div class="ab-row"><div class="m"><b>${escHtml((x.nome || '').split(' ')[0])} · ${escHtml(x.numero || x.tipoDocumento)}</b><span>${escHtml(x.area || x.tipoDocumento)} · ${abHa(x.inicioTs)}</span></div><span class="ab-pill${abHoras(x.inicioTs, r.serverNow) >= lim ? ' red' : ''}">${abHoras(x.inicioTs, r.serverNow) >= lim ? '+' + lim + ' h' : abHa(x.inicioTs).replace('há ', '')}</span></div>`).join('') +
+      r.abertos.slice(0, 3).map(x => `<div class="ab-row"><div class="m"><b>${escHtml((x.nome || '').split(' ')[0])} · ${escHtml(x.numero || x.tipoDocumento)}</b><span>${escHtml(x.area || x.tipoDocumento)} · ${abHa(x.inicioTs)}</span></div><span class="ab-pill${abHoras(x.inicioTs, r.serverNow) >= lim ? ' red' : ''}">${abHoras(x.inicioTs, r.serverNow) >= lim ? '+' + lim + ' h' : abHa(x.inicioTs).replace('há ', '')}</span><button type="button" class="ab-x" data-abx="${escHtml(x.abertoId)}" title="Remover aviso">✕</button></div>`).join('') +
       (r.abertos.length > 3 ? `<div style="font-size:12px;margin-top:6px;">e mais ${r.abertos.length - 3}…</div>` : '') +
       '<div style="margin-top:9px;"><button type="button" class="ab-btn" id="abVerPainel">Ver todos</button></div>';
     const bt = document.getElementById('abVerPainel'); if(bt) bt.onclick = openAbertos;
+    el2.querySelectorAll('[data-abx]').forEach(b => b.onclick = ()=> abRemoverAviso(r.abertos.find(x => x.abertoId === b.getAttribute('data-abx')), refreshHomeMenuIfVisible));
     const tile = document.querySelector('#homeMenuItems [data-home="abertos"]');
     if(tile && !tile.querySelector('.badge')) tile.insertAdjacentHTML('afterbegin', `<span class="badge">${r.abertos.length}</span>`);
   }catch(e){}
@@ -6101,9 +6103,10 @@ function renderAbView(){
     const h = abHoras(x.inicioTs, r.serverNow), red = h >= lim, pct = Math.min(100, Math.round(h / lim * 100));
     return `<div class="ab-pcard"><div class="t"><div><b>${escHtml(x.numero || x.tipoDocumento)} · ${escHtml(x.nome)}</b><div class="meta">${escHtml(x.tipoDocumento)}${x.area ? ' · ' + escHtml(x.area) : ''}</div></div><span class="ab-pill${red ? ' red' : ''}">${red ? '+' + lim + ' h' : abHa(x.inicioTs).replace('há ', '')}</span></div>
       <div class="bar${red ? ' red' : ''}"><i style="width:${pct}%"></i></div><div class="meta">Iniciado ${new Date(x.inicioTs).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})} · ainda não enviado</div>
-      <div class="acts"><button type="button" class="ab-btn" data-lem="${i}">🔔 Lembrar</button><button type="button" class="ab-btn" data-msg="${i}">💬 Mensagem</button></div></div>`;
+      <div class="acts"><button type="button" class="ab-btn" data-lem="${i}">🔔 Lembrar</button><button type="button" class="ab-btn" data-msg="${i}">💬 Mensagem</button><button type="button" class="ab-btn" data-abx="${i}" style="background:#fff;color:#A32D2D;border:1px solid rgba(163,45,45,.35);">✕ Remover aviso</button></div></div>`;
   }).join('');
   $('abList').querySelectorAll('[data-msg]').forEach(b => b.onclick = ()=>{ const x = lista[parseInt(b.getAttribute('data-msg'), 10)]; openMensagens(x.login, x.nome, x.abertoId, (x.numero || x.tipoDocumento) + (x.area ? ' · ' + x.area : '')); });
+  $('abList').querySelectorAll('[data-abx]').forEach(b => b.onclick = ()=> abRemoverAviso(lista[parseInt(b.getAttribute('data-abx'), 10)], loadAbView));
   $('abList').querySelectorAll('[data-lem]').forEach(b => b.onclick = async ()=>{
     const x = lista[parseInt(b.getAttribute('data-lem'), 10)];
     b.disabled = true; const old = b.textContent; b.textContent = '...';
@@ -6114,6 +6117,22 @@ function renderAbView(){
     }catch(e){ toast(e.message || 'Não foi possível enviar.', 'err'); }
     b.disabled = false; b.textContent = old;
   });
+}
+// O gestor tira um aviso que ficou preso (o documento já foi finalizado, mas o
+// servidor não ficou sabendo). Se ainda estiver aberto no celular do
+// colaborador, o app dele avisa de novo e o aviso volta sozinho.
+async function abRemoverAviso(x, depois){
+  if(!x) return;
+  const quem = escHtml((x.nome || '').split(' ')[0]);
+  const ok = await dsConfirm(`<div style="font-size:16px;">Remover o aviso de <b>${escHtml(x.numero || x.tipoDocumento)}</b> (${quem})?</div>` +
+    `<div style="font-size:13px;font-weight:400;color:#566179;margin-top:8px;line-height:1.45;">Use quando o documento já foi finalizado e o aviso ficou preso. Se ele ainda estiver aberto no celular de ${quem}, o aviso volta sozinho.</div>`, 'Remover aviso');
+  if(!ok) return;
+  try{
+    const r = await api('docFechado', { abertoId: x.abertoId });
+    if(r.error) throw new Error(r.error === 'não autorizado' ? 'O servidor ainda não permite. Atualize o código do Apps Script.' : r.error);
+    toast('Aviso removido.', 'ok');
+    if(depois) depois();
+  }catch(e){ toast(e.message || 'Não foi possível remover.', 'err'); }
 }
 $('abBack').onclick = goHome;
 $('abRefresh').onclick = loadAbView;
