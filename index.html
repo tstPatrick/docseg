@@ -2263,6 +2263,18 @@ $('btnLogout').onclick = ()=>{
 
 /* Ao abrir o app já logado: confere com o servidor se o acesso continua valendo
    (usuário removido, senha trocada, termos novos) e atualiza foto, nome e empresa. */
+// A configuração da empresa pode mudar com o app aberto (ex.: o admin ligou a
+// liberação). O app instalado fica horas em segundo plano sem reabrir, então
+// atualiza a sessão ao voltar para a tela e a cada 5 min.
+let _sessaoAtualizadaEm = Date.now();
+function refreshSessionSeVelha(){
+  if(Date.now() - _sessaoAtualizadaEm < 60000) return;
+  _sessaoAtualizadaEm = Date.now();
+  refreshSessionFromServer();
+}
+document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState === 'visible') refreshSessionSeVelha(); });
+setInterval(()=>{ if(document.visibilityState === 'visible') refreshSessionSeVelha(); }, 5 * 60000);
+
 async function refreshSessionFromServer(){
   const s = getSession();
   if(!s || !navigator.onLine) return;
@@ -6185,12 +6197,13 @@ function renderHomeMenu(){
     html += '</div>';
   }
   if(gestor) html = '<div id="abertosCard"></div><div id="teamCard"></div>' + html;
-  if(!admin && libCfg().ativo) html = '<div id="libCard"></div>' + html;
+  if(gestor || (!admin && libCfg().ativo)) html = '<div id="libCard"></div>' + html;
   if(!admin && !gestor) html = abertosMeusHtml() + html;
   if(!admin) html = '<div class="ab-card" id="msgCard" style="display:none;background:#E6ECF8;color:#12254B;border-color:rgba(18,37,75,.2);"></div>' + pushBannerHtml() + html;
   box.innerHTML = html;
   if(gestor){ loadAbertosCard(); loadTeamCard(); }
-  if(!admin && libCfg().ativo){ if(gestor) libLoadCardGestor(); else libLoadCardTec(); }
+  if(gestor) libLoadCardGestor();
+  else if(!admin && libCfg().ativo) libLoadCardTec();
   if(!admin){ pushBannerBind(); loadMsgBadge(); }
   if(!admin && !gestor){ abertosMeusBind(); syncAbertos(); }
   { const bs = document.getElementById('btnTrocarSenhaPadrao'); if(bs) bs.onclick = openAdminAccountModal; }
@@ -6556,6 +6569,7 @@ async function libCorrigir(x){
 
 /* ---- Gestor: lista, card da tela inicial e avaliação ---- */
 async function libLoadGestor(){
+  const antes = !!libCfg().ativo;
   try{
     const r = await api('listLiberacoes');
     if(r && r.ok){
@@ -6564,6 +6578,7 @@ async function libLoadGestor(){
       if(s && (r.carimbo || r.config)){ if(r.carimbo) s.carimbo = r.carimbo; if(r.config) s.empresaLiberacao = r.config; saveSession(s); }
     }
   }catch(e){}
+  return antes !== !!libCfg().ativo; // a liberação foi ligada/desligada desde a última vez
 }
 function libSemCarimbo(){
   const s = getSession() || {}, c = s.carimbo || {};
@@ -6571,7 +6586,7 @@ function libSemCarimbo(){
 }
 async function libLoadCardGestor(){
   if(!$('libCard')) return;
-  await libLoadGestor();
+  if(await libLoadGestor()){ refreshHomeMenuIfVisible(); return; } // mostra/esconde o bloco "Liberações"
   const box = $('libCard'); if(!box) return;
   const agora = Date.now();
   let h = '';
