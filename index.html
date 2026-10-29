@@ -6403,7 +6403,15 @@ document.getElementById('btnSaveExitPt').onclick = parkCurrentPtAndGoHome;
    hora ou com o carimbo + PIN). O PDF final, com o quadro "Liberação da
    atividade", é montado no aparelho do gestor (pdf-lib) e só então vai
    para a pasta da empresa no Drive. */
-const LIB_DOCS = [['pt','Permissão de Trabalho (PT)'],['veiculo','Checklist de Veículo'],['escada','Checklist de Escada']];
+/* Documento novo no futuro: para seguir o mesmo padrão de liberação, basta
+   1) acrescentá-lo em DOCS_CATALOGO (aparece sozinho em "Liberação de documentos"
+      no cadastro da empresa);
+   2) no modelo do PDF, usar quadroTecnicoHtml('<chave>') no lugar do Técnico de
+      Segurança — sem campos de técnico/carimbo na tela de preenchimento;
+   3) enviar com generateAndSendDoc({ ..., tipoDoc:'<chave>', store: <estado> });
+   4) no servidor (apps-script/Codigo.gs), incluir a chave em DOC_TIPOS, DOC_NOMES
+      e tipoDocKey. */
+const LIB_DOCS_ROTULO = { pt: 'Permissão de Trabalho (PT)' };
 const LIB_MOTIVOS = ['Item não conforme','Falta de EPI','Equipe incompleta','Foto insuficiente','Colaborador não apto','Outro'];
 const LIB_SNAP_KEY = 'lib_snaps';
 const PT_NUM_GUARDADO_KEY = 'pt_num_guardado';
@@ -6969,7 +6977,7 @@ $('carSave').onclick = async ()=>{
 function paintEmpresaLib(l){
   l = l || {};
   $('empresaFormLibAtivo').checked = !!l.ativo;
-  $('empresaFormLibDocs').innerHTML = LIB_DOCS.map(([k, label]) => `<label style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #EDF0F6;font-size:14px;"><input type="checkbox" data-libdoc="${k}" style="width:20px;height:20px;" ${(l.docs || (l.ativo ? [] : ['pt'])).indexOf(k) !== -1 ? 'checked' : ''}>${label}</label>`).join('');
+  $('empresaFormLibDocs').innerHTML = DOCS_CATALOGO.map(({ key: k, label }) => [k, LIB_DOCS_ROTULO[k] || label]).map(([k, label]) => `<label style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #EDF0F6;font-size:14px;"><input type="checkbox" data-libdoc="${k}" style="width:20px;height:20px;" ${(l.docs || (l.ativo ? [] : ['pt'])).indexOf(k) !== -1 ? 'checked' : ''}>${label}</label>`).join('');
   $('empresaFormLibModo').value = l.modo || 'escolha';
   $('empresaFormLibLembrete').value = String(l.lembreteMin || 15);
   const upd = ()=>{ $('empresaFormLibBox').style.display = $('empresaFormLibAtivo').checked ? 'block' : 'none'; };
