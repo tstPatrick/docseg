@@ -947,7 +947,6 @@
       <button class="nav-item" data-doc="historico"><span class="nav-ic">🕘</span>Histórico</button>
       <div class="nav-sep admin-only"></div>
       <div class="nav-section-label admin-only">Administração</div>
-      <button class="nav-item admin-only" id="navUsuarios"><span class="nav-ic">👤</span>Usuários</button>
       <button class="nav-item admin-only" id="navEmpresas"><span class="nav-ic">🏢</span>Empresas</button>
       <button class="nav-item admin-only" id="navConfig"><span class="nav-ic">⚙</span>Configurações</button>
     </nav>
@@ -1244,7 +1243,7 @@
     <p class="desc" style="margin-bottom:6px; border-top:1px solid var(--line); padding-top:14px;" id="userFormTitle">Novo usuário</p>
     <div class="field" id="userFormRoleWrap"><label>Perfil</label>
       <select id="userFormRole" style="width:100%;padding:11px 12px;border:1px solid #D6D3CC;border-radius:8px;font-size:15px;background:#fff;">
-        <option value="gestor">Cliente (acompanha o painel da empresa)</option>
+        <option value="gestor">Gestor (acompanha o painel da empresa)</option>
         <option value="admin">Administrador (acesso completo)</option>
       </select>
     </div>
@@ -1931,7 +1930,7 @@ function isAdmin(){ return getRole() === 'admin'; }
 function isGestor(){ return getRole() === 'gestor'; }
 function isManager(){ const r = getRole(); return r === 'admin' || r === 'gestor'; }
 function getScriptUrl(){ return (loadCfg().scriptUrl) || DEFAULT_SCRIPT_URL; }
-function roleLabel(r){ return r === 'admin' ? 'Administrador' : (r === 'gestor' ? 'Cliente' : 'Colaborador'); }
+function roleLabel(r){ return r === 'admin' ? 'Administrador' : (r === 'gestor' ? 'Gestor' : 'Colaborador'); }
 function escHtml(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function initialsOf(nome){
   const p = (nome||'').trim().split(/\s+/).filter(Boolean);
@@ -3381,8 +3380,8 @@ function resetUserForm(){
   $('userFormPassLabel').textContent = 'Senha provisória';
   $('userFormRole').value = usersMode === 'cliente' ? 'gestor' : 'tecnico';
   $('userFormEmail').value = '';
-  $('userFormTitle').textContent = usersMode === 'cliente' ? 'Novo cliente' : 'Novo colaborador';
-  $('btnUserFormSave').textContent = usersMode === 'cliente' ? 'Salvar cliente' : 'Salvar colaborador';
+  $('userFormTitle').textContent = usersMode === 'cliente' ? 'Novo gestor' : 'Novo colaborador';
+  $('btnUserFormSave').textContent = usersMode === 'cliente' ? 'Salvar gestor' : 'Salvar colaborador';
   setUserFotoPreview('', '');
   updateUserFormFieldsByRole();
 }
@@ -3390,9 +3389,9 @@ async function openUsersModal(mode){
   if(!isManager()){ toast('Acesso restrito.', 'err'); return; }
   usersMode = (isGestor() || mode !== 'cliente') ? 'colab' : 'cliente';
   hideAllScreens();
-  $('usersTitle').textContent = isGestor() ? 'Colaboradores da empresa' : (usersMode === 'cliente' ? 'Cliente' : 'Colaboradores');
+  $('usersTitle').textContent = isGestor() ? 'Colaboradores da empresa' : (usersMode === 'cliente' ? 'Gestores' : 'Colaboradores');
   $('usersDesc').textContent = usersMode === 'cliente'
-    ? 'O cliente é quem acompanha a empresa: vê o painel, baixa os PDFs, cadastra colaboradores e escreve avisos. Defina o login e a senha provisória; ele troca a senha no primeiro acesso.'
+    ? 'O gestor é quem acompanha a empresa: vê o painel, baixa os PDFs, cadastra colaboradores e escreve avisos. Defina o login e a senha provisória; ele troca a senha no primeiro acesso.'
     : 'Cada colaborador tem o seu login. Ele entra com o login e a senha provisória que você definir aqui e troca a senha no primeiro acesso.';
   const optAdmin = [...$('userFormRole').options].find(o => o.value === 'admin');
   if(usersMode === 'cliente' && !optAdmin){ const o = document.createElement('option'); o.value = 'admin'; o.textContent = 'Administrador (acesso completo)'; $('userFormRole').appendChild(o); }
@@ -3413,7 +3412,6 @@ async function openUsersModal(mode){
   await populateUserFormEmpresaSelect();
   if(isGestor()) $('userFormEmpresaSelect').value = getSession().empresa || '';
 }
-$('navUsuarios').onclick = ()=> openUsersModal('colab');
 $('closeUsers').onclick = goHome;
 
 function renderUsersList(list){
@@ -3867,7 +3865,7 @@ function docsAtivos(){
 
 /* ============ SUPORTE ============ */
 const SUPORTE_WHATS = '5571996033896';
-const APP_VERSION = '5.1';
+const APP_VERSION = '5.2';
 const SUPORTE_FAQ = [
   ['Como envio um documento?', 'Preencha o documento (PT, checklist de veículo ou de escada) e toque em Enviar. Escolha "Enviar agora" ou "Guardar e enviar depois". Em "Meus documentos" você vê o que já foi enviado.'],
   ['Estou sem internet, e agora?', 'Pode preencher normalmente. O documento fica guardado no aparelho e é enviado sozinho quando a internet voltar. Em "Meus documentos" aparece como "Aguardando envio".'],
@@ -3877,7 +3875,7 @@ const SUPORTE_FAQ = [
 ];
 function supInfoUsuario(){
   const s = getSession() || {};
-  const perfil = s.role === 'gestor' ? 'Cliente' : (s.role === 'admin' ? 'Administrador' : 'Colaborador');
+  const perfil = s.role === 'gestor' ? 'Gestor' : (s.role === 'admin' ? 'Administrador' : 'Colaborador');
   return { nome: s.nome || s.username || '', empresa: s.empresa || '', perfil, login: s.username || '' };
 }
 function supAparelho(){
@@ -6212,7 +6210,7 @@ function renderHomeMenu(){
   if(admin){
     html += '<div class="ds-sec">Gestão</div><div class="ds-grid">';
     // Colaboradores, localização e documentos em aberto são da empresa: ficam só com o gestor.
-    html += tileHtml('usersCliente', 'Cliente', '#FFF1D6', '#8A4B00', {sub:'Gestores das empresas', icon:'cliente'});
+    html += tileHtml('usersCliente', 'Gestores', '#FFF1D6', '#8A4B00', {sub:'Login de quem gerencia cada empresa', icon:'cliente'});
     html += tileHtml('empresas', 'Empresas', '#FFF1D6', '#8A4B00');
     html += tileHtml('questionarios', 'Questionários', '#E6ECF8', '#1D3A6F', {sub:'PT e checklists', icon:'pt'});
     html += tileHtml('chamados', 'Suporte', '#FDECEB', '#A32D2D', {sub:'Chamados dos usuários', icon:'suporte'});
