@@ -787,6 +787,47 @@
   .ct-pill{display:inline-block; font-size:10px; font-weight:700; padding:3px 9px; border-radius:20px; text-transform:uppercase; letter-spacing:.3px; white-space:nowrap;}
   .ct-pill.ok{background:#E6F4DE; color:#1F6B2A;} .ct-pill.warn{background:#FFF1D6; color:#8A4B00;} .ct-pill.bad{background:#FDECEC; color:#A32D2D;} .ct-pill.none{background:#EEF1F7; color:#566179;}
   .ct-alert{background:#FFF8E1; border:1px solid #F5D77A; border-radius:12px; padding:10px 12px; font-size:12.5px; color:#5D4B00; margin-bottom:12px; line-height:1.45;}
+  /* ============ LIBERAÇÃO (Apto / Não apto) ============ */
+  .pill.red{background:#FDECEB; color:#A32D2D;}
+  .lib-card{background:#fff; border:2px solid #E3A008; border-radius:16px; padding:12px 14px; margin:0 0 14px;}
+  .lib-card.red{border-color:#A32D2D;} .lib-card.ok{border-color:#1F8A4C;}
+  .lib-card h4{margin:0 0 6px; font-size:14.5px; display:flex; align-items:center; gap:8px;}
+  .lib-card h4 .n{margin-left:auto; background:#D93025; color:#fff; border-radius:999px; font-size:12px; padding:2px 8px;}
+  .lib-card .hint{margin:6px 0 0;}
+  .lib-row{display:flex; align-items:center; gap:10px; width:100%; background:none; border:0; border-top:1px solid #EEF1F6; padding:10px 0; text-align:left; font:inherit; color:inherit; cursor:pointer;}
+  .lib-row:first-of-type{border-top:0;}
+  .lib-row .ic{width:38px; height:38px; border-radius:12px; display:grid; place-items:center; font-size:18px; flex-shrink:0; background:#E6ECF8;}
+  .lib-row .m{flex:1; min-width:0; display:flex; flex-direction:column; gap:2px;}
+  .lib-row .m b{font-size:14px;} .lib-row .m span{font-size:12px; color:#566179;}
+  .lib-hero{background:#fff; border:1px solid #E1E7F1; border-radius:16px; padding:18px 14px; text-align:center; margin-bottom:12px;}
+  .lib-hero .big{width:78px; height:78px; border-radius:50%; margin:0 auto 10px; display:grid; place-items:center; font-size:36px;}
+  .lib-hero h3{font-family:'Poppins','DM Sans',sans-serif; font-size:19px; margin:0 0 4px;}
+  .lib-hero p{margin:4px 0 0; font-size:13px; color:#566179; line-height:1.45;}
+  .lib-box{background:#fff; border:1px solid #E1E7F1; border-radius:16px; padding:12px 14px; margin-bottom:12px; font-size:13px;}
+  .lib-box b.t{display:block; margin-bottom:6px; font-size:14px;}
+  .lib-box.red{background:#FDECEB; border-color:rgba(163,45,45,.25); color:#A32D2D;}
+  .lib-kv{display:grid; grid-template-columns:100px 1fr; gap:6px 10px;} .lib-kv span:nth-child(odd){color:#566179;}
+  .lib-nc{display:flex; justify-content:space-between; gap:10px; padding:7px 0; border-top:1px solid #EEF1F6; color:#14213D;} .lib-nc:first-of-type{border-top:0;}
+  .lib-tl{border-left:2px solid #D0D7E2; margin:4px 0 0 6px; padding-left:12px; color:#566179;}
+  .lib-tl div{position:relative; margin-bottom:6px;} .lib-tl div:before{content:''; position:absolute; left:-18px; top:4px; width:10px; height:10px; border-radius:50%; background:#C5CEDB;}
+  .lib-tl div.d:before{background:#1F8A4C;} .lib-tl div.w:before{background:#E3A008;} .lib-tl div.x:before{background:#A32D2D;}
+  .lib-acts{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:6px;}
+  .lib-btn{display:block; width:100%; border-radius:12px; padding:13px; font:700 15px inherit; font-family:inherit; border:0; cursor:pointer; margin-top:10px; text-align:center;}
+  .lib-btn.ok{background:#1F8A4C; color:#fff;} .lib-btn.no{background:#fff; color:#A32D2D; border:2px solid #A32D2D;}
+  .lib-btn.red{background:#A32D2D; color:#fff;} .lib-btn.pri{background:#1D3A6F; color:#fff;} .lib-btn.ghost{background:#fff; color:#14213D; border:1px solid #D0D7E2;}
+  .lib-btn:disabled{opacity:.6;}
+  .lib-seg{display:flex; background:#E9EDF4; border-radius:12px; padding:4px; margin:12px 0;}
+  .lib-seg button{flex:1; border:0; background:none; padding:9px; border-radius:9px; font:700 13px inherit; font-family:inherit; color:#566179; cursor:pointer;}
+  .lib-seg button.on{background:#fff; color:#14213D; box-shadow:0 1px 3px rgba(0,0,0,.12);}
+  .lib-chips button{border:1px solid #D0D7E2; background:#fff; border-radius:999px; padding:7px 12px; margin:0 6px 8px 0; font:500 13px inherit; font-family:inherit; cursor:pointer;}
+  .lib-chips button.on{background:#FDECEB; border-color:#A32D2D; color:#A32D2D; font-weight:700;}
+  .lib-sig{width:100%; height:160px; border:1.5px dashed #C5CEDB; border-radius:12px; background:#fff; touch-action:none; display:block;}
+  .lib-stamp{border:2px solid #1D3A6F; border-radius:10px; padding:8px 12px; color:#1D3A6F; background:#fff;}
+  .lib-stamp img{display:block; max-width:100%; height:56px; object-fit:contain; border-bottom:1px solid #1D3A6F; margin-bottom:4px;}
+  .lib-stamp .l{font-size:12px; line-height:1.45;}
+  .lib-pin{width:100%; height:52px; border:1.5px solid #D5DCE9; border-radius:12px; text-align:center; font-size:24px; letter-spacing:10px;}
+  .lib-small{font-size:12.5px; color:#566179; line-height:1.45; margin:8px 0 0;}
+  .lib-err{color:#A32D2D; font-size:13px; font-weight:700; margin-top:8px; display:none;}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
@@ -1032,6 +1073,12 @@
   </div>
 </div>
 
+<!-- ===================== TELA: LIBERAÇÃO (Apto / Não apto) ===================== -->
+<div id="libView" class="ds" style="display:none;">
+  <div class="screen-topbar"><button type="button" id="libBack" title="Voltar">←</button><b id="libTitle">Liberação</b><button type="button" id="libRefresh" title="Atualizar" style="margin-left:auto;">↻</button></div>
+  <div class="painel-wrap" id="libBody"></div>
+</div>
+
 <!-- ===================== TELA: LOCALIZAÇÃO DAS PTs ===================== -->
 <div id="locView" class="ds" style="display:none;">
   <div class="screen-topbar"><button type="button" id="locBack" title="Voltar">←</button><b>Localização das PTs</b><button type="button" id="locRefresh" title="Atualizar" style="margin-left:auto;">↻</button></div>
@@ -1261,7 +1308,46 @@
     <div class="field"><label>Nova senha</label><input type="password" id="profPassNew" autocomplete="new-password" placeholder="Mínimo de 6 caracteres"></div>
     <div class="field"><label>Repita a nova senha</label><input type="password" id="profPassNew2" autocomplete="new-password" placeholder="Repita a nova senha"></div>
     <button type="button" class="btn btn-primary" style="width:100%;" id="btnProfPassSave">Salvar nova senha</button>
+    <button type="button" class="btn btn-ghost" style="width:100%;margin-top:12px;display:none;" id="btnProfCarimbo">🔖 Meu carimbo de liberação</button>
     <button type="button" class="btn btn-ghost" style="width:100%;margin-top:12px;" id="btnProfTerms">Ler os Termos de Uso</button>
+  </div>
+</div>
+
+<!-- LIBERAÇÃO: decisão do gestor (Apto / Não apto + assinatura) -->
+<div class="modal-bg ds" id="libDecModal">
+  <div class="modal" id="libDecBody"></div>
+</div>
+
+<!-- CARIMBO DIGITAL DO LIBERADOR (gestor) -->
+<div class="modal-bg ds" id="carimboModal">
+  <div class="modal">
+    <button class="modal-close" id="closeCarimbo">←</button>
+    <h2 style="font-family:'Poppins',sans-serif;">Meu carimbo de liberação</h2>
+    <p class="desc">Usado para liberar PTs e checklists. Você pode alterar quando quiser; documentos já liberados mantêm o carimbo da época.</p>
+    <div class="field"><label>Nome que aparece no carimbo</label><input type="text" id="carNome" maxlength="80"></div>
+    <div class="field"><label>Função</label><input type="text" id="carFuncao" maxlength="80" placeholder="Ex: Técnico(a) de Segurança do Trabalho"></div>
+    <div style="display:grid;grid-template-columns:1fr 2fr;gap:8px;">
+      <div class="field"><label>Órgão</label><select id="carOrgao" style="width:100%;height:44px;border:1.5px solid #D5DCE9;border-radius:10px;background:#fff;padding:0 8px;"><option value="MTE">MTE</option><option value="CREA">CREA</option><option value="CRQ">CRQ</option><option value="CFT">CFT</option><option value="">Outro / sem</option></select></div>
+      <div class="field"><label>Nº do registro</label><input type="text" id="carRegistro" maxlength="30"></div>
+    </div>
+    <div class="field"><label>Assinatura</label>
+      <canvas class="lib-sig" id="carSig"></canvas>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;gap:8px;">
+        <span class="hint" style="margin:0;">✍️ Desenhe com o dedo</span>
+        <span><label class="btn btn-ghost" style="padding:6px 10px;font-size:12px;cursor:pointer;">📷 Foto do carimbo<input type="file" accept="image/*" id="carFoto" style="display:none;"></label> <button type="button" class="btn btn-ghost" id="carSigClear" style="padding:6px 10px;font-size:12px;">Limpar</button></span>
+      </div>
+    </div>
+    <p class="desc" style="margin:14px 0 6px;border-top:1px solid var(--line);padding-top:14px;">Como vai ficar no PDF</p>
+    <div class="lib-stamp" id="carPreview"></div>
+    <p class="desc" style="margin:14px 0 6px;border-top:1px solid var(--line);padding-top:14px;">🔒 PIN de liberação <span id="carPinStatus" class="pill gray" style="margin-left:6px;"></span></p>
+    <p class="lib-small" style="margin:-2px 0 8px;">4 a 6 números criados por você — o app pede a cada liberação com o carimbo. Não chega por SMS: só você sabe. Para criar ou trocar (também se esqueceu), confirme a sua senha de login.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <div class="field"><label>Novo PIN</label><input type="password" inputmode="numeric" maxlength="6" id="carPin1" autocomplete="off"></div>
+      <div class="field"><label>Repita o PIN</label><input type="password" inputmode="numeric" maxlength="6" id="carPin2" autocomplete="off"></div>
+    </div>
+    <div class="field"><label>Sua senha de login (só para criar/trocar o PIN)</label><input type="password" id="carSenha" autocomplete="current-password"></div>
+    <div class="lib-err" id="carErr"></div>
+    <button type="button" class="btn btn-primary" style="width:100%;margin-top:8px;" id="carSave">Salvar carimbo</button>
   </div>
 </div>
 
@@ -1376,6 +1462,20 @@
     <p class="desc" style="margin-bottom:6px; margin-top:14px; border-top:1px solid var(--line); padding-top:14px;">Documentos contratados</p>
     <p class="hint" style="margin-top:-4px;margin-bottom:8px;">Só estes aparecem para os colaboradores desta empresa. Documentos já enviados continuam no painel mesmo se você desligar um.</p>
     <div id="empresaFormDocs"></div>
+    <p class="desc" style="margin-bottom:6px; margin-top:14px; border-top:1px solid var(--line); padding-top:14px;">Liberação de documentos</p>
+    <p class="hint" style="margin-top:-4px;margin-bottom:8px;">Pergunte na contratação. Ligada: o colaborador só inicia depois que um gestor da empresa avaliar e assinar (Apto / Não apto), e o PDF só vai para a pasta do Drive depois disso — os recusados vão para "Não Aptas"/"Não Aptos".</p>
+    <label style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;"><input type="checkbox" id="empresaFormLibAtivo" style="width:20px;height:20px;"> Exigir liberação antes do trabalho</label>
+    <div id="empresaFormLibBox" style="margin-top:8px;">
+      <div id="empresaFormLibDocs"></div>
+      <div class="field" style="margin-top:8px;"><label style="font-size:13px;font-weight:600;">Como o liberador assina</label>
+        <select id="empresaFormLibModo" style="width:100%;height:44px;border:1.5px solid #D5DCE9;border-radius:10px;background:#fff;padding:0 10px;">
+          <option value="escolha">Liberador escolhe (assinatura na hora ou carimbo)</option>
+          <option value="hora">Só assinatura na hora</option>
+          <option value="carimbo">Só carimbo digital + PIN</option>
+        </select></div>
+      <div class="field"><label style="font-size:13px;font-weight:600;">Lembrar os gestores se ninguém avaliar em (minutos)</label>
+        <input type="number" id="empresaFormLibLembrete" min="5" max="240" value="15" style="width:100%;height:44px;border:1.5px solid #D5DCE9;border-radius:10px;padding:0 12px;"></div>
+    </div>
     <p class="desc" style="margin-bottom:6px; margin-top:14px; border-top:1px solid var(--line); padding-top:14px;">Contrato (licença de uso)</p>
     <p class="hint" style="margin-top:-4px;margin-bottom:10px;">Passada a validade, gestor e colaboradores da empresa deixam de entrar, sozinho, sem você precisar fazer nada. O gestor recebe um aviso na tela inicial perto do vencimento. Deixe a validade em branco para uso sem prazo.</p>
     <div class="field" style="margin-bottom:8px;">
@@ -1560,6 +1660,7 @@
 <div id="printTemplate"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
@@ -1581,7 +1682,7 @@ function makeEmptyState(){
     respNome:"", libNome:"", tecNome:"", tecCarimbo:"",
     naoConformidades:"", acoesGerais:"",
     encHora:"", encMotivo:"",
-    fotos:[], abertoId:"", abertoInicio:0
+    fotos:[], abertoId:"", abertoInicio:0, libRevisao:0, libRevisaoDe:""
   };
 }
 const state = makeEmptyState();
@@ -1793,7 +1894,7 @@ async function initPushNotifications(session, mostrar){
     let r; try{ r = await (await fetch(scriptUrl, { method: 'POST', body: JSON.stringify({ action: 'saveFcmToken', username: session.username, passwordHash: session.passwordHash, fcmToken: token }) })).json(); }
     catch(e){ return fim(false, 'Sem conexão com o servidor. Tente de novo com internet.'); }
     if(!r || r.error) return fim(false, 'O servidor recusou: ' + ((r && r.error) || 'resposta inválida'));
-    if(!window.__fcmFg){ window.__fcmFg = 1; try{ messaging.onMessage(p => { const n = p.notification || {}, d = p.data || {}; toast((n.title || d.titulo || 'DocSeg Digital') + ': ' + (n.body || d.corpo || ''), 'ok'); try{ if(navigator.vibrate) navigator.vibrate(120); }catch(e){} try{ onMsgPush(); }catch(e){} }); }catch(e){} }
+    if(!window.__fcmFg){ window.__fcmFg = 1; try{ messaging.onMessage(p => { const n = p.notification || {}, d = p.data || {}; toast((n.title || d.titulo || 'DocSeg Digital') + ': ' + (n.body || d.corpo || ''), 'ok'); try{ if(navigator.vibrate) navigator.vibrate(120); }catch(e){} try{ onMsgPush(); }catch(e){} try{ libOnPush(); }catch(e){} }); }catch(e){} }
     return fim(true, 'Notificações ativadas neste aparelho!');
   }catch(e){
     console.warn('Não foi possível ativar notificações push:', e);
@@ -1882,6 +1983,7 @@ function sessionFromServer(uname, passHash, r){
     empresaLogoDataUrl2: r.empresaLogoDataUrl2 || '',
     empresaThemeColor: r.empresaThemeColor || '', empresaThemeColor2: r.empresaThemeColor2 || '',
     empresaPtPrefix: r.empresaPtPrefix || '',
+    empresaLiberacao: r.empresaLiberacao || null, carimbo: r.carimbo || null,
     empresaDocumentos: Array.isArray(r.empresaDocumentos) && r.empresaDocumentos.length ? r.empresaDocumentos : null
   };
 }
@@ -2086,7 +2188,8 @@ function finishLogin(session){
   toast('Bem-vindo, ' + primeiro + '!', 'ok');
   initPushNotifications(session);
   goHome();
-  if(!state.ptNumero){
+  // Só quem preenche documentos reserva número (gestor e admin não preenchem PT).
+  if(!state.ptNumero && session.role === 'tecnico'){
     assignNextPtNumber().then(n => {
       if(state.ptNumero) return;
       state.ptNumero = n;
@@ -2224,6 +2327,7 @@ function openProfileModal(){
   hideAllScreens();
   $('profPassCur').value = ''; $('profPassNew').value = ''; $('profPassNew2').value = '';
   $('profFotoMsg').textContent = '';
+  $('btnProfCarimbo').style.display = isGestor() ? 'block' : 'none';
   paintProfile();
   $('profileModal').classList.add('show');
   window.scrollTo(0,0);
@@ -2648,8 +2752,8 @@ async function assignNextPtNumber(){
     try{
       const controller = new AbortController();
       const timer = setTimeout(()=>controller.abort(), 7000);
-      const qs = 'prefix=' + encodeURIComponent(currentPtPrefix()) + '&empresa=' + encodeURIComponent(empresaParaNumeracao());
-      const resp = await fetch(cfg.scriptUrl + '?action=nextNumber&' + qs, {signal: controller.signal});
+      const body = Object.assign({ action: 'nextNumber', prefix: currentPtPrefix(), empresa: empresaParaNumeracao() }, sendCreds());
+      const resp = await fetch(cfg.scriptUrl, {method:'POST', body: JSON.stringify(body), signal: controller.signal});
       clearTimeout(timer);
       const data = await resp.json();
       if(data && typeof data.number === 'number'){
@@ -3001,9 +3105,7 @@ async function hashPin(pin){
 }
 
 function peekNumeroParaEmpresa(scriptUrl, empresaNome){
-  const qs = 'action=peekNumber&empresa=' + encodeURIComponent(empresaNome||'');
-  fetch(scriptUrl + '?' + qs)
-    .then(r=>r.json())
+  fetchAdminAction(scriptUrl, 'peekNumber', { empresa: empresaNome||'' })
     .then(data=>{ if(data && typeof data.number === 'number') document.getElementById('cfgNextNumber').value = data.number; })
     .catch(()=>{ /* mantém o valor local exibido */ });
 }
@@ -3039,8 +3141,7 @@ function openSettingsModal(){
         else document.getElementById('cfgNextNumber').value = peekNextCounter();
       };
     });
-    fetch(cfg.scriptUrl + '?action=sheetUrl')
-      .then(r=>r.json())
+    fetchAdminAction(cfg.scriptUrl, 'sheetUrl')
       .then(data=>{
         if(data && data.url){
           document.getElementById('openSheetLink').href = data.url;
@@ -3072,8 +3173,7 @@ document.getElementById('saveSettings').onclick = async ()=>{
     localStorage.setItem(PT_COUNTER_KEY, String(nextNumTyped - 1));
     if(cfg.scriptUrl){
       try{
-        const qs = 'value=' + nextNumTyped + '&empresa=' + encodeURIComponent(empresaSelecionada);
-        await fetch(cfg.scriptUrl + '?action=setNumber&' + qs);
+        await fetchAdminAction(cfg.scriptUrl, 'setNumber', { value: nextNumTyped, empresa: empresaSelecionada });
       }catch(err){
         toast('Não foi possível atualizar o contador central — verifique a conexão.', 'err');
       }
@@ -3520,6 +3620,7 @@ function paintEmpresaDocs(sel){
 function empresaDocsSelecionados(){ return [...document.querySelectorAll('#empresaFormDocs input[data-empdoc]:checked')].map(i => i.getAttribute('data-empdoc')); }
 function resetEmpresaForm(){
   paintEmpresaDocs(DOCS_CATALOGO.map(d => d.key));
+  paintEmpresaLib(null);
   document.getElementById('empresaFormNome').value = '';
   document.getElementById('empresaFormAviso').value = '';
   document.getElementById('empresaFormSuspenso').checked = false;
@@ -3659,6 +3760,7 @@ function loadEmpresaIntoForm(nome){
   if(!emp) return;
   document.getElementById('empresaFormNome').value = emp.nome;
   paintEmpresaDocs(Array.isArray(emp.documentos) && emp.documentos.length ? emp.documentos : DOCS_CATALOGO.map(d => d.key));
+  paintEmpresaLib(emp.liberacao);
   document.getElementById('empresaFormAviso').value = emp.avisoGestor || '';
   document.getElementById('empresaFormSuspenso').checked = !!emp.suspenso;
   document.getElementById('empresaFormSuspensoMsg').value = emp.suspensoMsg || '';
@@ -3703,7 +3805,7 @@ document.getElementById('btnEmpresaFormSave').onclick = async ()=>{
     const emailAtivo = document.getElementById('empresaFormEmailAtivo').checked;
     const emailDestino = document.getElementById('empresaFormEmailDestino').value.trim();
     if(emailAtivo && !emailDestino){ toast('Informe o e-mail de destino ou desligue o envio por e-mail.', 'err'); btn.disabled = false; btn.textContent = oldTxt; return; }
-    const payload = Object.assign({action:'saveEmpresa', nome, documentos, teste: document.getElementById('empresaFormTeste').checked, relatorioMensal: document.getElementById('empresaFormRelatorio').checked, alertaHoras: +document.getElementById('empresaFormAlertaHoras').value || 24, avisoGestor: aviso, suspenso: document.getElementById('empresaFormSuspenso').checked, suspensoMsg: document.getElementById('empresaFormSuspensoMsg').value.trim(), contratoInicio: document.getElementById('empresaFormContratoIni').value, contratoFim: document.getElementById('empresaFormContratoFim').value, avisoDias: +document.getElementById('empresaFormAvisoDias').value, carenciaDias: +document.getElementById('empresaFormCarencia').value, themeColor, themeColor2, ptPrefix, emailAtivo, emailDestino, driveEmails: document.getElementById('empresaFormDriveEmails').value.trim()}, currentAdminCreds());
+    const payload = Object.assign({action:'saveEmpresa', nome, documentos, teste: document.getElementById('empresaFormTeste').checked, relatorioMensal: document.getElementById('empresaFormRelatorio').checked, alertaHoras: +document.getElementById('empresaFormAlertaHoras').value || 24, avisoGestor: aviso, suspenso: document.getElementById('empresaFormSuspenso').checked, suspensoMsg: document.getElementById('empresaFormSuspensoMsg').value.trim(), contratoInicio: document.getElementById('empresaFormContratoIni').value, contratoFim: document.getElementById('empresaFormContratoFim').value, avisoDias: +document.getElementById('empresaFormAvisoDias').value, carenciaDias: +document.getElementById('empresaFormCarencia').value, themeColor, themeColor2, ptPrefix, emailAtivo, emailDestino, driveEmails: document.getElementById('empresaFormDriveEmails').value.trim(), liberacao: empresaLibForm()}, currentAdminCreds());
     // só manda o campo da logo quando o admin realmente mexeu nela
     // (escolheu uma nova ou clicou em "Remover logo") — null = não mexeu.
     if(empresaFormLogoDataUrl !== null) payload.logoDataUrl = empresaFormLogoDataUrl;
@@ -4268,7 +4370,7 @@ async function finalizeAndSend(){
     // voltou antes de enviar, tenta trocar por um número oficial e limpo do
     // servidor — sem isso, o número offline (único por aparelho) já evita
     // colisão, mas o número do servidor é o ideal sempre que possível.
-    if(state.ptNumero && state.ptNumero.indexOf('-OFF-') !== -1 && navigator.onLine){
+    if(state.ptNumero && state.ptNumero.indexOf('-OFF-') !== -1 && !state.libRevisao && navigator.onLine){
       try{
         const fresh = await assignNextPtNumber();
         if(fresh && fresh.indexOf('-OFF-') === -1){
@@ -4296,6 +4398,8 @@ async function finalizeAndSend(){
     // sob demanda, sem lotar o armazenamento do celular à toa.
 
     const cfg = loadCfg();
+    const exigeLib = canSendDocs() && libExigida('pt');
+    let libEnviado = null;
     const pdfDataUri = pdf.output('datauristring');
     const base64 = pdfDataUri.split(',')[1];
     const resumo = `Área: ${state.area||'-'} | Descrição: ${(state.descricaoAtividade||'-').slice(0,200)}`;
@@ -4309,9 +4413,14 @@ async function finalizeAndSend(){
         docId: histMeta.id, tipoDocumento: 'Permissão de Trabalho (PT)',
         ptNumero: state.ptNumero || 'S/N', ptData: state.data || '', ptArea: state.area || '',
         abertoId: state.abertoId || '', ptHoraIni: state.horario || '', ptHoraFim: state.encHora || '', ptMotivo: state.encMotivo || '',
-        resumo: resumo, pdfBase64: base64, pdfNome: fileName
+        resumo: resumo, naoConformes: ptNaoConformes(), pdfBase64: base64, pdfNome: fileName
       }, currentEmpresaUsuario());
-      const choice = await askSendChoice('Permissão de Trabalho (PT)');
+      if(exigeLib){
+        payload.revisao = state.libRevisao || 0; payload.revisaoDe = state.libRevisaoDe || '';
+        libSaveSnap(histMeta.id, { tipo:'pt', ts: Date.now(), state: JSON.parse(JSON.stringify(state)), sigs: Object.assign({}, sigData) });
+      }
+      // Com liberação, envia na hora: o colaborador precisa da resposta para começar.
+      const choice = exigeLib ? 'now' : await askSendChoice('Permissão de Trabalho (PT)');
       if(choice === 'later' && queuePendingSend(payload, histMeta)){
         addHistoryEntry(Object.assign({}, stripPdfFromMeta(histMeta), {status:'pendente'}));
         toast('PDF gerado! Documento guardado para enviar junto com outros — veja em "📁 Meus documentos".', 'ok');
@@ -4319,13 +4428,15 @@ async function finalizeAndSend(){
         nextBtn.textContent = 'Enviando...';
         try{
           await sendPayload(cfg, payload);
-          toast('PDF gerado e enviado! Já aparece no painel da empresa.', 'ok');
+          toast(exigeLib ? 'PT enviada para liberação. Aguarde o gestor antes de iniciar.' : 'PDF gerado e enviado! Já aparece no painel da empresa.', 'ok');
           playSuccessSound();
-          addHistoryEntry(Object.assign({}, histMeta, {status:'enviado'}));
+          addHistoryEntry(Object.assign({}, histMeta, {status:'enviado'}, exigeLib ? {lib:'aguardando'} : {}));
+          libEnviado = true;
         }catch(err){
           noteSendError(err);
-          enqueueDocument({payload, meta: histMeta});
+          enqueueDocument({payload, meta: Object.assign({}, histMeta, exigeLib ? {lib:'aguardando'} : {})});
           toast(sendErrToast(err), 'err');
+          libEnviado = false;
         }
       }
     } else {
@@ -4333,7 +4444,8 @@ async function finalizeAndSend(){
       addHistoryEntry(Object.assign({}, histMeta, {status:'gerado'}));
     }
     await resetForNewPT();
-    goHome();
+    if(exigeLib && libEnviado !== null) libAposEnvio(histMeta.id, 'pt', 'Permissão de Trabalho (PT)', histMeta.numero, histMeta.area, libEnviado);
+    else goHome();
   } catch(e){
     console.error(e);
     toast('Não foi possível gerar o PDF. Tente novamente.', 'err');
@@ -4353,7 +4465,8 @@ async function resetForNewPT(){
   current = 0;
   renderCurrentStep();
   updateBrand();
-  state.ptNumero = await assignNextPtNumber();
+  let guardado = ''; try{ guardado = localStorage.getItem(PT_NUM_GUARDADO_KEY) || ''; localStorage.removeItem(PT_NUM_GUARDADO_KEY); }catch(e){}
+  state.ptNumero = guardado || await assignNextPtNumber();
   saveDraft();
   if(steps[current].key === 'ident') renderCurrentStep();
   const badge = document.getElementById('ptNumberBadge');
@@ -4724,7 +4837,7 @@ function buildMeusDocsRows(){
     rows.push({
       status:'enviado', icon: DOC_TYPE_ICON[h.tipo] || 'x',
       title: meusDocsTitle(h.tipo, h.tipoLabel, h.numero),
-      num: meusDocsNum(h.tipo, h.numero), meta: (h.status==='enviado' ? '' : 'Gerado · ') + mdTime(h.ts),
+      num: meusDocsNum(h.tipo, h.numero), meta: (h.lib ? ({aguardando:'Aguardando liberação', apto:'✅ Apto', nao_apto:'⛔ Não apto', reenviada:'Corrigida e reenviada', nao_executada:'Não executada'}[h.lib] || '') + ' · ' : (h.status==='enviado' ? '' : 'Gerado · ')) + mdTime(h.ts),
       ts: h.ts, actionLabel:'PDF', actionIcon:'down',
       action: ()=>{
         if(h.pdfDataUrl){ const w = window.open(); if(w) w.location = h.pdfDataUrl; else toast('Permita pop-ups para reabrir o PDF.', 'err'); }
@@ -4922,6 +5035,8 @@ async function generateAndSendDoc(opts){
     const fileName = `${opts.fileNameBase}.pdf`;
     // Idem PT: não baixa mais automático — fica disponível no Histórico.
     const cfg = loadCfg();
+    const exigeLib = canSendDocs() && !!opts.store && libExigida(opts.tipoDoc);
+    let libEnviado = null;
     const pdfDataUri = pdf.output('datauristring');
     const base64 = pdfDataUri.split(',')[1];
     const histMeta = {
@@ -4935,7 +5050,11 @@ async function generateAndSendDoc(opts){
         ptNumero: opts.subjectLabel, ptData: opts.subjectDate || '', ptArea: opts.subjectArea || '',
         resumo: opts.resumo || '', abertoId: opts.abertoId || '', naoConformes: opts.naoConformes || [], pdfBase64: base64, pdfNome: fileName
       }, currentEmpresaUsuario());
-      const choice = await askSendChoice(opts.tipoDocumento || opts.subjectLabel);
+      if(exigeLib){
+        payload.revisao = opts.store.libRevisao || 0; payload.revisaoDe = opts.store.libRevisaoDe || '';
+        libSaveSnap(histMeta.id, { tipo: opts.tipoDoc, ts: Date.now(), state: JSON.parse(JSON.stringify(opts.store)) });
+      }
+      const choice = exigeLib ? 'now' : await askSendChoice(opts.tipoDocumento || opts.subjectLabel);
       if(choice === 'later' && queuePendingSend(payload, histMeta)){
         addHistoryEntry(Object.assign({}, stripPdfFromMeta(histMeta), {status:'pendente'}));
         toast('PDF gerado! Documento guardado para enviar junto com outros — veja em "📁 Meus documentos".', 'ok');
@@ -4943,13 +5062,15 @@ async function generateAndSendDoc(opts){
         btn.textContent = 'Enviando...';
         try{
           await sendPayload(cfg, payload);
-          toast('PDF gerado e enviado! Já aparece no painel da empresa.', 'ok');
+          toast(exigeLib ? 'Enviado para liberação. Aguarde o gestor antes de iniciar.' : 'PDF gerado e enviado! Já aparece no painel da empresa.', 'ok');
           playSuccessSound();
-          addHistoryEntry(Object.assign({}, histMeta, {status:'enviado'}));
+          addHistoryEntry(Object.assign({}, histMeta, {status:'enviado'}, exigeLib ? {lib:'aguardando'} : {}));
+          libEnviado = true;
         }catch(err){
           noteSendError(err);
-          enqueueDocument({payload, meta: histMeta});
+          enqueueDocument({payload, meta: Object.assign({}, histMeta, exigeLib ? {lib:'aguardando'} : {})});
           toast(sendErrToast(err), 'err');
+          libEnviado = false;
         }
       }
     } else {
@@ -4957,7 +5078,8 @@ async function generateAndSendDoc(opts){
       addHistoryEntry(Object.assign({}, histMeta, {status:'gerado'}));
     }
     if(opts.resetFn) opts.resetFn();
-    goHome();
+    if(exigeLib && libEnviado !== null) libAposEnvio(histMeta.id, opts.tipoDoc, opts.tipoDocumento, '', opts.subjectArea || '', libEnviado);
+    else goHome();
   } catch(e){
     console.error(e);
     toast('Não foi possível gerar o PDF. Tente novamente.', 'err');
@@ -4983,7 +5105,7 @@ const VEICULO_MANUT_DEFAULT = [
 ];
 function makeEmptyVState(){
   return { data:"", tipoVeiculo:"", marcaModelo:"", placa:"", motorista1:"", motorista2:"",
-    itens:{}, obs:"", acoes:[{item:"",desc:"",resp:"",dataAcao:"",conclusao:""}], tecNome:"", tecCarimbo:"", fotos:[], abertoId:"", abertoInicio:0 };
+    itens:{}, obs:"", acoes:[{item:"",desc:"",resp:"",dataAcao:"",conclusao:""}], tecNome:"", tecCarimbo:"", fotos:[], abertoId:"", abertoInicio:0, libRevisao:0, libRevisaoDe:"" };
 }
 let vState = makeEmptyVState();
 function saveVDraft(){ markAberto('veiculo', vState); try{ localStorage.setItem('veiculo_draft', JSON.stringify(vState)); }catch(e){} pingAberto('veiculo', vState); }
@@ -5148,7 +5270,7 @@ const ESCADA_ITEMS_DEFAULT = [
   ['e20','As pontas dos bicos de papagaio encontram-se em perfeito estado?']
 ];
 function makeEmptyEState(){
-  return { data:"", executanteNome:"", itens:{}, obs:"", ciente:false, tecCarimbo:"", fotos:[], abertoId:"", abertoInicio:0 };
+  return { data:"", executanteNome:"", itens:{}, obs:"", ciente:false, tecCarimbo:"", fotos:[], abertoId:"", abertoInicio:0, libRevisao:0, libRevisaoDe:"" };
 }
 let eState = makeEmptyEState();
 function saveEDraft(){ markAberto('escada', eState); try{ localStorage.setItem('escada_draft', JSON.stringify(eState)); }catch(e){} pingAberto('escada', eState); }
@@ -5255,7 +5377,7 @@ document.getElementById('btnSendVeiculo').onclick = ()=>{
     subjectLabel:'Checklist Veículo', subjectDate:vState.data, subjectArea:vState.placa||vState.tipoVeiculo,
     resumo:`Motorista: ${vState.motorista1||'-'}`, resetFn:resetVeiculoForm,
     naoConformes: naoConformesDe(vState, getQ('veiculoBasico').concat(getQ('veiculoManut')), 'IRREGULAR'),
-    abertoId: vState.abertoId || '', tipoDocumento:'Checklist de Veículo', tipoDoc:'veiculo'
+    abertoId: vState.abertoId || '', tipoDocumento:'Checklist de Veículo', tipoDoc:'veiculo', store: vState
   });
 };
 document.getElementById('btnSendEscada').onclick = ()=>{
@@ -5269,7 +5391,7 @@ document.getElementById('btnSendEscada').onclick = ()=>{
     subjectLabel:'Checklist Escada Extensiva', subjectDate:eState.data, subjectArea:eState.responsavelNome||'',
     resumo:`Executante: ${eState.executanteNome||'-'}`, resetFn:resetEscadaForm,
     naoConformes: naoConformesDe(eState, getQ('escada'), 'NAO_CONFORME'),
-    abertoId: eState.abertoId || '', tipoDocumento:'Checklist de Escada Extensiva', tipoDoc:'escada'
+    abertoId: eState.abertoId || '', tipoDocumento:'Checklist de Escada Extensiva', tipoDoc:'escada', store: eState
   });
 };
 
@@ -5422,6 +5544,9 @@ function hideAllScreens(){
   document.getElementById('msgView').style.display = 'none'; clearInterval(msg.timer);
   document.getElementById('locBg').style.display = 'none'; document.getElementById('locSheet').style.display = 'none';
   document.getElementById('profileModal').classList.remove('show');
+  document.getElementById('libView').style.display = 'none';
+  document.getElementById('libDecModal').classList.remove('show');
+  document.getElementById('carimboModal').classList.remove('show');
   stopPainelTimers();
 }
 
@@ -5697,6 +5822,7 @@ function tileHtml(id, label, bg, fg, opts){
 }
 
 ICONS.aberto = '<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
+ICONS.lib = '<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg>';
 ICONS.pin = '<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>';
 const loc = { dias:1, filtro:'todas', data:null, empresa:'' };
 function locConcluida(x){ return /^conclu[ií]do$/i.test(x.motivo || ''); }
@@ -6040,6 +6166,7 @@ function renderHomeMenu(){
     html += '</div>';
   } else if(gestor){
     html += '<div class="ds-sec">Acompanhamento</div><div class="ds-grid">';
+    if(libCfg().ativo) html += tileHtml('liberacoes', 'Liberações', '#E3F4E6', '#1F6B2A', {sub:'Apto / Não apto', icon:'lib'});
     html += tileHtml('abertos', 'Em aberto', '#FFF1D6', '#8A4B00', {sub:'Documentos não finalizados', icon:'aberto'});
     html += tileHtml('mensagens', 'Mensagens', '#E6ECF8', '#1D3A6F', {sub:'Conversar com a equipe', icon:'msg'});
     html += tileHtml('painel', 'Painel', '#E6ECF8', '#12254B', {sub:'Quem enviou e quando'});
@@ -6058,10 +6185,12 @@ function renderHomeMenu(){
     html += '</div>';
   }
   if(gestor) html = '<div id="abertosCard"></div><div id="teamCard"></div>' + html;
+  if(!admin && libCfg().ativo) html = '<div id="libCard"></div>' + html;
   if(!admin && !gestor) html = abertosMeusHtml() + html;
   if(!admin) html = '<div class="ab-card" id="msgCard" style="display:none;background:#E6ECF8;color:#12254B;border-color:rgba(18,37,75,.2);"></div>' + pushBannerHtml() + html;
   box.innerHTML = html;
   if(gestor){ loadAbertosCard(); loadTeamCard(); }
+  if(!admin && libCfg().ativo){ if(gestor) libLoadCardGestor(); else libLoadCardTec(); }
   if(!admin){ pushBannerBind(); loadMsgBadge(); }
   if(!admin && !gestor){ abertosMeusBind(); syncAbertos(); }
   { const bs = document.getElementById('btnTrocarSenhaPadrao'); if(bs) bs.onclick = openAdminAccountModal; }
@@ -6077,7 +6206,8 @@ function renderHomeMenu(){
         hist.map(h => {
           const t = Date.parse(h.ts);
           let pill;
-          if(h.status === 'enviado') pill = `<span class="pill ok">Enviado ${timeAgo(t, now)}</span>`;
+          if(h.lib) pill = h.lib === 'aguardando' ? '<span class="pill wait">Aguardando liberação</span>' : libPill(h.lib);
+          else if(h.status === 'enviado') pill = `<span class="pill ok">Enviado ${timeAgo(t, now)}</span>`;
           else if(h.status === 'pendente') pill = '<span class="pill wait">Aguardando envio</span>';
           else pill = '<span class="pill gray">Gerado</span>';
           const titulo = (h.tipo === 'pt' ? 'PT Nº ' + (h.numero || 'S/N') : (h.tipoLabel || 'Documento'));
@@ -6146,6 +6276,7 @@ function homeAction(id){
   else if(id === 'painel') openPainel();
   else if(id === 'localizacao') openLoc();
   else if(id === 'abertos') openAbertos();
+  else if(id === 'liberacoes') libAbrirGestor();
   else if(id === 'mensagens') openMensagens();
   else if(id === 'perfil') openProfileModal();
   else if(id === 'suporte') openSuporte();
@@ -6255,6 +6386,583 @@ function openDraftsScreen(){
 document.getElementById('btnSaveExitPt').onclick = parkCurrentPtAndGoHome;
 
 /* ============ INIT ============ */
+/* ============ LIBERAÇÃO DE DOCUMENTOS (Apto / Não apto) ============
+   Ligada por empresa (cadastro da empresa). O colaborador envia e fica
+   "Aguardando liberação"; o gestor recebe um push, avalia e assina (na
+   hora ou com o carimbo + PIN). O PDF final, com o quadro "Liberação da
+   atividade", é montado no aparelho do gestor (pdf-lib) e só então vai
+   para a pasta da empresa no Drive. */
+const LIB_DOCS = [['pt','Permissão de Trabalho (PT)'],['veiculo','Checklist de Veículo'],['escada','Checklist de Escada']];
+const LIB_MOTIVOS = ['Item não conforme','Falta de EPI','Equipe incompleta','Foto insuficiente','Colaborador não apto','Outro'];
+const LIB_SNAP_KEY = 'lib_snaps';
+const PT_NUM_GUARDADO_KEY = 'pt_num_guardado';
+const LIB_ICON = { pt:'📄', veiculo:'🚗', escada:'🪜' };
+const lib = { modo:'', lista:[], pend:[], rec:[], cfg:null, atual:null, local:null, assinatura:'' };
+
+function libCfg(){ const s = getSession(); return (s && s.empresaLiberacao) || { ativo:false, docs:[], modo:'escolha' }; }
+function libExigida(tipo){ const c = libCfg(); return !!(c.ativo && (c.docs || []).indexOf(tipo) !== -1); }
+function libTitulo(x){ return x.tipo === 'pt' ? 'PT Nº ' + (x.numero || 'S/N') : (x.tipoDocumento || 'Documento'); }
+function libHora(ts){ return ts ? new Date(ts).toLocaleString('pt-BR', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'}) : ''; }
+function libPill(st){
+  if(st === 'aguardando') return '<span class="pill wait">Aguardando</span>';
+  if(st === 'apto') return '<span class="pill ok">Apto</span>';
+  if(st === 'nao_apto') return '<span class="pill red">Não apto</span>';
+  if(st === 'reenviada') return '<span class="pill blue">Corrigida</span>';
+  if(st === 'nao_executada') return '<span class="pill gray">Não executada</span>';
+  return '';
+}
+// Itens marcados como "não conforme" na PT (o gestor vê primeiro).
+function ptNaoConformes(){
+  const out = [];
+  [['eletrico','NAO'],['altura','NAO'],['instalacao','NAO'],['saude','SIM']].forEach(([prefix, ruim]) => {
+    getQ(prefix).forEach(([id, txt]) => {
+      const it = state[prefix] && state[prefix][id];
+      if(it && it.val === ruim) out.push((prefix === 'saude' ? 'Saúde: ' : '') + txt + (it.just ? ' — ' + it.just : ''));
+    });
+  });
+  return out;
+}
+
+/* ---- Cópia local do documento enviado (para "Corrigir e reenviar") ---- */
+function libLoadSnaps(){ try{ return JSON.parse(localStorage.getItem(LIB_SNAP_KEY) || '{}'); }catch(e){ return {}; } }
+function libSaveSnap(docId, snap){
+  const all = libLoadSnaps();
+  all[docId] = snap;
+  Object.keys(all).sort((a, b) => (all[b].ts || 0) - (all[a].ts || 0)).slice(5).forEach(k => delete all[k]);
+  try{ localStorage.setItem(LIB_SNAP_KEY, JSON.stringify(all)); return; }catch(e){}
+  // sem espaço: guarda sem as fotos
+  const st = JSON.parse(JSON.stringify(snap.state));
+  st.fotos = [];
+  if(st.itens) Object.keys(st.itens).forEach(k => { if(st.itens[k]) delete st.itens[k].foto; });
+  all[docId] = Object.assign({}, snap, { state: st, semFotos: true });
+  try{ localStorage.setItem(LIB_SNAP_KEY, JSON.stringify(all)); }catch(e){}
+}
+// Situação da liberação no histórico deste aparelho (o "status" de envio continua "enviado").
+function libMarcarHist(id, st){
+  const list = loadHistory(), h = list.find(y => y.id === id);
+  if(h && h.lib !== st){ h.lib = st; saveHistoryList(list); }
+}
+function libDelSnap(docId){ const all = libLoadSnaps(); delete all[docId]; try{ localStorage.setItem(LIB_SNAP_KEY, JSON.stringify(all)); }catch(e){} }
+
+/* ---- Depois de enviar (colaborador) ---- */
+function libAposEnvio(docId, tipo, tipoDocumento, numero, area, enviado){
+  lib.local = { id: docId, tipo, tipoDocumento, numero, area, ts: Date.now(), status: 'aguardando', offline: !enviado };
+  libAbrirTec(docId);
+}
+
+/* ---- Colaborador: dados, card da tela inicial e tela de acompanhamento ---- */
+async function libLoadMinhas(){
+  try{
+    const r = await api('minhasLiberacoes');
+    if(r && r.ok){
+      lib.lista = r.liberacoes || [];
+      lib.lista.forEach(x => { if(x.status !== 'aguardando') libMarcarHist(x.id, x.status); });
+      if(lib.local && lib.lista.some(x => x.id === lib.local.id)) lib.local = null;
+    }
+  }catch(e){}
+  return lib.lista;
+}
+function libRowHtml(x, sub){
+  return `<button type="button" class="lib-row" data-lib="${escHtml(x.id)}"><span class="ic">${LIB_ICON[x.tipo] || '📄'}</span><span class="m"><b>${escHtml(libTitulo(x))}${x.revisao ? ' · R' + x.revisao : ''}</b><span>${escHtml(sub)}</span></span>${libPill(x.status)}</button>`;
+}
+async function libLoadCardTec(){
+  const box = $('libCard'); if(!box) return;
+  await libLoadMinhas();
+  const box2 = $('libCard'); if(!box2) return;
+  const agora = Date.now();
+  const vis = lib.lista.filter(x => x.status === 'aguardando' || (x.status === 'nao_apto') || (x.status === 'apto' && agora - x.decididoTs < 12 * 3600000));
+  if(lib.local && !vis.some(x => x.id === lib.local.id)) vis.unshift(lib.local);
+  if(!vis.length){ box2.innerHTML = ''; return; }
+  const temNao = vis.some(x => x.status === 'nao_apto'), temEsp = vis.some(x => x.status === 'aguardando');
+  box2.innerHTML = `<div class="lib-card${temNao ? ' red' : (temEsp ? '' : ' ok')}"><h4>${temNao ? '⛔ Documento não liberado' : (temEsp ? '⏳ Aguardando liberação' : '✅ Documentos liberados')}</h4>` +
+    vis.map(x => libRowHtml(x, x.status === 'aguardando' ? (x.offline ? 'Sem internet — será enviado quando a conexão voltar' : 'Enviado ' + timeAgo(x.ts, agora) + ' · não inicie ainda') :
+      x.status === 'nao_apto' ? 'Motivo: ' + x.motivo : 'Liberado por ' + x.decididoPor + ' · ' + libHora(x.decididoTs))).join('') + '</div>';
+  box2.querySelectorAll('[data-lib]').forEach(b => b.onclick = ()=> libAbrirTec(b.getAttribute('data-lib')));
+}
+function libAbrirTec(id){
+  hideAllScreens();
+  lib.modo = 'tec'; lib.atual = id;
+  $('libTitle').textContent = 'Liberação';
+  $('libView').style.display = 'block';
+  window.scrollTo(0, 0);
+  libRenderTec();
+  libLoadMinhas().then(()=>{ if(lib.modo === 'tec' && $('libView').style.display === 'block') libRenderTec(); });
+}
+function libRenderTec(){
+  const x = lib.lista.find(y => y.id === lib.atual) || (lib.local && lib.local.id === lib.atual ? lib.local : null);
+  const box = $('libBody');
+  if(!x){ box.innerHTML = '<div class="ab-empty"><b>Carregando…</b></div>'; return; }
+  const agora = Date.now(), titulo = escHtml(libTitulo(x)) + (x.revisao ? ' · Revisão ' + x.revisao : '');
+  let h = '';
+  if(x.status === 'aguardando'){
+    h += `<div class="lib-hero"><div class="big" style="background:#FFF1D6">⏳</div><h3>Aguardando liberação</h3><p>${titulo}${x.area ? ' · ' + escHtml(x.area) : ''}</p>` +
+      `<p>${x.offline ? 'Sem internet agora: o documento será enviado para avaliação assim que a conexão voltar.' : 'Os gestores da empresa foram avisados e vão avaliar.'}<br><b style="color:#A32D2D">Não inicie a atividade antes da liberação.</b></p>` +
+      `<p><span class="pill wait">${x.offline ? 'Na fila de envio' : 'Enviado ' + timeAgo(x.ts, agora)}</span></p></div>` +
+      `<div class="lib-box"><b class="t">Andamento</b><div class="lib-tl"><div class="${x.offline ? 'w' : 'd'}">${x.offline ? 'Aguardando internet para enviar' : libHora(x.ts) + ' · enviado'}</div>${x.offline ? '' : '<div class="d">Gestores notificados</div>'}<div class="w">Aguardando avaliação…</div></div></div>`;
+  } else if(x.status === 'apto'){
+    h += `<div class="lib-hero"><div class="big" style="background:#DDF3E4">✅</div><h3 style="color:#1E6B3A">APTO — pode iniciar</h3><p>${titulo}${x.area ? ' · ' + escHtml(x.area) : ''}</p><p>Liberado por <b>${escHtml(x.decididoPor)}</b> em ${libHora(x.decididoTs)}</p></div>`;
+  } else if(x.status === 'nao_apto'){
+    const snap = libLoadSnaps()[x.id];
+    h += `<div class="lib-hero"><div class="big" style="background:#FDECEB">⛔</div><h3 style="color:#A32D2D">NÃO APTO — não inicie</h3><p>${titulo}${x.area ? ' · ' + escHtml(x.area) : ''}</p><p>Avaliado por <b>${escHtml(x.decididoPor)}</b> em ${libHora(x.decididoTs)}</p></div>` +
+      `<div class="lib-box red"><b class="t">Motivo: ${escHtml(x.motivo)}</b>${x.oQueFazer ? escHtml(x.oQueFazer) : ''}</div>` +
+      (x.podeReenviar ? (snap ? '<button type="button" class="lib-btn pri" id="libCorrigir">Corrigir e reenviar</button>' : '<p class="lib-small">Os dados deste documento não estão mais neste aparelho. Para corrigir, preencha um documento novo.</p>') : '<p class="lib-small">O gestor não liberou a correção deste documento.</p>') +
+      '<button type="button" class="lib-btn ghost" id="libEncerrar">Encerrar como "Não executada"</button>' +
+      '<p class="lib-small" style="text-align:center;">Use "Não executada" quando o trabalho não vai acontecer (ex.: a própria pessoa não está apta). Outro colaborador pode abrir um documento novo.</p>';
+  } else if(x.status === 'reenviada'){
+    h += `<div class="lib-hero"><div class="big" style="background:#E6ECF8">🔁</div><h3>Corrigida e reenviada</h3><p>${titulo}</p><p>A versão corrigida está aguardando nova avaliação.</p></div>`;
+  } else {
+    h += `<div class="lib-hero"><div class="big" style="background:#E8ECF2">⏹</div><h3>Não executada</h3><p>${titulo}</p><p>Encerrada depois de não ser liberada (${escHtml(x.motivo)}).</p></div>`;
+  }
+  if(x.fileId) h += '<button type="button" class="lib-btn ghost" id="libVerPdf">📄 Ver PDF</button>';
+  box.innerHTML = h;
+  if($('libVerPdf')) $('libVerPdf').onclick = ()=> libBaixarPdf(x, $('libVerPdf'));
+  if($('libCorrigir')) $('libCorrigir').onclick = ()=> libCorrigir(x);
+  if($('libEncerrar')) $('libEncerrar').onclick = async ()=>{
+    if(!(await dsConfirm('Encerrar ' + escHtml(libTitulo(x)) + ' como "Não executada"? Ela não poderá mais ser corrigida.', 'Encerrar'))) return;
+    try{
+      const r = await api('encerrarLiberacao', { id: x.id });
+      if(r.error) throw new Error(r.error);
+      libDelSnap(x.id); x.status = 'nao_executada'; libMarcarHist(x.id, 'nao_executada');
+      toast('Documento encerrado como "Não executada".', 'ok'); libRenderTec();
+    }catch(e){ toast(e.message || 'Não foi possível encerrar.', 'err'); }
+  };
+}
+async function libCorrigir(x){
+  const snap = libLoadSnaps()[x.id];
+  if(!snap) return;
+  const rev = (x.revisao || 0) + 1;
+  if(snap.tipo === 'pt'){
+    if(abertoInfo('pt', state).touched && !(await dsConfirm('Você tem uma PT em andamento. Ela será guardada em "Meus documentos" para continuar depois.', 'Continuar'))) return;
+    if(abertoInfo('pt', state).touched) await parkCurrentPtAndGoHome();
+    // A PT em branco já tinha um número reservado: guarda para a próxima PT nova.
+    if(state.ptNumero && !state.libRevisao){ try{ localStorage.setItem(PT_NUM_GUARDADO_KEY, state.ptNumero); }catch(e){} }
+    Object.assign(state, makeEmptyState(), snap.state);
+    state.ptNumero = String(snap.state.ptNumero || '').replace(/-R\d+$/, '') + '-R' + rev;
+    state.libRevisao = rev; state.libRevisaoDe = x.id; state.abertoId = ''; state.abertoInicio = 0;
+    Object.keys(sigData).forEach(k => delete sigData[k]);
+    Object.assign(sigData, snap.sigs || {});
+    saveSigData(); saveDraft();
+    current = 0; renderCurrentStep(); updateBrand();
+    const badge = document.getElementById('ptNumberBadge'); if(badge) badge.textContent = state.ptNumero;
+    openDocScreen('pt');
+  } else {
+    const alvo = snap.tipo === 'veiculo' ? vState : eState;
+    Object.assign(alvo, snap.tipo === 'veiculo' ? makeEmptyVState() : makeEmptyEState(), snap.state, { libRevisao: rev, libRevisaoDe: x.id, abertoId: '', abertoInicio: 0 });
+    if(snap.tipo === 'veiculo') saveVDraft(); else saveEDraft();
+    openDocScreen(snap.tipo);
+  }
+  toast('Corrija o que foi apontado e envie de novo. Motivo: ' + x.motivo + (snap.semFotos ? ' (as fotos precisam ser tiradas de novo)' : ''), 'ok');
+}
+
+/* ---- Gestor: lista, card da tela inicial e avaliação ---- */
+async function libLoadGestor(){
+  try{
+    const r = await api('listLiberacoes');
+    if(r && r.ok){
+      lib.pend = r.pendentes || []; lib.rec = r.recentes || []; lib.cfg = r.config || null;
+      const s = getSession();
+      if(s && (r.carimbo || r.config)){ if(r.carimbo) s.carimbo = r.carimbo; if(r.config) s.empresaLiberacao = r.config; saveSession(s); }
+    }
+  }catch(e){}
+}
+function libSemCarimbo(){
+  const s = getSession() || {}, c = s.carimbo || {};
+  return libCfg().modo === 'carimbo' && !(c.temAssinatura && c.temPin);
+}
+async function libLoadCardGestor(){
+  if(!$('libCard')) return;
+  await libLoadGestor();
+  const box = $('libCard'); if(!box) return;
+  const agora = Date.now();
+  let h = '';
+  if(lib.pend.length){
+    h += `<div class="lib-card"><h4>⚠️ Aguardando sua avaliação<span class="n">${lib.pend.length}</span></h4>` +
+      lib.pend.slice(0, 5).map(x => libRowHtml(x, x.nome + (x.area ? ' · ' + x.area : '') + ' · ' + timeAgo(x.ts, agora) + (x.naoConformes.length ? ' · ' + x.naoConformes.length + ' NC' : ''))).join('') +
+      (lib.pend.length > 5 ? '<button type="button" class="lib-btn ghost" id="libVerTodos">Ver todos</button>' : '') + '</div>';
+  }
+  if(libCfg().ativo && libSemCarimbo()){
+    h += '<div class="home-contract urgent" style="margin:0 0 14px;"><b>🔖 Cadastre o seu carimbo</b><p>Esta empresa libera documentos só com o carimbo digital + PIN.</p><button type="button" class="btn btn-primary" id="libCadCarimbo" style="width:100%;margin-top:10px;">Cadastrar agora</button></div>';
+  }
+  box.innerHTML = h;
+  box.querySelectorAll('[data-lib]').forEach(b => b.onclick = ()=> libAbrirAvaliar(b.getAttribute('data-lib')));
+  if($('libVerTodos')) $('libVerTodos').onclick = libAbrirGestor;
+  if($('libCadCarimbo')) $('libCadCarimbo').onclick = openCarimboModal;
+  document.querySelectorAll('#homeMenuItems [data-home="liberacoes"] .badge').forEach(x => x.remove());
+  const tile = document.querySelector('#homeMenuItems [data-home="liberacoes"]');
+  if(tile && lib.pend.length) tile.insertAdjacentHTML('afterbegin', `<span class="badge">${lib.pend.length}</span>`);
+}
+function libAbrirGestor(){
+  hideAllScreens();
+  lib.modo = 'gestor';
+  $('libTitle').textContent = '✅ Liberações';
+  $('libView').style.display = 'block';
+  window.scrollTo(0, 0);
+  libRenderGestor();
+  libLoadGestor().then(()=>{ if(lib.modo === 'gestor' && $('libView').style.display === 'block') libRenderGestor(); });
+}
+function libRenderGestor(){
+  const agora = Date.now();
+  let h = '<div class="ds-sec">Aguardando avaliação</div>';
+  h += lib.pend.length ? '<div class="lib-box">' + lib.pend.map(x => libRowHtml(x, x.nome + (x.area ? ' · ' + x.area : '') + ' · ' + timeAgo(x.ts, agora))).join('') + '</div>'
+    : '<div class="ab-empty"><div style="font-size:30px;">✅</div><b>Nada esperando</b>Quando alguém enviar um documento para liberação, ele aparece aqui.</div>';
+  h += '<div class="ds-sec">Avaliados nos últimos 7 dias</div>';
+  h += lib.rec.length ? '<div class="lib-box">' + lib.rec.map(x => libRowHtml(x, x.nome + ' · ' + (x.decididoPor ? 'por ' + x.decididoPor + ' · ' : '') + libHora(x.decididoTs || x.ts))).join('') + '</div>'
+    : '<p class="hint">Nenhum documento avaliado nos últimos 7 dias.</p>';
+  $('libBody').innerHTML = h;
+  $('libBody').querySelectorAll('[data-lib]').forEach(b => b.onclick = ()=> libAbrirAvaliar(b.getAttribute('data-lib')));
+}
+function libAbrirAvaliar(id){
+  hideAllScreens();
+  lib.modo = 'avaliar'; lib.atual = id;
+  $('libTitle').textContent = 'Avaliar';
+  $('libView').style.display = 'block';
+  window.scrollTo(0, 0);
+  libRenderAvaliar();
+  if(!lib.pend.concat(lib.rec).some(x => x.id === id)) libLoadGestor().then(libRenderAvaliar);
+}
+function libRenderAvaliar(){
+  const x = lib.pend.concat(lib.rec).find(y => y.id === lib.atual);
+  const box = $('libBody');
+  if(!x){ box.innerHTML = '<div class="ab-empty"><b>Carregando…</b></div>'; return; }
+  let h = `<div class="lib-hero" style="text-align:left;"><h3>${escHtml(libTitulo(x))}${x.revisao ? ' · Revisão ' + x.revisao : ''}</h3><p>${escHtml(x.nome)} · enviado ${libHora(x.ts)} ${libPill(x.status)}</p></div>`;
+  if(x.naoConformes.length){
+    h += `<div class="lib-box red"><b class="t">${x.naoConformes.length} ${x.naoConformes.length > 1 ? 'itens marcados como não conformes' : 'item marcado como não conforme'}</b>` +
+      x.naoConformes.map(t => `<div class="lib-nc"><span>${escHtml(t)}</span><span class="pill red">NC</span></div>`).join('') + '</div>';
+  }
+  h += '<div class="lib-box"><div class="lib-kv">' +
+    `<span>Documento</span><b>${escHtml(x.tipoDocumento)}</b>` +
+    (x.area ? `<span>Local</span><span>${escHtml(x.area)}</span>` : '') +
+    (x.dataDoc ? `<span>Data</span><span>${escHtml(brDate(x.dataDoc))}</span>` : '') +
+    (x.horaIni ? `<span>Horário</span><span>${escHtml(x.horaIni)}${x.horaFim ? ' – ' + escHtml(x.horaFim) : ''}</span>` : '') +
+    (x.resumo ? `<span>Resumo</span><span>${escHtml(x.resumo)}</span>` : '') + '</div></div>';
+  h += '<button type="button" class="lib-btn ghost" id="libVerPdf">📄 Abrir PDF completo (fotos e assinaturas)</button>';
+  if(x.status === 'aguardando'){
+    h += '<div class="lib-acts"><button type="button" class="lib-btn no" id="libNao">✕ Não apto</button><button type="button" class="lib-btn ok" id="libSim">✓ Apto — liberar</button></div>';
+  } else {
+    h += `<div class="lib-box${x.status === 'nao_apto' ? ' red' : ''}" style="margin-top:12px;"><b class="t">${x.status === 'apto' ? '✅ Liberado' : '⛔ Não apto'} por ${escHtml(x.decididoPor)} · ${libHora(x.decididoTs)}</b>${x.motivo ? escHtml(x.motivo) + (x.oQueFazer ? ' — ' + escHtml(x.oQueFazer) : '') : ''}</div>`;
+  }
+  box.innerHTML = h;
+  $('libVerPdf').onclick = ()=> libBaixarPdf(x, $('libVerPdf'));
+  if($('libSim')) $('libSim').onclick = ()=> libAbrirDecisao(x, 'apto');
+  if($('libNao')) $('libNao').onclick = ()=> libAbrirDecisao(x, 'nao_apto');
+}
+async function libBaixarPdf(x, btn){
+  const old = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Baixando...';
+  try{
+    const r = await api('getPdf', { fileId: x.fileId });
+    if(r.error) throw new Error(r.error);
+    const url = URL.createObjectURL(new Blob([libB64ToBytes(r.base64)], {type:'application/pdf'}));
+    const a = document.createElement('a');
+    a.href = url; a.download = r.nome || 'documento.pdf'; a.target = '_blank';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=> URL.revokeObjectURL(url), 60000);
+  }catch(e){ toast(e.message || 'Não foi possível abrir o PDF.', 'err'); }
+  finally{ btn.disabled = false; btn.textContent = old; }
+}
+
+/* ---- Decisão: motivo (se não apto) + assinatura na hora ou carimbo + PIN ---- */
+function libSigPad(canvas){
+  const ctx = canvas.getContext('2d');
+  let drawing = false, vazio = true;
+  function fit(){ const r = canvas.getBoundingClientRect(); canvas.width = r.width * 2; canvas.height = r.height * 2; ctx.setTransform(2,0,0,2,0,0); ctx.lineWidth = 2.2; ctx.lineCap = 'round'; ctx.strokeStyle = '#12254B'; }
+  fit();
+  const pos = e => { const r = canvas.getBoundingClientRect(), t = e.touches ? e.touches[0] : e; return { x: t.clientX - r.left, y: t.clientY - r.top }; };
+  const start = e => { drawing = true; vazio = false; const p = pos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); e.preventDefault(); };
+  const move = e => { if(!drawing) return; const p = pos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); e.preventDefault(); };
+  const end = ()=>{ drawing = false; };
+  canvas.onmousedown = start; canvas.onmousemove = move; window.addEventListener('mouseup', end);
+  canvas.ontouchstart = start; canvas.ontouchmove = move; canvas.ontouchend = end;
+  return {
+    vazio: ()=> vazio,
+    limpar: ()=>{ ctx.clearRect(0, 0, canvas.width, canvas.height); vazio = true; },
+    desenhar: src => new Promise(res => { const img = new Image(); img.onload = ()=>{ const r = canvas.getBoundingClientRect(), k = Math.min(r.width / img.width, r.height / img.height); ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.drawImage(img, (r.width - img.width * k) / 2, (r.height - img.height * k) / 2, img.width * k, img.height * k); vazio = false; res(); }; img.onerror = res; img.src = src; }),
+    png: ()=> canvas.toDataURL('image/png')
+  };
+}
+function libCarimboTxt(c){
+  const s = getSession() || {};
+  return { nome: (c && c.nome) || s.nome || s.username || '', funcao: (c && c.funcao) || '', reg: c && c.registro ? 'Reg. ' + (c.orgao ? c.orgao + ' ' : '') + 'nº ' + c.registro : '' };
+}
+async function libAbrirDecisao(x, decisao){
+  const s = getSession() || {}, c = s.carimbo || {}, modo = libCfg().modo || 'escolha';
+  const temCarimbo = !!(c.temAssinatura && c.temPin && c.nome);
+  let forma = modo === 'hora' ? 'hora' : (modo === 'carimbo' ? 'carimbo' : (temCarimbo ? 'carimbo' : 'hora'));
+  let motivo = '';
+  const nao = decisao === 'nao_apto', ct = libCarimboTxt(c);
+  const body = $('libDecBody');
+  body.innerHTML = `<button class="modal-close" id="libDecClose">←</button><h2 style="font-family:'Poppins',sans-serif;">${nao ? 'Não liberar' : 'Liberar'} ${escHtml(libTitulo(x))}</h2>` +
+    `<p class="desc">${escHtml(x.nome)}${x.area ? ' · ' + escHtml(x.area) : ''}${nao ? ' — ' + escHtml(x.nome.split(' ')[0]) + ' recebe o motivo na hora.' : ''}</p>` +
+    (nao ? `<b style="font-size:13px;">Motivo</b><div class="lib-chips" id="libMotivos" style="margin-top:8px;">${LIB_MOTIVOS.map(m => `<button type="button" data-m="${escHtml(m)}">${escHtml(m)}</button>`).join('')}</div>` +
+      '<div class="field"><label>O que precisa ser feito</label><textarea id="libFazer" rows="3" maxlength="500" style="width:100%;padding:10px;border:1.5px solid #D5DCE9;border-radius:12px;font:inherit;" placeholder="Ex: Instalar a linha de vida e isolar a área. Reenvie com foto."></textarea></div>' +
+      '<label style="display:flex;align-items:center;gap:8px;font-size:13px;"><input type="checkbox" id="libReenviar" checked style="width:18px;height:18px;"> Permitir que o colaborador corrija e reenvie</label>' : '') +
+    (modo === 'escolha' ? '<div class="lib-seg" id="libSeg"><button type="button" data-f="hora">✍️ Assinar agora</button><button type="button" data-f="carimbo">🔖 Meu carimbo</button></div>' : '<div style="height:12px"></div>') +
+    `<div id="libFormaHora"><canvas class="lib-sig" id="libSigCanvas"></canvas><div style="display:flex;justify-content:space-between;margin-top:6px;"><span class="hint" style="margin:0;">Assine com o dedo no quadro</span><button type="button" class="btn btn-ghost" id="libSigLimpar" style="padding:4px 10px;font-size:12px;">Limpar</button></div>` +
+      `<div class="lib-box" style="margin-top:10px;background:#F6F8FB;"><div class="lib-kv"><span>Nome</span><b>${escHtml(ct.nome)}</b>${ct.reg ? `<span>Registro</span><span>${escHtml(ct.reg)}</span>` : ''}<span>Data/hora</span><span>agora</span></div></div></div>` +
+    `<div id="libFormaCarimbo">${temCarimbo ? `<div class="lib-stamp" id="libStampPrev"><div class="l">Carregando carimbo…</div></div><p style="text-align:center;font-weight:700;margin:14px 0 6px;">Digite seu PIN para confirmar</p><input type="password" inputmode="numeric" maxlength="6" class="lib-pin" id="libPin" autocomplete="off">`
+      : '<div class="lib-box" style="text-align:center;">Você ainda não cadastrou o carimbo e o PIN.<button type="button" class="lib-btn pri" id="libIrCarimbo">Cadastrar meu carimbo</button></div>'}</div>` +
+    '<div class="lib-err" id="libDecErr"></div>' +
+    `<button type="button" class="lib-btn ${nao ? 'red' : 'ok'}" id="libConfirmar">${nao ? 'Confirmar: Não apto' : '✓ Confirmar liberação'}</button><button type="button" class="lib-btn ghost" id="libCancelar">Cancelar</button>` +
+    '<p class="lib-small" style="text-align:center;">Fica registrado quem avaliou, quando e de que forma.</p>';
+  $('libDecModal').classList.add('show');
+  let pad = null; // criado quando o quadro aparece (escondido ele não tem tamanho)
+  const err = m => { const e = $('libDecErr'); e.textContent = m || ''; e.style.display = m ? 'block' : 'none'; };
+  const pintaForma = ()=>{
+    $('libFormaHora').style.display = forma === 'hora' ? 'block' : 'none';
+    $('libFormaCarimbo').style.display = forma === 'carimbo' ? 'block' : 'none';
+    if($('libSeg')) $('libSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.getAttribute('data-f') === forma));
+    if(forma === 'hora') pad = libSigPad($('libSigCanvas'));
+    err('');
+  };
+  pintaForma();
+  if($('libSeg')) $('libSeg').querySelectorAll('button').forEach(b => b.onclick = ()=>{ forma = b.getAttribute('data-f'); pintaForma(); });
+  if($('libMotivos')) $('libMotivos').querySelectorAll('button').forEach(b => b.onclick = ()=>{ motivo = b.getAttribute('data-m'); $('libMotivos').querySelectorAll('button').forEach(y => y.classList.toggle('on', y === b)); });
+  $('libSigLimpar').onclick = ()=>{ if(pad) pad.limpar(); };
+  const fechar = ()=> $('libDecModal').classList.remove('show');
+  $('libDecClose').onclick = fechar; $('libCancelar').onclick = fechar;
+  if($('libIrCarimbo')) $('libIrCarimbo').onclick = ()=>{ fechar(); openCarimboModal(); };
+  lib.assinatura = '';
+  if(temCarimbo){
+    api('getCarimbo').then(r => {
+      if(!r || !r.ok || !$('libStampPrev')) return;
+      lib.assinatura = r.carimbo.assinatura || '';
+      const t = libCarimboTxt(r.carimbo);
+      $('libStampPrev').innerHTML = (lib.assinatura ? `<img src="${escHtml(lib.assinatura)}" alt="">` : '') + `<div class="l"><b>${escHtml(t.nome.toUpperCase())}</b>${t.funcao ? '<br>' + escHtml(t.funcao) : ''}${t.reg ? '<br>' + escHtml(t.reg) : ''}</div>`;
+    }).catch(()=>{});
+  }
+  $('libConfirmar').onclick = async ()=>{
+    err('');
+    const fazer = nao ? $('libFazer').value.trim() : '';
+    if(nao && !motivo) return err('Escolha o motivo.');
+    if(forma === 'hora' && (!pad || pad.vazio())) return err('Assine no quadro antes de confirmar.');
+    if(forma === 'carimbo' && !temCarimbo) return err('Cadastre o seu carimbo primeiro.');
+    const pin = forma === 'carimbo' ? $('libPin').value.trim() : '';
+    if(forma === 'carimbo' && !/^\d{4,6}$/.test(pin)) return err('Digite o seu PIN (4 a 6 números).');
+    if(forma === 'carimbo' && !lib.assinatura) return err('Carimbo ainda carregando — tente de novo em instantes.');
+    const btn = $('libConfirmar'), old = btn.textContent;
+    btn.disabled = true; btn.textContent = 'Montando o PDF...';
+    try{
+      const assinatura = forma === 'hora' ? pad.png() : lib.assinatura;
+      const orig = await api('getPdf', { fileId: x.fileId });
+      if(orig.error) throw new Error(orig.error);
+      const quando = Date.now();
+      const pdfFinal = await libMontarPdf(orig.base64, x, { decisao, forma, motivo, fazer, assinatura, carimbo: forma === 'carimbo' ? (getSession() || {}).carimbo : c, quando });
+      btn.textContent = 'Enviando...';
+      const r = await api('decidirLiberacao', { id: x.id, decisao, forma, motivo, oQueFazer: fazer, podeReenviar: nao ? $('libReenviar').checked : false,
+        pinHash: pin ? await hashPinLib(pin) : '', assinaturaHora: forma === 'hora' ? assinatura : '', pdfFinalBase64: pdfFinal });
+      if(r.error){ if(r.item) await libLoadGestor(); throw new Error(r.error); }
+      fechar();
+      toast(nao ? libTitulo(x) + ': Não apto. O colaborador foi avisado.' : libTitulo(x) + ' liberada! O colaborador foi avisado.', 'ok');
+      if(!nao) playSuccessSound();
+      await libLoadGestor();
+      libAbrirGestor();
+    }catch(e){
+      err(e.message || 'Não foi possível concluir.');
+    }finally{
+      if($('libConfirmar')){ btn.disabled = false; btn.textContent = old; }
+    }
+  };
+}
+async function hashPinLib(pin){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('docseg-pin:' + pin));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+function libB64ToBytes(b64){ const bin = atob(b64), out = new Uint8Array(bin.length); for(let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i); return out; }
+function libBytesToB64(bytes){ let bin = ''; for(let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000)); return btoa(bin); }
+
+// Acrescenta ao PDF enviado uma página "LIBERAÇÃO DA ATIVIDADE" com a decisão,
+// quem avaliou, quando e a assinatura (ou o carimbo).
+async function libMontarPdf(base64, x, d){
+  if(!window.PDFLib) throw new Error('Sem conexão para carregar o gerador de PDF. Verifique a internet e tente de novo.');
+  const { PDFDocument, StandardFonts, rgb } = window.PDFLib;
+  const doc = await PDFDocument.load(libB64ToBytes(base64));
+  const page = doc.addPage([595.28, 841.89]);
+  const fN = await doc.embedFont(StandardFonts.Helvetica), fB = await doc.embedFont(StandardFonts.HelveticaBold);
+  // As fontes padrão do PDF só têm o alfabeto latino: tira emoji e afins.
+  const t = v => String(v == null ? '' : v).replace(/[–—]/g, '-').replace(/[“”]/g, '"').replace(/[‘’]/g, "'").replace(/[^\x20-\x7E\xA0-\xFF]/g, '').trim();
+  const navy = rgb(0.07, 0.145, 0.294), cinza = rgb(0.33, 0.36, 0.42), preto = rgb(0.1, 0.1, 0.12);
+  const verde = rgb(0.12, 0.42, 0.23), vermelho = rgb(0.64, 0.18, 0.18);
+  const W = 595.28, M = 42;
+  let y = 790;
+  const quebra = (txt, font, size, larg) => {
+    const linhas = []; let atual = '';
+    t(txt).split(/\s+/).forEach(p => { const prova = atual ? atual + ' ' + p : p; if(font.widthOfTextAtSize(prova, size) > larg && atual){ linhas.push(atual); atual = p; } else atual = prova; });
+    if(atual) linhas.push(atual);
+    return linhas;
+  };
+  const campo = (rotulo, valor, larg) => {
+    page.drawText(t(rotulo), { x: M + 14, y, size: 9, font: fN, color: cinza });
+    y -= 13;
+    quebra(valor, fB, 11, larg || (W - 2 * M - 28)).forEach(l => { page.drawText(l, { x: M + 14, y, size: 11, font: fB, color: preto }); y -= 14; });
+    y -= 6;
+  };
+  const topo = y;
+  page.drawRectangle({ x: M, y: y - 30, width: W - 2 * M, height: 30, color: navy });
+  page.drawText('LIBERAÇÃO DA ATIVIDADE', { x: M + 14, y: y - 20, size: 14, font: fB, color: rgb(1, 1, 1) });
+  page.drawText(t(libTitulo(x) + (x.revisao ? ' - Revisão ' + x.revisao : '')), { x: W - M - 14 - fN.widthOfTextAtSize(t(libTitulo(x) + (x.revisao ? ' - Revisão ' + x.revisao : '')), 10), y: y - 19, size: 10, font: fN, color: rgb(1, 1, 1) });
+  y -= 56;
+  const nao = d.decisao === 'nao_apto';
+  page.drawText('Situação', { x: M + 14, y, size: 9, font: fN, color: cinza });
+  y -= 26;
+  page.drawText(nao ? 'NÃO APTO' : 'APTO', { x: M + 14, y, size: 26, font: fB, color: nao ? vermelho : verde });
+  y -= 18;
+  page.drawText(nao ? 'A atividade NÃO está liberada.' : 'Atividade liberada para execução.', { x: M + 14, y, size: 10, font: fN, color: nao ? vermelho : verde });
+  y -= 26;
+  const colTop = y, larg = 270;
+  campo('Documento', x.tipo === 'pt' ? x.tipoDocumento + ' Nº ' + (x.numero || 'S/N') : x.tipoDocumento, larg);
+  campo('Enviado por', x.nome + ' em ' + libHora(x.ts), larg);
+  if(x.area) campo('Local', x.area, larg);
+  campo(nao ? 'Avaliado em' : 'Liberado em', new Date(d.quando).toLocaleString('pt-BR', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'}), larg);
+  campo('Forma', d.forma === 'carimbo' ? 'Carimbo digital + PIN' : 'Assinatura na hora', larg);
+  const fimEsq = y;
+  // Carimbo / assinatura (à direita)
+  const cx = M + 320, cw = W - M - 14 - cx;
+  let cy = colTop + 12;
+  const ch = 150;
+  page.drawRectangle({ x: cx, y: cy - ch, width: cw, height: ch, borderColor: navy, borderWidth: 1.6 });
+  try{
+    const bytes = libB64ToBytes(d.assinatura.split(',')[1] || '');
+    const img = /^data:image\/jpe?g/.test(d.assinatura) ? await doc.embedJpg(bytes) : await doc.embedPng(bytes);
+    const k = Math.min((cw - 20) / img.width, 64 / img.height);
+    page.drawImage(img, { x: cx + (cw - img.width * k) / 2, y: cy - 12 - img.height * k, width: img.width * k, height: img.height * k });
+  }catch(e){ /* sem imagem: fica só o texto */ }
+  page.drawLine({ start: { x: cx + 10, y: cy - 82 }, end: { x: cx + cw - 10, y: cy - 82 }, thickness: 0.8, color: navy });
+  const ct = libCarimboTxt(d.carimbo);
+  let ly = cy - 98;
+  [[ct.nome.toUpperCase(), fB, 10], [ct.funcao, fN, 9], [ct.reg, fN, 9]].forEach(([txt, f, sz]) => {
+    if(!txt) return;
+    quebra(txt, f, sz, cw - 20).slice(0, 2).forEach(l => { page.drawText(l, { x: cx + 10, y: ly, size: sz, font: f, color: navy }); ly -= sz + 3; });
+  });
+  y = Math.min(fimEsq, cy - ch - 16);
+  if(nao){
+    page.drawRectangle({ x: M + 8, y: y - 8, width: W - 2 * M - 16, height: 1, color: rgb(0.85, 0.85, 0.88) });
+    y -= 26;
+    campo('Motivo', d.motivo);
+    if(d.fazer) campo('O que precisa ser feito', d.fazer);
+  }
+  y -= 4;
+  page.drawRectangle({ x: M, y: y, width: W - 2 * M, height: topo - y, borderColor: rgb(0.27, 0.27, 0.3), borderWidth: 1 });
+  y -= 18;
+  page.drawText(t('Código de verificação: ' + x.id + ' · Avaliado pelo DocSeg Digital'), { x: M, y, size: 8.5, font: fN, color: cinza });
+  return libBytesToB64(await doc.save());
+}
+
+/* ---- Carimbo digital (perfil do gestor) ---- */
+let carPad = null;
+async function openCarimboModal(){
+  hideAllScreens();
+  $('carimboModal').classList.add('show');
+  window.scrollTo(0, 0);
+  const s = getSession() || {}, c = s.carimbo || {};
+  $('carNome').value = c.nome || s.nome || '';
+  $('carFuncao').value = c.funcao || '';
+  $('carOrgao').value = c.orgao != null && c.nome ? c.orgao : 'MTE';
+  $('carRegistro').value = c.registro || '';
+  ['carPin1', 'carPin2', 'carSenha'].forEach(k => $(k).value = '');
+  $('carErr').style.display = 'none';
+  $('carPinStatus').textContent = c.temPin ? 'Criado' : 'Não criado';
+  $('carPinStatus').className = 'pill ' + (c.temPin ? 'ok' : 'wait');
+  carPad = libSigPad($('carSig'));
+  carPad.alterada = false;
+  $('carSig').addEventListener('pointerdown', ()=>{ carPad.alterada = true; }, { once: true });
+  carPreview();
+  try{
+    const r = await api('getCarimbo');
+    if(r && r.ok && r.carimbo.assinatura) await carPad.desenhar(r.carimbo.assinatura);
+  }catch(e){}
+  carPreview();
+}
+function carPreview(){
+  const t = libCarimboTxt({ nome: $('carNome').value.trim(), funcao: $('carFuncao').value.trim(), orgao: $('carOrgao').value, registro: $('carRegistro').value.trim() });
+  $('carPreview').innerHTML = (carPad && !carPad.vazio() ? `<img src="${carPad.png()}" alt="">` : '<div class="hint" style="margin:0 0 4px;">(assinatura)</div>') +
+    `<div class="l"><b>${escHtml(t.nome.toUpperCase())}</b>${t.funcao ? '<br>' + escHtml(t.funcao) : ''}${t.reg ? '<br>' + escHtml(t.reg) : ''}</div>`;
+}
+['carNome', 'carFuncao', 'carRegistro'].forEach(k => $(k).addEventListener('input', carPreview));
+$('carOrgao').onchange = carPreview;
+$('carSig').addEventListener('pointerup', ()=> setTimeout(carPreview, 0));
+$('carSig').addEventListener('touchend', ()=> setTimeout(carPreview, 0));
+$('carSigClear').onclick = ()=>{ carPad.limpar(); carPad.alterada = true; carPreview(); };
+$('carFoto').onchange = ()=>{
+  const f = $('carFoto').files && $('carFoto').files[0]; if(!f) return;
+  resizeImageFile(f, 600, async (dataUrl)=>{ await carPad.desenhar(dataUrl); carPad.alterada = true; carPreview(); });
+};
+$('closeCarimbo').onclick = openProfileModal;
+$('btnProfCarimbo').onclick = openCarimboModal;
+$('carSave').onclick = async ()=>{
+  const err = m => { $('carErr').textContent = m; $('carErr').style.display = m ? 'block' : 'none'; };
+  err('');
+  const nome = $('carNome').value.trim();
+  if(!nome) return err('Informe o nome que aparece no carimbo.');
+  const p1 = $('carPin1').value.trim(), p2 = $('carPin2').value.trim(), senha = $('carSenha').value;
+  if(p1 || p2){
+    if(!/^\d{4,6}$/.test(p1)) return err('O PIN precisa ter de 4 a 6 números.');
+    if(p1 !== p2) return err('Os dois PINs não são iguais.');
+    if(/^(\d)\1+$/.test(p1) || '0123456789'.indexOf(p1) !== -1) return err('Escolha um PIN menos óbvio (sem sequência ou números repetidos).');
+    if(!senha) return err('Para criar ou trocar o PIN, digite a sua senha de login.');
+  }
+  const s = getSession() || {};
+  if(!(s.carimbo && s.carimbo.temPin) && !p1) return err('Crie o seu PIN (ele é pedido a cada liberação com o carimbo).');
+  if(carPad.vazio()) return err('Faça a sua assinatura no quadro (ou envie a foto do carimbo).');
+  const btn = $('carSave'); btn.disabled = true; btn.textContent = 'Salvando...';
+  try{
+    const extra = { nome, funcao: $('carFuncao').value.trim(), orgao: $('carOrgao').value, registro: $('carRegistro').value.trim() };
+    if(carPad.alterada || !(s.carimbo && s.carimbo.temAssinatura)){
+      // A planilha guarda até ~45 mil caracteres por célula: reduz se precisar.
+      let png = carPad.png();
+      if(png.length > 44000) png = $('carSig').toDataURL('image/jpeg', 0.6);
+      if(png.length > 44000) throw new Error('Assinatura muito grande. Desenhe de novo, um pouco menor.');
+      extra.assinatura = png;
+    }
+    if(p1){ extra.novoPinHash = await hashPinLib(p1); extra.senhaHash = await hashPass(senha); }
+    const r = await api('saveCarimbo', extra);
+    if(r.error) throw new Error(r.error);
+    const sess = getSession(); if(sess){ sess.carimbo = r.carimbo; saveSession(sess); }
+    toast('Carimbo salvo!', 'ok');
+    goHome();
+  }catch(e){ err(e.message || 'Não foi possível salvar.'); }
+  finally{ btn.disabled = false; btn.textContent = 'Salvar carimbo'; }
+};
+
+/* ---- Cadastro da empresa (Administrador) ---- */
+function paintEmpresaLib(l){
+  l = l || {};
+  $('empresaFormLibAtivo').checked = !!l.ativo;
+  $('empresaFormLibDocs').innerHTML = LIB_DOCS.map(([k, label]) => `<label style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #EDF0F6;font-size:14px;"><input type="checkbox" data-libdoc="${k}" style="width:20px;height:20px;" ${(l.docs || (l.ativo ? [] : ['pt'])).indexOf(k) !== -1 ? 'checked' : ''}>${label}</label>`).join('');
+  $('empresaFormLibModo').value = l.modo || 'escolha';
+  $('empresaFormLibLembrete').value = String(l.lembreteMin || 15);
+  const upd = ()=>{ $('empresaFormLibBox').style.display = $('empresaFormLibAtivo').checked ? 'block' : 'none'; };
+  $('empresaFormLibAtivo').onchange = upd; upd();
+}
+function empresaLibForm(){
+  return { ativo: $('empresaFormLibAtivo').checked, docs: [...document.querySelectorAll('#empresaFormLibDocs input[data-libdoc]:checked')].map(i => i.getAttribute('data-libdoc')),
+    modo: $('empresaFormLibModo').value, lembreteMin: +$('empresaFormLibLembrete').value || 15 };
+}
+
+/* ---- Atualização ao vivo ---- */
+function libOnPush(){
+  if(!getSession()) return;
+  if(isGestor()){
+    if($('libView').style.display === 'block' && lib.modo === 'gestor') libLoadGestor().then(libRenderGestor);
+    else if($('homeMenu').style.display === 'block') libLoadCardGestor();
+  } else if(!isAdmin()){
+    if($('libView').style.display === 'block' && lib.modo === 'tec') libLoadMinhas().then(libRenderTec);
+    else if($('homeMenu').style.display === 'block') libLoadCardTec();
+  }
+}
+$('libBack').onclick = ()=>{ if(lib.modo === 'avaliar') libAbrirGestor(); else goHome(); };
+$('libRefresh').onclick = ()=>{
+  if(lib.modo === 'tec') libLoadMinhas().then(libRenderTec);
+  else if(lib.modo === 'gestor') libLoadGestor().then(libRenderGestor);
+  else libLoadGestor().then(libRenderAvaliar);
+};
+// Sem push (notificações desligadas), confere sozinho a cada 30 s enquanto o app está aberto.
+setInterval(()=>{
+  if(document.visibilityState !== 'visible' || !navigator.onLine || !libCfg().ativo) return;
+  const tecEsperando = lib.modo === 'tec' && $('libView').style.display === 'block' && (lib.lista.concat(lib.local ? [lib.local] : [])).some(x => x.id === lib.atual && x.status === 'aguardando');
+  if(tecEsperando || $('homeMenu').style.display === 'block' || ($('libView').style.display === 'block' && lib.modo === 'gestor')) libOnPush();
+}, 30000);
+
+
 async function initApp(){
   // Servidor trocado (login individual): na primeira abertura, usa o endereço atual do app.
   { const c = loadCfg(); if(c.serverGen !== SERVER_GEN){ c.scriptUrl = DEFAULT_SCRIPT_URL; c.serverGen = SERVER_GEN; saveCfg(c); } }
@@ -6286,7 +6994,7 @@ async function initApp(){
   renderOfflineBanner();
   if(navigator.onLine){ retryQueue(); autoFlushPendingIfStale(); }
   // Sem login ainda não há empresa/prefixo — o número é pedido em finishLogin().
-  if(!state.ptNumero && getSession()){
+  if(!state.ptNumero && getRole() === 'tecnico'){
     state.ptNumero = await assignNextPtNumber();
     saveDraft();
     if(steps[current].key === 'ident') renderCurrentStep();

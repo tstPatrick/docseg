@@ -62,6 +62,15 @@ function doPost(e) {
     if (a === "listAuditoria") return listAuditoria(data);
     if (a === "deleteAuditoria") return deleteAuditoria(data);
 
+    if (a === "listLiberacoes") return listLiberacoes(data);
+    if (a === "minhasLiberacoes") return minhasLiberacoes(data);
+    if (a === "decidirLiberacao") return decidirLiberacao(data);
+    if (a === "encerrarLiberacao") return encerrarLiberacao(data);
+    if (a === "getCarimbo") return getCarimbo(data);
+    if (a === "saveCarimbo") return saveCarimbo(data);
+
+    if (a === "nextNumber" || a === "peekNumber" || a === "setNumber" || a === "sheetUrl") return numeracao(data);
+
     // Envio de um documento só (formato antigo do app, sem "action")
     return receiveSingle(data);
   } catch (err) {
@@ -123,14 +132,22 @@ function saveDocuments(caller, items, empresaFallback) {
 
   var lock = LockService.getScriptLock();
   lock.waitLock(20000);
-  var saved = 0, blobs = [], linhas = [];
+  var saved = 0, blobs = [], linhas = [], pendentes = [];
   try {
     for (var i = 0; i < items.length; i++) {
       var it = items[i];
       if (!it.pdfBase64) continue;
-      if (it.docId && jaRecebido(it.docId)) { saved++; continue; } // reenvio: já está salvo
+      if (it.docId && (jaRecebido(it.docId) || acharLiberacao_(it.docId))) { saved++; continue; } // reenvio: já está salvo
       var blob = Utilities.newBlob(Utilities.base64Decode(it.pdfBase64), "application/pdf",
         it.pdfNome || ("documento_" + Date.now() + ".pdf"));
+      // Empresa com liberação ligada para este documento: o PDF espera na
+      // pasta "_Pendentes" (fora da pasta da empresa) até o gestor decidir.
+      if (it.docId && liberacaoExigida_(empresaNome, tipoDocKey(it.tipoDocumento))) {
+        registrarPendente_(caller, empresaNome, it, pastaPendentes_().createFile(blob));
+        saved++;
+        pendentes.push(it);
+        continue;
+      }
       var file = pastaDoMes(empresaNome).createFile(blob);
       registrarNaPlanilha({
         tipoDocumento: it.tipoDocumento, ptNumero: it.ptNumero, ptData: it.ptData, ptArea: it.ptArea,
@@ -164,7 +181,12 @@ function saveDocuments(caller, items, empresaFallback) {
   }
   try { items.forEach(function (it) { if (it.abertoId) removerAberto_(it.abertoId); }); } catch (e) {}
   if (blobs.length) pushGestores_(empresaNome, "Novo documento", nomeTecnico + " enviou " + blobs.length + " documento" + (blobs.length > 1 ? "s" : "") + ".");
-  return { saved: saved, emailed: emailed };
+  pendentes.forEach(function (it) {
+    var nc = Array.isArray(it.naoConformes) ? it.naoConformes.length : 0;
+    pushGestores_(empresaNome, "📋 " + tituloLib_(it.tipoDocumento, it.ptNumero) + " aguardando sua avaliação",
+      nomeTecnico + " enviou" + (it.ptArea ? " · " + it.ptArea : "") + (nc ? ". " + nc + (nc > 1 ? " itens não conformes." : " item não conforme.") : "."));
+  });
+  return { saved: saved, emailed: emailed, pendentes: pendentes.length };
 }
 
 function jaRecebido(docId) {
@@ -241,8 +263,10 @@ function sincronizarAcessoPasta(empresaNome, emails, jaCompartilhados) {
 var AUDIT_HEADERS = [
   "Data/Hora do envio", "Tipo de documento", "Número/ID", "Data do documento",
   "Área/Local", "Empresa", "Técnico", "E-mail(s) de destino", "Resumo", "Nome do arquivo",
-  "ID do arquivo (Drive)", "Login", "ID do documento (app)", "Não conformidades", "Início", "Término", "Motivo do encerramento"
+  "ID do arquivo (Drive)", "Login", "ID do documento (app)", "Não conformidades", "Início", "Término", "Motivo do encerramento",
+  "Liberação", "Liberado por", "Liberado em", "Motivo (não apto)"
 ];
+var AUDIT_ULTIMA = "Motivo (não apto)";
 
 function getOrCreateSpreadsheet() {
   var props = PropertiesService.getScriptProperties();
@@ -258,7 +282,7 @@ function getOrCreateSpreadsheet() {
 function ensureAuditHeaders(sheet) {
   var lastCol = sheet.getLastColumn();
   var headerRow = lastCol > 0 ? sheet.getRange(1, 1, 1, lastCol).getValues()[0] : [];
-  if (headerRow.indexOf("Motivo do encerramento") === -1) {
+  if (headerRow.indexOf(AUDIT_ULTIMA) === -1) {
     sheet.getRange(1, 1, 1, AUDIT_HEADERS.length).setValues([AUDIT_HEADERS]);
     sheet.setFrozenRows(1);
   }
@@ -303,7 +327,8 @@ function registrarNaPlanilha(d) {
     new Date(), d.tipoDocumento || "", d.ptNumero || "", d.ptData || "", d.ptArea || "",
     d.empresa || "", d.usuario || "", "", d.resumo || "", d.pdfNome || "",
     d.fileId || "", d.login || "", d.docId || "", (d.naoConformes || []).join(" | "),
-    d.horaIni || "", d.horaFim || "", d.motivo || ""
+    d.horaIni || "", d.horaFim || "", d.motivo || "",
+    d.liberacao || "", d.liberadoPor || "", d.liberadoEm || "", d.motivoNaoApto || ""
   ];
   getOrCreateAuditSheet().appendRow(row);
   if (d.empresa) getOrCreateEmpresaSheet(ss, d.empresa).appendRow(row);
@@ -325,7 +350,8 @@ function rowToObj(v, tz) {
     empresa: v[5], usuario: v[6], destEmail: v[7], resumo: v[8], pdfNome: v[9],
     fileId: fid === "EXPIRADO" ? "" : fid, expirado: fid === "EXPIRADO", login: v[11] || "",
     naoConformes: v[13] ? String(v[13]).split(" | ") : [],
-    horaIni: hhmm_(v[14]), horaFim: hhmm_(v[15]), motivo: String(v[16] || "")
+    horaIni: hhmm_(v[14]), horaFim: hhmm_(v[15]), motivo: String(v[16] || ""),
+    liberacao: String(v[17] || ""), liberadoPor: String(v[18] || ""), motivoNaoApto: String(v[20] || "")
   };
 }
 
@@ -363,6 +389,8 @@ function moveRowsToExcluidos(ss, sheet, rowIndexes) {
     excl = ss.insertSheet("Excluídos");
     excl.getRange(1, 1, 1, AUDIT_HEADERS.length + 2).setValues([AUDIT_HEADERS.concat(["Apagado em", "Apagado da aba"])]);
     excl.setFrozenRows(1);
+  } else if (excl.getRange(1, AUDIT_HEADERS.length).getValue() !== AUDIT_ULTIMA) {
+    excl.getRange(1, 1, 1, AUDIT_HEADERS.length + 2).setValues([AUDIT_HEADERS.concat(["Apagado em", "Apagado da aba"])]);
   }
   rowIndexes.sort(function (a, b) { return b - a; });
   var moved = 0;
@@ -504,11 +532,17 @@ function getPdf(data) {
   if (!fileId || fileId === "EXPIRADO") return jsonOut({ error: "PDF não disponível (já passou do prazo de guarda)" });
   var sheet = getOrCreateAuditSheet();
   var last = sheet.getLastRow();
-  if (last < 2) return jsonOut({ error: "documento não encontrado" });
-  var cell = sheet.getRange(2, 11, last - 1, 1).createTextFinder(fileId).matchEntireCell(true).findNext();
-  if (!cell) return jsonOut({ error: "documento não encontrado" });
-  var v = sheet.getRange(cell.getRow(), 1, 1, AUDIT_HEADERS.length).getValues()[0];
-  var empresaDoc = String(v[5] || ""), loginDoc = String(v[11] || "");
+  var cell = last < 2 ? null : sheet.getRange(2, 11, last - 1, 1).createTextFinder(fileId).matchEntireCell(true).findNext();
+  var empresaDoc, loginDoc;
+  if (cell) {
+    var v = sheet.getRange(cell.getRow(), 1, 1, AUDIT_HEADERS.length).getValues()[0];
+    empresaDoc = String(v[5] || ""); loginDoc = String(v[11] || "");
+  } else {
+    // PDF que ainda espera liberação (ou já foi decidido): está na aba "Liberações".
+    var lib = acharLiberacaoPorArquivo_(fileId);
+    if (!lib) return jsonOut({ error: "documento não encontrado" });
+    empresaDoc = lib.empresa; loginDoc = lib.login;
+  }
   var ok = caller.role === "admin" ||
     (caller.role === "gestor" && slugEmpresa(caller.empresa) === slugEmpresa(empresaDoc)) ||
     (caller.role === "tecnico" && caller.username === loginDoc);
@@ -535,7 +569,7 @@ function aplicarRetencao() {
   for (var s = 0; s < sheets.length; s++) {
     var sh = sheets[s];
     var nome = sh.getName();
-    if (nome === "Fotos" || nome === "Aceites" || nome === "Excluídos") continue;
+    if (nome === "Fotos" || nome === "Aceites" || nome === "Excluídos" || nome === LIB_ABA || nome === "Carimbos") continue;
     var last = sh.getLastRow();
     if (last < 2 || sh.getLastColumn() < 11) continue;
     var vals = sh.getRange(2, 1, last - 1, 11).getValues();
@@ -556,7 +590,7 @@ function instalarGatilhos() {
   var existentes = ScriptApp.getProjectTriggers();
   existentes.forEach(function (t) {
     var f = t.getHandlerFunction();
-    if (f === "aplicarRetencao" || f === "enviarLembretesDiarios" || f === "fazerBackupDiario" || f === "enviarRelatoriosMensais") ScriptApp.deleteTrigger(t);
+    if (f === "aplicarRetencao" || f === "enviarLembretesDiarios" || f === "fazerBackupDiario" || f === "enviarRelatoriosMensais" || f === "lembrarLiberacoesPendentes") ScriptApp.deleteTrigger(t);
   });
   ScriptApp.newTrigger("aplicarRetencao").timeBased().onWeekDay(ScriptApp.WeekDay.SUNDAY).atHour(3).create();
   ScriptApp.newTrigger("fazerBackupDiario").timeBased().everyDays(1).atHour(3).create();
@@ -566,6 +600,8 @@ function instalarGatilhos() {
   var props = PropertiesService.getScriptProperties();
   if (props.getProperty("fcm_client_email") && props.getProperty("fcm_private_key")) {
     ScriptApp.newTrigger("enviarLembretesDiarios").timeBased().everyDays(1).atHour(7).create();
+    // Lembra os gestores dos documentos que esperam liberação há muito tempo.
+    ScriptApp.newTrigger("lembrarLiberacoesPendentes").timeBased().everyMinutes(5).create();
   }
 }
 
@@ -732,7 +768,10 @@ function loginUser(username, passwordHash) {
     empresaLogoDataUrl: extras.logoDataUrl,
     empresaLogoDataUrl2: extras.logoDataUrl2,
     empresaThemeColor: extras.themeColor, empresaThemeColor2: extras.themeColor2,
-    empresaPtPrefix: extras.ptPrefix, serverNow: Date.now()
+    empresaPtPrefix: extras.ptPrefix,
+    empresaLiberacao: extras.liberacao,
+    carimbo: rec.role === "gestor" ? carimboResumo_(uname, rec) : null,
+    serverNow: Date.now()
   });
 }
 
@@ -975,6 +1014,8 @@ function saveEmpresa(data) {
   var relatorioMensal = (data.relatorioMensal === undefined) ? undefined : !!data.relatorioMensal;
   var suspenso = !!data.suspenso;
   var suspensoMsg = (data.suspensoMsg || "").toString().trim();
+  var liberacao = (data.liberacao && typeof data.liberacao === "object") ? normLiberacao_(data.liberacao) : undefined;
+  if (liberacao && liberacao.ativo && !liberacao.docs.length) return jsonOut({ error: "escolha ao menos 1 documento que exige liberação, ou desligue a liberação" });
   var lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
@@ -1011,6 +1052,7 @@ function saveEmpresa(data) {
       driveEmails: driveEmails.join(", "),
       driveShared: sync.shared,
       driveFolderUrl: sync.url || anterior.driveFolderUrl || "",
+      liberacao: liberacao || normLiberacao_(anterior.liberacao),
       updatedAt: new Date().toISOString()
     };
     props.setProperty("empresa_" + slug, JSON.stringify(rec));
@@ -1645,6 +1687,7 @@ function listEmpresas(params) {
           emailDestino: rec.emailDestino || "",
           driveEmails: rec.driveEmails || "",
           driveFolderUrl: rec.driveFolderUrl || "",
+          liberacao: normLiberacao_(rec.liberacao),
           logoDataUrl: all["empresa_" + slug + "_logo"] || "",
           logoDataUrl2: all["empresa_" + slug + "_logo2"] || ""
         });
@@ -1666,7 +1709,7 @@ function deleteEmpresa(data) {
 }
 
 function getEmpresaExtras(nome) {
-  var out = { alertaHoras: 24, teste: false, documentos: DOC_TIPOS.slice(), perguntas: {}, aviso: "", avisoGestor: "", suspenso: false, suspensoMsg: "", contratoInicio: "", contratoFim: "", avisoDias: 30, carenciaDias: 0, contratoVencido: false, diasRestantes: null, themeColor: "", themeColor2: "", ptPrefix: "", logoDataUrl: "", logoDataUrl2: "", emailAtivo: false, emailDestino: "" };
+  var out = { alertaHoras: 24, teste: false, documentos: DOC_TIPOS.slice(), perguntas: {}, aviso: "", avisoGestor: "", suspenso: false, suspensoMsg: "", contratoInicio: "", contratoFim: "", avisoDias: 30, carenciaDias: 0, contratoVencido: false, diasRestantes: null, themeColor: "", themeColor2: "", ptPrefix: "", logoDataUrl: "", logoDataUrl2: "", emailAtivo: false, emailDestino: "", liberacao: normLiberacao_(null) };
   if (!nome) return out;
   var slug = slugEmpresa(nome);
   if (!slug) return out;
@@ -1695,6 +1738,7 @@ function getEmpresaExtras(nome) {
       out.ptPrefix = rec.ptPrefix || "";
       out.emailAtivo = !!rec.emailAtivo;
       out.emailDestino = rec.emailDestino || "";
+      out.liberacao = normLiberacao_(rec.liberacao);
     } catch (e) { /* ignora registro corrompido */ }
   }
   out.logoDataUrl = props.getProperty("empresa_" + slug + "_logo") || "";
@@ -1865,6 +1909,359 @@ function enviarLembretesDiarios() {
 }
 
 
+/* ============ LIBERAÇÃO DE DOCUMENTOS (Apto / Não apto) ============
+   Ligada por empresa (cadastro da empresa) e por tipo de documento. Quando
+   ligada, o documento enviado fica "aguardando": o PDF espera na pasta
+   "_Pendentes" (que o cliente não vê) e os gestores recebem um push. O
+   gestor avalia e assina (na hora ou com o carimbo + PIN); o app dele monta
+   o PDF final com o quadro "Liberação da atividade" e só então ele vai para
+   a pasta da empresa — "Não Aptas"/"Não Aptos" quando recusado.
+   Tudo fica na aba "Liberações" da planilha. */
+var LIB_ABA = "Liberações";
+var LIB_HEADERS = ["ID", "Enviado em", "Empresa", "Tipo de documento", "Número", "Revisão", "Login", "Técnico",
+  "Área/Local", "Resumo", "Não conformidades", "Arquivo pendente", "Status", "Decidido por (login)", "Decidido por",
+  "Decidido em", "Forma", "Motivo", "O que fazer", "Pode reenviar", "Arquivo final", "Lembrete enviado", "Dados"];
+// Colunas (base 0) da aba "Liberações"
+var LB = { id: 0, ts: 1, empresa: 2, tipo: 3, numero: 4, rev: 5, login: 6, nome: 7, area: 8, resumo: 9, nc: 10,
+  arqPend: 11, status: 12, decLogin: 13, decNome: 14, decTs: 15, forma: 16, motivo: 17, fazer: 18, reenviar: 19,
+  arqFinal: 20, lembrete: 21, dados: 22 };
+var LIB_MODOS = ["escolha", "hora", "carimbo"];
+var PIN_MAX_FALHAS = 5;
+var PIN_BLOQUEIO_MS = 15 * 60000;
+
+function normLiberacao_(x) {
+  x = x || {};
+  var docs = Array.isArray(x.docs) ? DOC_TIPOS.filter(function (k) { return x.docs.indexOf(k) !== -1; }) : [];
+  return {
+    ativo: !!x.ativo, docs: docs,
+    modo: LIB_MODOS.indexOf(x.modo) !== -1 ? x.modo : "escolha",
+    lembreteMin: Math.min(240, Math.max(5, parseInt(x.lembreteMin, 10) || 15))
+  };
+}
+function liberacaoExigida_(empresaNome, tipoKey) {
+  var l = getEmpresaExtras(empresaNome).liberacao;
+  return l.ativo && l.docs.indexOf(tipoKey) !== -1;
+}
+function pastaPendentes_() { return subpasta(getRaiz(), "_Pendentes"); }
+function libSheet_() { return getOrCreateSheet(getOrCreateSpreadsheet(), LIB_ABA, LIB_HEADERS); }
+function tituloLib_(tipoDocumento, numero) {
+  return tipoDocKey(tipoDocumento) === "pt" ? "PT Nº " + (numero || "S/N") : String(tipoDocumento || "Documento");
+}
+function libDados_(v) { try { return JSON.parse(String(v[LB.dados] || "{}")); } catch (e) { return {}; } }
+function libObj_(v) {
+  var d = libDados_(v);
+  return {
+    id: String(v[LB.id]), ts: Number(v[LB.ts]), empresa: String(v[LB.empresa] || ""), tipoDocumento: String(v[LB.tipo] || ""),
+    tipo: tipoDocKey(v[LB.tipo]), numero: String(v[LB.numero] || ""), revisao: Number(v[LB.rev]) || 0,
+    login: normUser(v[LB.login]), nome: String(v[LB.nome] || ""), area: String(v[LB.area] || ""), resumo: String(v[LB.resumo] || ""),
+    naoConformes: v[LB.nc] ? String(v[LB.nc]).split(" | ") : [], fileId: String(v[LB.arqFinal] || v[LB.arqPend] || ""),
+    status: String(v[LB.status] || "aguardando"), decididoPor: String(v[LB.decNome] || ""), decididoTs: Number(v[LB.decTs]) || 0,
+    forma: String(v[LB.forma] || ""), motivo: String(v[LB.motivo] || ""), oQueFazer: String(v[LB.fazer] || ""),
+    podeReenviar: String(v[LB.reenviar]) === "1", dataDoc: d.ptData || "", horaIni: d.horaIni || "", horaFim: d.horaFim || ""
+  };
+}
+// Linha (base 1) e valores de uma liberação pelo ID do documento, ou null.
+function acharLiberacao_(id) {
+  id = String(id || "");
+  if (!id) return null;
+  var sh = libSheet_(), n = sh.getLastRow();
+  if (n < 2) return null;
+  var cell = sh.getRange(2, 1, n - 1, 1).createTextFinder(id).matchEntireCell(true).findNext();
+  if (!cell) return null;
+  return { row: cell.getRow(), v: sh.getRange(cell.getRow(), 1, 1, LIB_HEADERS.length).getValues()[0] };
+}
+function acharLiberacaoPorArquivo_(fileId) {
+  var sh = libSheet_(), n = sh.getLastRow();
+  if (n < 2) return null;
+  var vals = sh.getRange(2, 1, n - 1, LIB_HEADERS.length).getValues();
+  for (var i = 0; i < vals.length; i++) {
+    if (String(vals[i][LB.arqPend]) === fileId || String(vals[i][LB.arqFinal]) === fileId) {
+      return { empresa: String(vals[i][LB.empresa] || ""), login: normUser(vals[i][LB.login]) };
+    }
+  }
+  return null;
+}
+// Chamada dentro do lock de saveDocuments.
+function registrarPendente_(caller, empresaNome, it, file) {
+  var sh = libSheet_();
+  var nc = Array.isArray(it.naoConformes) ? it.naoConformes.slice(0, 40).map(function (x) { return String(x).slice(0, 160); }) : [];
+  var dados = {
+    ptData: it.ptData || "", horaIni: String(it.ptHoraIni || "").slice(0, 5), horaFim: String(it.ptHoraFim || "").slice(0, 5),
+    motivoEnc: String(it.ptMotivo || "").slice(0, 60), pdfNome: file.getName(), revisaoDe: String(it.revisaoDe || "")
+  };
+  sh.appendRow([String(it.docId), Date.now(), empresaNome, it.tipoDocumento || "", it.ptNumero || "", Math.max(0, parseInt(it.revisao, 10) || 0),
+    caller.username, caller.nome || caller.username, it.ptArea || "", String(it.resumo || "").slice(0, 300), nc.join(" | "),
+    file.getId(), "aguardando", "", "", "", "", "", "", "", "", "", JSON.stringify(dados)]);
+  // Era a correção de uma recusa: a recusa anterior sai da lista "corrigir".
+  if (it.revisaoDe) {
+    var ant = acharLiberacao_(it.revisaoDe);
+    if (ant && normUser(ant.v[LB.login]) === caller.username && String(ant.v[LB.status]) === "nao_apto") {
+      sh.getRange(ant.row, LB.status + 1).setValue("reenviada");
+    }
+  }
+}
+
+function listLiberacoes(data) {
+  var caller = authCaller(data);
+  if (!caller || (caller.role !== "admin" && caller.role !== "gestor")) return jsonOut({ error: "não autorizado" });
+  var empresaNome = caller.role === "gestor" ? caller.empresa : (data.empresa || "").toString().trim();
+  if (!empresaNome) return jsonOut({ error: "empresa não informada" });
+  var slug = slugEmpresa(empresaNome);
+  var sh = libSheet_(), n = sh.getLastRow(), pendentes = [], recentes = [];
+  var desde = Date.now() - 7 * 86400000;
+  if (n > 1) {
+    var vals = sh.getRange(2, 1, n - 1, LIB_HEADERS.length).getValues();
+    for (var i = vals.length - 1; i >= 0; i--) {
+      if (!vals[i][LB.id] || slugEmpresa(String(vals[i][LB.empresa] || "")) !== slug) continue;
+      var o = libObj_(vals[i]);
+      if (o.status === "aguardando") pendentes.push(o);
+      else if (o.ts >= desde && recentes.length < 50) recentes.push(o);
+    }
+  }
+  pendentes.sort(function (a, b) { return a.ts - b.ts; });
+  return jsonOut({ ok: true, pendentes: pendentes, recentes: recentes, config: getEmpresaExtras(empresaNome).liberacao,
+    carimbo: caller.role === "gestor" ? carimboResumo_(caller.username, caller.rec) : null, serverNow: Date.now() });
+}
+
+function minhasLiberacoes(data) {
+  var caller = authCaller(data);
+  if (!caller || caller.role === "admin") return jsonOut({ error: "não autorizado" });
+  var sh = libSheet_(), n = sh.getLastRow(), out = [];
+  var desde = Date.now() - 3 * 86400000;
+  if (n > 1) {
+    var vals = sh.getRange(2, 1, n - 1, LIB_HEADERS.length).getValues();
+    for (var i = vals.length - 1; i >= 0 && out.length < 30; i--) {
+      if (normUser(vals[i][LB.login]) !== caller.username) continue;
+      var o = libObj_(vals[i]);
+      if (o.status === "aguardando" || o.status === "nao_apto" || o.ts >= desde) out.push(o);
+    }
+  }
+  return jsonOut({ ok: true, liberacoes: out, serverNow: Date.now() });
+}
+
+function decidirLiberacao(data) {
+  var caller = authCaller(data);
+  if (!caller || caller.role !== "gestor") return jsonOut({ error: "só o gestor da empresa pode liberar" });
+  var decisao = data.decisao === "apto" ? "apto" : (data.decisao === "nao_apto" ? "nao_apto" : "");
+  if (!decisao) return jsonOut({ error: "decisão inválida" });
+  var forma = data.forma === "carimbo" ? "carimbo" : "hora";
+  var motivo = (data.motivo || "").toString().trim().slice(0, 80);
+  var oQueFazer = (data.oQueFazer || "").toString().trim().slice(0, 500);
+  if (decisao === "nao_apto" && !motivo) return jsonOut({ error: "informe o motivo" });
+  var m = /^[A-Za-z0-9+\/=]+$/.exec((data.pdfFinalBase64 || "").toString());
+  if (!m) return jsonOut({ error: "PDF final ausente" });
+
+  var config = getEmpresaExtras(caller.empresa).liberacao;
+  if (config.modo !== "escolha" && config.modo !== forma) {
+    return jsonOut({ error: config.modo === "carimbo" ? "esta empresa exige o carimbo digital" : "esta empresa exige a assinatura na hora" });
+  }
+  if (forma === "hora" && String(data.assinaturaHora || "").indexOf("data:image/") !== 0) return jsonOut({ error: "assine antes de confirmar" });
+
+  var lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  var item, dados, finalFile;
+  try {
+    var achado = acharLiberacao_(data.id);
+    if (!achado || !sameEmpresa(achado.v[LB.empresa], caller.empresa)) return jsonOut({ error: "documento não encontrado" });
+    item = libObj_(achado.v);
+    if (item.status !== "aguardando") {
+      return jsonOut({ error: "este documento já foi avaliado" + (item.decididoPor ? " por " + item.decididoPor : ""), item: item });
+    }
+    var rec = getUserRec(caller.username);
+    var carimbo = rec.carimbo || {};
+    if (forma === "carimbo") {
+      if (!carimbo.nome || !getAssinaturaCarimbo_(caller.username)) return jsonOut({ error: "cadastre seu carimbo no perfil antes de usar" });
+      var pin = verificarPin_(caller.username, rec, (data.pinHash || "").toString());
+      if (pin.error) return jsonOut({ error: pin.error, pinErro: true });
+    }
+    dados = libDados_(achado.v);
+    var nomeArq = String(dados.pdfNome || (item.numero || "documento") + ".pdf");
+    if (decisao === "nao_apto") nomeArq = nomeArq.replace(/\.pdf$/i, "") + "_NAO_APTO.pdf";
+    var blob = Utilities.newBlob(Utilities.base64Decode(data.pdfFinalBase64), "application/pdf", nomeArq);
+    var pasta = pastaDoMes(caller.empresa);
+    if (decisao === "nao_apto") pasta = subpasta(pasta, item.tipo === "pt" ? "Não Aptas" : "Não Aptos");
+    finalFile = pasta.createFile(blob);
+    try { DriveApp.getFileById(String(achado.v[LB.arqPend])).setTrashed(true); } catch (e) { /* já não existe */ }
+
+    var agora = Date.now();
+    var quem = (carimbo.nome || caller.nome) + (carimbo.registro ? " (" + (carimbo.orgao ? carimbo.orgao + " " : "") + carimbo.registro + ")" : "");
+    var podeReenviar = decisao === "nao_apto" && data.podeReenviar !== false;
+    libSheet_().getRange(achado.row, LB.status + 1, 1, 9).setValues([[decisao, caller.username, quem, agora, forma,
+      motivo, oQueFazer, podeReenviar ? "1" : "0", finalFile.getId()]]);
+    item = libObj_(libSheet_().getRange(achado.row, 1, 1, LIB_HEADERS.length).getValues()[0]);
+
+    registrarNaPlanilha({
+      tipoDocumento: item.tipoDocumento, ptNumero: item.numero, ptData: dados.ptData, ptArea: item.area,
+      empresa: caller.empresa, usuario: item.nome, login: item.login, resumo: item.resumo,
+      pdfNome: nomeArq, fileId: finalFile.getId(), docId: item.id,
+      horaIni: dados.horaIni, horaFim: dados.horaFim, motivo: dados.motivoEnc, naoConformes: item.naoConformes,
+      liberacao: decisao === "apto" ? "Apto" : "Não apto", liberadoPor: quem,
+      liberadoEm: Utilities.formatDate(new Date(agora), TZ_CONTRATO, "dd/MM/yyyy HH:mm"),
+      motivoNaoApto: decisao === "nao_apto" ? motivo + (oQueFazer ? " — " + oQueFazer : "") : ""
+    });
+  } finally {
+    lock.releaseLock();
+  }
+
+  var titulo = tituloLib_(item.tipoDocumento, item.numero), fem = item.tipo === "pt";
+  try {
+    var ext = getEmpresaExtras(caller.empresa);
+    if (ext.emailAtivo && ext.emailDestino) {
+      GmailApp.sendEmail(ext.emailDestino,
+        "[DocSeg Digital] " + titulo + " — " + (decisao === "apto" ? "APTO" : "NÃO APTO") + " - " + caller.empresa,
+        "Enviado por " + item.nome + " e avaliado por " + item.decididoPor + " pelo DocSeg Digital." +
+        (decisao === "nao_apto" ? "\n\nMotivo: " + motivo + (oQueFazer ? "\nO que fazer: " + oQueFazer : "") : ""),
+        { attachments: [finalFile.getBlob()], name: "DocSeg Digital" });
+    }
+  } catch (mailErr) { Logger.log("Falha ao enviar e-mail da liberação: " + mailErr.message); }
+  if (decisao === "apto") {
+    pushParaUsuario_(item.login, "✅ " + titulo + (fem ? " liberada" : " liberado"), "Liberado por " + item.decididoPor + ". Pode iniciar a atividade.");
+  } else {
+    pushParaUsuario_(item.login, "⛔ " + titulo + (fem ? " não liberada" : " não liberado"), "Não inicie. Motivo: " + motivo + (oQueFazer ? ". " + oQueFazer.slice(0, 90) : ""));
+  }
+  return jsonOut({ ok: true, item: item });
+}
+
+// Depois de um "Não apto": o técnico (ou o gestor) encerra o documento como
+// "Não executado" quando não vai corrigir (ex.: a própria pessoa não está apta).
+function encerrarLiberacao(data) {
+  var caller = authCaller(data);
+  if (!caller || caller.role === "admin") return jsonOut({ error: "não autorizado" });
+  var lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    var achado = acharLiberacao_(data.id);
+    if (!achado) return jsonOut({ error: "documento não encontrado" });
+    var dono = normUser(achado.v[LB.login]) === caller.username;
+    var gestor = caller.role === "gestor" && sameEmpresa(achado.v[LB.empresa], caller.empresa);
+    if (!dono && !gestor) return jsonOut({ error: "não autorizado" });
+    if (String(achado.v[LB.status]) !== "nao_apto") return jsonOut({ error: "só um documento não apto pode ser encerrado" });
+    libSheet_().getRange(achado.row, LB.status + 1).setValue("nao_executada");
+    return jsonOut({ ok: true });
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+// Gatilho a cada 5 min (instalarGatilhos): lembra os gestores, uma vez, dos
+// documentos que esperam liberação há mais tempo que o definido na empresa.
+function lembrarLiberacoesPendentes() {
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(5000)) return;
+  var avisos = [];
+  try {
+    var sh = libSheet_(), n = sh.getLastRow();
+    if (n < 2) return;
+    var vals = sh.getRange(2, 1, n - 1, LIB_HEADERS.length).getValues(), agora = Date.now(), cfg = {};
+    for (var i = 0; i < vals.length; i++) {
+      var v = vals[i];
+      if (String(v[LB.status]) !== "aguardando" || String(v[LB.lembrete]) === "1") continue;
+      var emp = String(v[LB.empresa] || "");
+      if (!(emp in cfg)) cfg[emp] = getEmpresaExtras(emp).liberacao.lembreteMin;
+      var min = Math.floor((agora - Number(v[LB.ts])) / 60000);
+      if (min < cfg[emp]) continue;
+      sh.getRange(i + 2, LB.lembrete + 1).setValue("1");
+      avisos.push({ empresa: emp, titulo: tituloLib_(v[LB.tipo], v[LB.numero]), nome: String(v[LB.nome] || ""), min: min });
+    }
+  } finally {
+    lock.releaseLock();
+  }
+  avisos.forEach(function (a) {
+    pushGestores_(a.empresa, "⏰ " + a.titulo + " aguardando há " + a.min + " min", a.nome + " está esperando a liberação para começar.");
+  });
+}
+
+/* ---- Carimbo digital do liberador (gestor) ----
+   Nome, função, órgão e nº de registro ficam no cadastro do usuário; a
+   imagem da assinatura fica na aba "Carimbos" (o cofre do script tem
+   limite de tamanho). O PIN é criado pela própria pessoa e guardado com
+   sal — nunca chega por SMS nem fica no aparelho. */
+function carimbosSheet_() { return getOrCreateSheet(getOrCreateSpreadsheet(), "Carimbos", ["Login", "Assinatura (data URL)", "Atualizada em"]); }
+function getAssinaturaCarimbo_(uname) {
+  var sh = carimbosSheet_(), n = sh.getLastRow();
+  if (n < 2) return "";
+  var cell = sh.getRange(2, 1, n - 1, 1).createTextFinder(uname).matchEntireCell(true).findNext();
+  return cell ? String(sh.getRange(cell.getRow(), 2).getValue() || "") : "";
+}
+function setAssinaturaCarimbo_(uname, dataUrl) {
+  var sh = carimbosSheet_(), n = sh.getLastRow();
+  var cell = n < 2 ? null : sh.getRange(2, 1, n - 1, 1).createTextFinder(uname).matchEntireCell(true).findNext();
+  if (!dataUrl) { if (cell) sh.deleteRow(cell.getRow()); return; }
+  if (cell) sh.getRange(cell.getRow(), 2, 1, 2).setValues([[dataUrl, new Date()]]);
+  else sh.appendRow([uname, dataUrl, new Date()]);
+}
+function carimboResumo_(uname, rec) {
+  var c = (rec && rec.carimbo) || {};
+  return { nome: c.nome || "", funcao: c.funcao || "", orgao: c.orgao || "", registro: c.registro || "",
+    temAssinatura: !!getAssinaturaCarimbo_(uname), temPin: !!(rec && rec.pinHash) };
+}
+function verificarPin_(uname, rec, pinHash) {
+  if (!rec.pinHash) return { error: "crie o seu PIN em Perfil › Meu carimbo" };
+  var agora = Date.now();
+  if (rec.pinBloqueadoAte && rec.pinBloqueadoAte > agora) {
+    return { error: "PIN bloqueado por excesso de tentativas. Tente em " + Math.ceil((rec.pinBloqueadoAte - agora) / 60000) + " min" };
+  }
+  var props = PropertiesService.getScriptProperties();
+  if (sha256Hex(rec.pinSalt + ":" + pinHash) !== rec.pinHash) {
+    rec.pinFalhas = (rec.pinFalhas || 0) + 1;
+    var msg;
+    if (rec.pinFalhas >= PIN_MAX_FALHAS) {
+      rec.pinFalhas = 0; rec.pinBloqueadoAte = agora + PIN_BLOQUEIO_MS;
+      msg = "PIN incorreto. Bloqueado por 15 min";
+    } else {
+      msg = "PIN incorreto (restam " + (PIN_MAX_FALHAS - rec.pinFalhas) + " tentativas)";
+    }
+    props.setProperty("user_" + uname, JSON.stringify(rec));
+    return { error: msg };
+  }
+  if (rec.pinFalhas || rec.pinBloqueadoAte) {
+    rec.pinFalhas = 0; rec.pinBloqueadoAte = 0;
+    props.setProperty("user_" + uname, JSON.stringify(rec));
+  }
+  return { ok: true };
+}
+function getCarimbo(data) {
+  var caller = authCaller(data);
+  if (!caller || caller.role !== "gestor") return jsonOut({ error: "não autorizado" });
+  var out = carimboResumo_(caller.username, caller.rec);
+  out.assinatura = getAssinaturaCarimbo_(caller.username);
+  return jsonOut({ ok: true, carimbo: out });
+}
+function saveCarimbo(data) {
+  var caller = authCaller(data);
+  if (!caller || caller.role !== "gestor") return jsonOut({ error: "não autorizado" });
+  var nome = (data.nome || "").toString().trim().slice(0, 80);
+  if (!nome) return jsonOut({ error: "informe o nome que aparece no carimbo" });
+  var assinatura = data.assinatura;
+  if (typeof assinatura === "string" && assinatura && (assinatura.indexOf("data:image/") !== 0 || assinatura.length > 45000)) {
+    return jsonOut({ error: "assinatura inválida ou muito grande" });
+  }
+  var novoPin = (data.novoPinHash || "").toString();
+  if (novoPin && !/^[0-9a-f]{64}$/.test(novoPin)) return jsonOut({ error: "PIN inválido" });
+  var lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    var rec = getUserRec(caller.username);
+    if (novoPin) {
+      // Criar ou trocar o PIN pede a senha de login de novo (serve também de "esqueci o PIN").
+      if ((data.senhaHash || "") !== rec.passwordHash) return jsonOut({ error: "senha de login incorreta" });
+      rec.pinSalt = Utilities.getUuid();
+      rec.pinHash = sha256Hex(rec.pinSalt + ":" + novoPin);
+      rec.pinFalhas = 0; rec.pinBloqueadoAte = 0;
+    }
+    rec.carimbo = {
+      nome: nome, funcao: (data.funcao || "").toString().trim().slice(0, 80),
+      orgao: (data.orgao || "").toString().trim().slice(0, 20), registro: (data.registro || "").toString().trim().slice(0, 30),
+      atualizadoEm: new Date().toISOString()
+    };
+    PropertiesService.getScriptProperties().setProperty("user_" + caller.username, JSON.stringify(rec));
+    if (typeof assinatura === "string") setAssinaturaCarimbo_(caller.username, assinatura);
+    return jsonOut({ ok: true, carimbo: carimboResumo_(caller.username, rec) });
+  } finally {
+    lock.releaseLock();
+  }
+}
+
 /* ============ NUMERAÇÃO CENTRALIZADA DA PT ============ */
 // Guarda o contador no "cofre" do próprio script (PropertiesService),
 // compartilhado entre todos os celulares que usam esta mesma implantação.
@@ -1875,11 +2272,22 @@ function enviarLembretesDiarios() {
 // sem empresa definida), cai no comportamento antigo, baseado no prefixo
 // digitado manualmente em Configurações — só pra não quebrar instalações
 // antigas.
+// Antes era por GET e sem login: qualquer um com o endereço do servidor podia
+// pular ou zerar a numeração. Agora vem por POST (doPost) e exige login.
+// O doGet só responde para avisar quem ainda está com o app antigo.
 function doGet(e) {
+  return jsonOut({ error: "atualize o app para a versão mais nova" });
+}
+
+function numeracao(data) {
   try {
-    var action = e.parameter.action;
-    var prefix = e.parameter.prefix || "";
-    var empresaParam = e.parameter.empresa || "";
+    var caller = authCaller(data);
+    if (!caller) return jsonOut({ error: "não autorizado" });
+    var action = data.action;
+    if (action !== "nextNumber" && caller.role !== "admin") return jsonOut({ error: "não autorizado" });
+    var prefix = (data.prefix || "").toString();
+    // Quem não é admin só mexe na numeração da própria empresa.
+    var empresaParam = caller.role === "admin" ? (data.empresa || "").toString() : caller.empresa;
     var empresaSlug = empresaParam ? slugEmpresa(empresaParam) : "";
     var key = empresaSlug ? ("pt_counter_emp_" + empresaSlug) : ("pt_counter_" + prefix);
     var props = PropertiesService.getScriptProperties();
@@ -1907,7 +2315,7 @@ function doGet(e) {
 
     if (action === "setNumber") {
       // Ajuste manual feito pelo responsável, via app (Configurações).
-      var value = parseInt(e.parameter.value, 10);
+      var value = parseInt(data.value, 10);
       if (isNaN(value) || value < 1) {
         return jsonOut({ error: "valor inválido" });
       }
@@ -1923,7 +2331,6 @@ function doGet(e) {
     }
 
     return jsonOut({ error: "ação inválida" });
-
   } catch (err) {
     return jsonOut({ error: err.message });
   }
