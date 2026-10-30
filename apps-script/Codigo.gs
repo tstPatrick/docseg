@@ -761,7 +761,7 @@ function loginUser(username, passwordHash) {
     cfg: rec.cfg || {}, mustChange: !!rec.mustChange,
     termsOk: rec.termsVersion === TERMS_VERSION, termsVersion: TERMS_VERSION,
     foto: getFoto(uname),
-    perguntas: extras.perguntas, empresaDocumentos: extras.documentos, empresaAviso: extras.aviso,
+    perguntas: extras.perguntas, empresaDocumentos: extras.documentos, empresaAviso: extras.aviso, empresaAvisoEm: extras.avisoEm,
     empresaAvisoGestor: rec.role === "gestor" ? extras.avisoGestor : "",
     contratoFim: rec.role === "gestor" ? extras.contratoFim : "",
     empresaTeste: rec.role === "gestor" ? !!extras.teste : false,
@@ -1040,6 +1040,7 @@ function saveEmpresa(data) {
       relatorioMensal: (relatorioMensal === undefined) ? !!anterior.relatorioMensal : relatorioMensal,
       alertaHoras: (alertaHoras === undefined) ? (anterior.alertaHoras || 24) : alertaHoras,
       aviso: (anterior.aviso || "").toString(),            // aviso aos técnicos: só o GESTOR edita
+      avisoEm: anterior.avisoEm || 0,
       avisoGestor: (data.avisoGestor || "").toString(),    // aviso ao gestor: só o ADMIN edita
       suspenso: suspenso,
       suspensoMsg: suspensoMsg,
@@ -1520,7 +1521,7 @@ function saveChamado(data) {
       printUrl = f.getUrl();
     } catch (e) { Logger.log("print do chamado não salvo: " + e.message); }
   }
-  var perfil = caller.role === "gestor" ? "Cliente" : (caller.role === "admin" ? "Administrador" : "Colaborador");
+  var perfil = caller.role === "gestor" ? "Gestor" : (caller.role === "admin" ? "Administrador" : "Colaborador");
   var lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
@@ -1646,6 +1647,7 @@ function saveAviso(data) {
     var raw = props.getProperty("empresa_" + slug);
     var rec = raw ? JSON.parse(raw) : { nome: caller.empresa, perguntas: {} };
     rec.aviso = aviso;
+    rec.avisoEm = aviso ? Date.now() : 0; // o aviso aparece para a equipe por 24 h a partir daqui
     rec.updatedAt = new Date().toISOString();
     props.setProperty("empresa_" + slug, JSON.stringify(rec));
     return jsonOut({ ok: true });
@@ -1677,6 +1679,7 @@ function listEmpresas(params) {
           relatorioMensal: !!rec.relatorioMensal,
           alertaHoras: rec.alertaHoras || 24,
           aviso: rec.aviso || "",
+          avisoEm: rec.avisoEm || 0,
           avisoGestor: rec.avisoGestor || "",
           suspenso: !!rec.suspenso,
           suspensoMsg: rec.suspensoMsg || "",
@@ -1715,7 +1718,7 @@ function deleteEmpresa(data) {
 }
 
 function getEmpresaExtras(nome) {
-  var out = { alertaHoras: 24, teste: false, documentos: DOC_TIPOS.slice(), perguntas: {}, aviso: "", avisoGestor: "", suspenso: false, suspensoMsg: "", contratoInicio: "", contratoFim: "", avisoDias: 30, carenciaDias: 0, contratoVencido: false, diasRestantes: null, themeColor: "", themeColor2: "", ptPrefix: "", logoDataUrl: "", logoDataUrl2: "", emailAtivo: false, emailDestino: "", liberacao: normLiberacao_(null) };
+  var out = { alertaHoras: 24, teste: false, documentos: DOC_TIPOS.slice(), perguntas: {}, aviso: "", avisoEm: 0, avisoGestor: "", suspenso: false, suspensoMsg: "", contratoInicio: "", contratoFim: "", avisoDias: 30, carenciaDias: 0, contratoVencido: false, diasRestantes: null, themeColor: "", themeColor2: "", ptPrefix: "", logoDataUrl: "", logoDataUrl2: "", emailAtivo: false, emailDestino: "", liberacao: normLiberacao_(null) };
   if (!nome) return out;
   var slug = slugEmpresa(nome);
   if (!slug) return out;
@@ -1729,6 +1732,7 @@ function getEmpresaExtras(nome) {
       out.teste = !!rec.teste;
       out.alertaHoras = rec.alertaHoras || 24;
       out.aviso = rec.aviso || "";
+      out.avisoEm = rec.avisoEm || 0;
       out.avisoGestor = rec.avisoGestor || "";
       out.suspenso = !!rec.suspenso;
       out.suspensoMsg = rec.suspensoMsg || "";
