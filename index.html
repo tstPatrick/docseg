@@ -830,6 +830,8 @@
   .lib-entendi{margin-left:auto; border:0; background:#E3F4E6; color:#1F6B2A; border-radius:999px; padding:6px 12px; font:700 12.5px inherit; font-family:inherit; cursor:pointer;}
   .md-pill.lib-aguardando{background:#FFF1D6; color:#8A4B00;} .md-pill.lib-apto{background:#E3F4E6; color:#1F6B2A;} .md-pill.lib-nao_apto{background:#FDECEB; color:#A32D2D;}
   .md-pill.lib-reenviada{background:#E6ECF8; color:#1D3A6F;} .md-pill.lib-nao_executada{background:#E8ECF2; color:#3B475E;}
+  .eg-status{margin-top:8px; border-radius:10px; padding:8px 10px; font-size:12.5px; font-weight:700; background:#E8ECF2; color:#3B475E;}
+  .eg-status.on{background:#E3F4E6; color:#1F6B2A;}
   .lib-small{font-size:12.5px; color:#566179; line-height:1.45; margin:8px 0 0;}
   .lib-err{color:#A32D2D; font-size:13px; font-weight:700; margin-top:8px; display:none;}
 </style>
@@ -984,7 +986,7 @@
     </div>
   </div>
   <div class="home-notice" id="homeNotice" style="display:none;">
-    <b>📌 Aviso da empresa</b>
+    <b>📌 Aviso</b>
     <p id="homeNoticeText"></p>
   </div>
   <div class="ds-body">
@@ -1367,7 +1369,8 @@
     <div class="field">
       <label>📣 Aviso para os colaboradores</label>
       <textarea id="egAviso" rows="4" maxlength="600" placeholder="Ex: Uso obrigatório de cinto tipo paraquedista acima de 2m." style="width:100%;padding:11px 12px;border:1px solid #D6D3CC;border-radius:8px;font-size:14px;font-family:inherit;resize:vertical;"></textarea>
-      <p class="hint">Aparece no final do menu de todos os colaboradores da empresa. Deixe em branco para não mostrar nenhum aviso.</p>
+      <p class="hint">Aparece na tela inicial dos colaboradores da empresa por 24 horas depois de salvo. Deixe em branco para não mostrar nenhum aviso.</p>
+      <div class="eg-status" id="egStatus" style="display:none;"></div>
     </div>
     <button type="button" class="btn btn-primary" id="egSave" style="width:100%;">Salvar aviso</button>
   </div>
@@ -1974,7 +1977,7 @@ function sessionFromServer(uname, passHash, r){
     username: r.username || uname, nome: r.nome || '', role, empresa: r.empresa || '', foto: r.foto || '',
     passwordHash: passHash, mustChange: !!r.mustChange, termsOk: r.termsOk !== false, termsVersion: r.termsVersion || '',
     cfg: r.cfg || null, perguntas: r.perguntas || null,
-    empresaAviso: r.empresaAviso || '', empresaAvisoGestor: r.empresaAvisoGestor || '', contratoFim: r.contratoFim || '', empresaTeste: !!r.empresaTeste, empresaAlertaHoras: r.alertaHoras || 24, senhaPadrao: !!r.senhaPadrao, contratoAvisoDias: r.contratoAvisoDias || 0, contratoCarencia: r.contratoCarencia || 0, empresaLogoDataUrl: r.empresaLogoDataUrl || '',
+    empresaAviso: r.empresaAviso || '', empresaAvisoEm: r.empresaAvisoEm || 0, empresaAvisoGestor: r.empresaAvisoGestor || '', contratoFim: r.contratoFim || '', empresaTeste: !!r.empresaTeste, empresaAlertaHoras: r.alertaHoras || 24, senhaPadrao: !!r.senhaPadrao, contratoAvisoDias: r.contratoAvisoDias || 0, contratoCarencia: r.contratoCarencia || 0, empresaLogoDataUrl: r.empresaLogoDataUrl || '',
     empresaLogoDataUrl2: r.empresaLogoDataUrl2 || '',
     empresaThemeColor: r.empresaThemeColor || '', empresaThemeColor2: r.empresaThemeColor2 || '',
     empresaPtPrefix: r.empresaPtPrefix || '',
@@ -3650,12 +3653,24 @@ document.getElementById('btnEmpresaLogoRemove2').onclick = ()=>{
   empresaFormLogoDataUrl2 = '';
   setEmpresaLogoPreview2('');
 };
+// O aviso do gestor aos colaboradores vale por 24 h a partir de quando foi salvo.
+const AVISO_VALIDADE_MS = 24 * 3600000;
+function avisoVigente(em){ return !!em && Date.now() - em < AVISO_VALIDADE_MS; }
+function pintaStatusAviso(texto, em){
+  const box = $('egStatus');
+  const quando = ts => new Date(ts).toLocaleString('pt-BR', {day:'2-digit', month:'2-digit'}) + ' às ' + new Date(ts).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+  if(!texto){ box.style.display = 'none'; return; }
+  box.style.display = 'block';
+  if(avisoVigente(em)){ box.className = 'eg-status on'; box.textContent = '🟢 Visível para a equipe até ' + quando(em + AVISO_VALIDADE_MS); }
+  else { box.className = 'eg-status'; box.textContent = '⏹ ' + (em ? 'Expirado em ' + quando(em + AVISO_VALIDADE_MS) : 'Não está visível') + ' — salve de novo para mostrar por mais 24 horas'; }
+}
 async function openEmpresaGestorModal(){
   if(!isGestor()){ toast('Acesso restrito ao gestor.', 'err'); return; }
   hideAllScreens();
   const s = getSession() || {};
   $('egTitle').textContent = s.empresa || 'Empresa';
   $('egAviso').value = '';
+  $('egStatus').style.display = 'none';
   $('egAdminBox').style.display = 'none';
   $('empresaGestorModal').classList.add('show');
   try{
@@ -3664,6 +3679,7 @@ async function openEmpresaGestorModal(){
     const emp = (data.empresas || [])[0];
     if(emp){
       $('egAviso').value = emp.aviso || '';
+      pintaStatusAviso(emp.aviso || '', emp.avisoEm || 0);
       if(emp.avisoGestor){ $('egAdminAviso').textContent = emp.avisoGestor; $('egAdminBox').style.display = 'block'; }
     }
   }catch(err){ toast('Não foi possível carregar: ' + (err.message || 'falha de conexão'), 'err'); }
@@ -3673,9 +3689,11 @@ $('egSave').onclick = async ()=>{
   const btn = $('egSave'); const old = btn.textContent;
   btn.disabled = true; btn.textContent = 'Salvando...';
   try{
-    const r = await api('saveAviso', { aviso: $('egAviso').value.trim() });
+    const texto = $('egAviso').value.trim();
+    const r = await api('saveAviso', { aviso: texto });
     if(r.error) throw new Error(r.error);
-    toast('Aviso salvo! Os colaboradores veem no próximo acesso.', 'ok');
+    pintaStatusAviso(texto, Date.now());
+    toast(texto ? 'Aviso salvo! A equipe vê por 24 horas.' : 'Aviso removido.', 'ok');
   }catch(err){ toast(err.message || 'Não foi possível salvar.', 'err'); }
   finally{ btn.disabled = false; btn.textContent = old; }
 };
@@ -3847,7 +3865,7 @@ function docsAtivos(){
 
 /* ============ SUPORTE ============ */
 const SUPORTE_WHATS = '5571996033896';
-const APP_VERSION = '5.3';
+const APP_VERSION = '5.4';
 const SUPORTE_FAQ = [
   ['Como envio um documento?', 'Preencha o documento (PT, checklist de veículo ou de escada) e toque em Enviar. Escolha "Enviar agora" ou "Guardar e enviar depois". Em "Meus documentos" você vê o que já foi enviado.'],
   ['Estou sem internet, e agora?', 'Pode preencher normalmente. O documento fica guardado no aparelho e é enviado sozinho quando a internet voltar. Em "Meus documentos" aparece como "Aguardando envio".'],
@@ -6293,8 +6311,8 @@ function renderHomeMenu(){
   // Aviso/lembrete da empresa (definido pelo Administrador em Empresas)
   const noticeBox = $('homeNotice'), noticeText = $('homeNoticeText');
   if(noticeBox && noticeText){
-    const txt = admin ? '' : (gestor ? (s.empresaAvisoGestor || '') : (s.empresaAviso || ''));
-    const tt = noticeBox.querySelector('b'); if(tt) tt.textContent = gestor ? '📌 Aviso do DocSeg Digital' : '📌 Aviso da empresa';
+    const txt = admin ? '' : (gestor ? (s.empresaAvisoGestor || '') : (avisoVigente(s.empresaAvisoEm) ? (s.empresaAviso || '') : ''));
+    const tt = noticeBox.querySelector('b'); if(tt) tt.textContent = gestor ? '📌 Aviso do DocSeg Digital' : '📌 Aviso';
     if(txt){ noticeText.textContent = txt; noticeBox.style.display = 'block'; }
     else noticeBox.style.display = 'none';
     const hero = document.querySelector('#homeMenu .ds-hero'); if(hero) hero.classList.toggle('compact', !txt);
