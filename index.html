@@ -317,7 +317,7 @@
 
   /* usuários */
   .user-row{border:1px solid var(--line); border-radius:10px; padding:10px 12px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; gap:8px;}
-  .user-role-tag{margin-left:8px; font-size:10.5px; padding:2px 8px; border-radius:20px; font-weight:700;}
+  .user-role-tag{margin-left:8px; font-size:10.5px; padding:2px 8px; border-radius:20px; font-weight:700; display:inline-block; white-space:nowrap;}
   .user-role-tag.admin{background:var(--ui-tint); color:var(--ui);}
   .user-role-tag.consulta{background:#EAF3DE; color:#27500A;}
 
@@ -1331,7 +1331,8 @@
     <button class="modal-close" id="closeCarimbo">←</button>
     <h2 style="font-family:'Poppins',sans-serif;">Meu carimbo de liberação</h2>
     <p class="desc">Usado para liberar PTs e checklists. Você pode alterar quando quiser; documentos já liberados mantêm o carimbo da época.</p>
-    <div class="field"><label>Nome que aparece no carimbo</label><input type="text" id="carNome" maxlength="80"></div>
+    <div class="field"><label>Nome que aparece no carimbo</label><input type="text" id="carNome" maxlength="80" readonly style="background:#F1F4F9;color:#3B475E;">
+      <p class="hint">É o seu nome completo do cadastro. Para corrigir, peça ao gestor da empresa.</p></div>
     <div class="field"><label>Função</label><input type="text" id="carFuncao" maxlength="80" placeholder="Ex: Técnico(a) de Segurança do Trabalho"></div>
     <div style="display:grid;grid-template-columns:1fr 2fr;gap:8px;">
       <div class="field"><label>Órgão</label><select id="carOrgao" style="width:100%;height:44px;border:1.5px solid #D5DCE9;border-radius:10px;background:#fff;padding:0 8px;"><option value="MTE">MTE</option><option value="CREA">CREA</option><option value="CRQ">CRQ</option><option value="CFT">CFT</option><option value="">Outro / sem</option></select></div>
@@ -3875,7 +3876,7 @@ function docsAtivos(){
 
 /* ============ SUPORTE ============ */
 const SUPORTE_WHATS = '5571996033896';
-const APP_VERSION = '6.0';
+const APP_VERSION = '6.1';
 const SUPORTE_FAQ = [
   ['Como envio um documento?', 'Preencha o documento (PT, checklist de veículo ou de escada) e toque em Enviar. Escolha "Enviar agora" ou "Guardar e enviar depois". Em "Meus documentos" você vê o que já foi enviado.'],
   ['Estou sem internet, e agora?', 'Pode preencher normalmente. O documento fica guardado no aparelho e é enviado sozinho quando a internet voltar. Em "Meus documentos" aparece como "Aguardando envio".'],
@@ -6992,9 +6993,9 @@ async function openCarimboModal(){
   $('carimboModal').classList.add('show');
   window.scrollTo(0, 0);
   const s = getSession() || {}, c = s.carimbo || {};
-  $('carNome').value = c.nome || s.nome || '';
+  $('carNome').value = s.nome || c.nome || '';
   $('carFuncao').value = c.funcao || '';
-  $('carOrgao').value = c.orgao != null && c.nome ? c.orgao : 'MTE';
+  $('carOrgao').value = c.registro ? (c.orgao || '') : 'MTE'; // carimbo novo começa em MTE
   $('carRegistro').value = c.registro || '';
   ['carPin1', 'carPin2', 'carSenha'].forEach(k => $(k).value = '');
   $('carErr').style.display = 'none';
@@ -7030,7 +7031,6 @@ $('carSave').onclick = async ()=>{
   const err = m => { $('carErr').textContent = m; $('carErr').style.display = m ? 'block' : 'none'; };
   err('');
   const nome = $('carNome').value.trim();
-  if(!nome) return err('Informe o nome que aparece no carimbo.');
   if(!$('carFuncao').value.trim()) return err('Informe a função (ex: Técnico de Segurança do Trabalho).');
   if(!$('carRegistro').value.trim()) return err('Informe o nº do registro.');
   const p1 = $('carPin1').value.trim(), p2 = $('carPin2').value.trim(), senha = $('carSenha').value;

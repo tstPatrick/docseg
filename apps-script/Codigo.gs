@@ -2113,7 +2113,7 @@ function decidirLiberacao(data) {
     var rec = getUserRec(caller.username);
     var carimbo = rec.carimbo || {};
     if (forma === "carimbo") {
-      if (!carimbo.nome || !getAssinaturaCarimbo_(caller.username)) return jsonOut({ error: "cadastre seu carimbo no perfil antes de usar" });
+      if (!carimbo.registro || !getAssinaturaCarimbo_(caller.username)) return jsonOut({ error: "cadastre seu carimbo no perfil antes de usar" });
       var pin = verificarPin_(caller.username, rec, (data.pinHash || "").toString());
       if (pin.error) return jsonOut({ error: pin.error, pinErro: true });
     }
@@ -2127,7 +2127,7 @@ function decidirLiberacao(data) {
     try { DriveApp.getFileById(String(achado.v[LB.arqPend])).setTrashed(true); } catch (e) { /* já não existe */ }
 
     var agora = Date.now();
-    var quem = (carimbo.nome || caller.nome) + (carimbo.registro ? " (" + (carimbo.orgao ? carimbo.orgao + " " : "") + carimbo.registro + ")" : "");
+    var quem = (rec.nome || caller.nome) + (carimbo.registro ? " (" + (carimbo.orgao ? carimbo.orgao + " " : "") + carimbo.registro + ")" : "");
     var podeReenviar = decisao === "nao_apto" && data.podeReenviar !== false;
     libSheet_().getRange(achado.row, LB.status + 1, 1, 9).setValues([[decisao, caller.username, quem, agora, forma,
       motivo, oQueFazer, podeReenviar ? "1" : "0", finalFile.getId()]]);
@@ -2235,7 +2235,8 @@ function setAssinaturaCarimbo_(uname, dataUrl) {
 }
 function carimboResumo_(uname, rec) {
   var c = (rec && rec.carimbo) || {};
-  return { nome: c.nome || "", funcao: c.funcao || "", orgao: c.orgao || "", registro: c.registro || "",
+  // O nome do carimbo é sempre o nome completo do cadastro (o gestor corrige em Colaboradores).
+  return { nome: (rec && rec.nome) || c.nome || "", funcao: c.funcao || "", orgao: c.orgao || "", registro: c.registro || "",
     temAssinatura: !!getAssinaturaCarimbo_(uname), temPin: !!(rec && rec.pinHash) };
 }
 function verificarPin_(uname, rec, pinHash) {
@@ -2273,8 +2274,6 @@ function getCarimbo(data) {
 function saveCarimbo(data) {
   var caller = authCaller(data);
   if (!caller || (caller.role !== "gestor" && caller.role !== "tst")) return jsonOut({ error: "não autorizado" });
-  var nome = (data.nome || "").toString().trim().slice(0, 80);
-  if (!nome) return jsonOut({ error: "informe o nome que aparece no carimbo" });
   var assinatura = data.assinatura;
   if (typeof assinatura === "string" && assinatura && (assinatura.indexOf("data:image/") !== 0 || assinatura.length > 45000)) {
     return jsonOut({ error: "assinatura inválida ou muito grande" });
@@ -2293,7 +2292,7 @@ function saveCarimbo(data) {
       rec.pinFalhas = 0; rec.pinBloqueadoAte = 0;
     }
     rec.carimbo = {
-      nome: nome, funcao: (data.funcao || "").toString().trim().slice(0, 80),
+      nome: rec.nome || caller.nome, funcao: (data.funcao || "").toString().trim().slice(0, 80),
       orgao: (data.orgao || "").toString().trim().slice(0, 20), registro: (data.registro || "").toString().trim().slice(0, 30),
       atualizadoEm: new Date().toISOString()
     };
