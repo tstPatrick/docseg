@@ -186,7 +186,7 @@ function saveDocuments(caller, items, empresaFallback) {
   if (blobs.length) pushGestores_(empresaNome, "Novo documento", nomeTecnico + " enviou " + blobs.length + " documento" + (blobs.length > 1 ? "s" : "") + ".");
   pendentes.forEach(function (it) {
     var nc = Array.isArray(it.naoConformes) ? it.naoConformes.length : 0;
-    pushGestores_(empresaNome, "📋 " + tituloLib_(it.tipoDocumento, it.ptNumero) + " aguardando sua avaliação",
+    pushLiberadores_(empresaNome, "📋 " + tituloLib_(it.tipoDocumento, it.ptNumero) + " aguardando sua avaliação",
       nomeTecnico + " enviou" + (it.ptArea ? " · " + it.ptArea : "") + (nc ? ". " + nc + (nc > 1 ? " itens não conformes." : " item não conforme.") : "."));
   });
   return { saved: saved, emailed: emailed, pendentes: pendentes.length };
@@ -547,7 +547,7 @@ function getPdf(data) {
     empresaDoc = lib.empresa; loginDoc = lib.login;
   }
   var ok = caller.role === "admin" ||
-    (caller.role === "gestor" && slugEmpresa(caller.empresa) === slugEmpresa(empresaDoc)) ||
+    ((caller.role === "gestor" || caller.role === "tst") && slugEmpresa(caller.empresa) === slugEmpresa(empresaDoc)) ||
     (caller.role === "tecnico" && caller.username === loginDoc);
   if (!ok) return jsonOut({ error: "não autorizado" });
   try {
@@ -625,6 +625,8 @@ function autorizar() {
 //   admin   — acesso total (você)
 //   gestor  — vê o painel da PRÓPRIA empresa, baixa PDFs, cadastra técnicos
 //   tecnico — preenche e envia os documentos
+//   tst     — Técnico de Segurança: avalia e libera os documentos da empresa
+//             (só com a liberação ligada; cadastrado pelo gestor)
 //   (consulta = login antigo da empresa, DESATIVADO)
 
 function sha256Hex(str) {
@@ -676,7 +678,7 @@ function authCaller(params) {
   }
   var rec = getUserRec(uname);
   if (!rec || rec.passwordHash !== hash) return null;
-  if (rec.role !== "admin" && rec.role !== "gestor" && rec.role !== "tecnico") return null; // "consulta" = desativado
+  if (rec.role !== "admin" && rec.role !== "gestor" && rec.role !== "tecnico" && rec.role !== "tst") return null; // "consulta" = desativado
   if (empresaSuspensa(rec.empresa)) return null; // empresa inadimplente: ninguém dela usa o sistema
   return { username: uname, role: rec.role, nome: rec.nome || uname, empresa: rec.empresa || "", rec: rec };
 }
@@ -773,7 +775,8 @@ function loginUser(username, passwordHash) {
     empresaThemeColor: extras.themeColor, empresaThemeColor2: extras.themeColor2,
     empresaPtPrefix: extras.ptPrefix,
     empresaLiberacao: extras.liberacao,
-    carimbo: rec.role === "gestor" ? carimboResumo_(uname, rec) : null,
+    carimbo: (rec.role === "gestor" || rec.role === "tst") ? carimboResumo_(uname, rec) : null,
+    empresaTemTst: rec.role === "gestor" ? empresaTemTst_(rec.empresa) : false,
     serverNow: Date.now()
   });
 }
@@ -828,7 +831,7 @@ function sameEmpresa(a, b) {
 
 function listUsers(params) {
   var caller = authCaller(params);
-  if (!caller || (caller.role !== "admin" && caller.role !== "gestor")) return jsonOut({ error: "não autorizado" });
+  if (!caller || (caller.role !== "admin" && caller.role !== "gestor" && caller.role !== "tst")) return jsonOut({ error: "não autorizado" });
   var all = PropertiesService.getScriptProperties().getProperties();
   var fotos = getFotosMap();
   var users = [];
@@ -836,7 +839,8 @@ function listUsers(params) {
     if (k.indexOf("user_") !== 0) continue;
     try {
       var rec = JSON.parse(all[k]);
-      if (caller.role === "gestor" && !(rec.role === "tecnico" && sameEmpresa(rec.empresa, caller.empresa))) continue;
+      if (caller.role === "gestor" && !(equipeDoGestor_(rec) && sameEmpresa(rec.empresa, caller.empresa))) continue;
+      if (caller.role === "tst" && !(rec.role === "tecnico" && sameEmpresa(rec.empresa, caller.empresa))) continue; // só para as mensagens
       var uname = k.substring(5);
       users.push({
         username: uname, role: rec.role, nome: rec.nome || "", empresa: rec.empresa || "",
@@ -858,14 +862,15 @@ function saveUser(data) {
   }
   if (username === "admin") return jsonOut({ error: "o login \"admin\" é reservado." });
   var role = data.role;
-  if (role !== "admin" && role !== "gestor" && role !== "tecnico") return jsonOut({ error: "perfil inválido" });
+  if (role !== "admin" && role !== "gestor" && role !== "tecnico" && role !== "tst") return jsonOut({ error: "perfil inválido" });
   var nome = (data.nome || "").toString().trim();
   var empresa = (data.empresa || "").toString().trim();
   var email = (data.email || "").toString().trim();
   if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return jsonOut({ error: "e-mail inválido" });
 
   if (caller.role === "gestor") {
-    if (role !== "tecnico") return jsonOut({ error: "o gestor só cadastra técnicos" });
+    if (role !== "tecnico" && role !== "tst") return jsonOut({ error: "o gestor só cadastra colaboradores e técnicos de segurança" });
+    if (role === "tst" && !getEmpresaExtras(caller.empresa).liberacao.ativo) return jsonOut({ error: "o Técnico de Segurança só existe com a liberação de documentos ligada" });
     empresa = caller.empresa; // sempre a empresa dele
   }
   if (role !== "admin") {
@@ -880,7 +885,7 @@ function saveUser(data) {
     var key = "user_" + username;
     var existing = getUserRec(username);
     if (existing && caller.role === "gestor" &&
-        !(existing.role === "tecnico" && sameEmpresa(existing.empresa, caller.empresa))) {
+        !(equipeDoGestor_(existing) && sameEmpresa(existing.empresa, caller.empresa))) {
       return jsonOut({ error: "este login pertence a outra empresa" });
     }
     var rec = existing || {};
@@ -911,7 +916,7 @@ function deleteUser(data) {
   if (!username || username === "admin") return jsonOut({ error: "usuário inválido" });
   var rec = getUserRec(username);
   if (!rec) return jsonOut({ ok: true });
-  if (caller.role === "gestor" && !(rec.role === "tecnico" && sameEmpresa(rec.empresa, caller.empresa))) {
+  if (caller.role === "gestor" && !(equipeDoGestor_(rec) && sameEmpresa(rec.empresa, caller.empresa))) {
     return jsonOut({ error: "não autorizado" });
   }
   PropertiesService.getScriptProperties().deleteProperty("user_" + username);
@@ -968,7 +973,7 @@ function saveFoto(data) {
   var allowed = target === caller.username || caller.role === "admin";
   if (!allowed && caller.role === "gestor") {
     var rec = getUserRec(target);
-    allowed = !!rec && rec.role === "tecnico" && sameEmpresa(rec.empresa, caller.empresa);
+    allowed = !!rec && equipeDoGestor_(rec) && sameEmpresa(rec.empresa, caller.empresa);
   }
   if (!allowed) return jsonOut({ error: "não autorizado" });
   if (target !== "admin" && !getUserRec(target)) return jsonOut({ error: "usuário não encontrado" });
@@ -1135,10 +1140,10 @@ function enviarMensagem(data) {
   if (!raw) return jsonOut({ error: "destinatário não encontrado" });
   var rec = JSON.parse(raw);
   if (!sameEmpresa(rec.empresa, caller.empresa)) return jsonOut({ error: "não autorizado" });
-  if (caller.role === "gestor") {
+  if (caller.role === "gestor" || caller.role === "tst") {
     if (rec.role !== "tecnico") return jsonOut({ error: "não autorizado" });
-  } else { // colaborador só responde a um gestor que já falou com ele
-    if (rec.role !== "gestor") return jsonOut({ error: "não autorizado" });
+  } else { // colaborador só responde a um gestor ou técnico de segurança que já falou com ele
+    if (rec.role !== "gestor" && rec.role !== "tst") return jsonOut({ error: "não autorizado" });
     var sh = mensagensSheet(), n = sh.getLastRow(), falou = false;
     if (n > 1) {
       var vals = sh.getRange(2, 1, n - 1, 6).getValues();
@@ -1521,7 +1526,7 @@ function saveChamado(data) {
       printUrl = f.getUrl();
     } catch (e) { Logger.log("print do chamado não salvo: " + e.message); }
   }
-  var perfil = caller.role === "gestor" ? "Gestor" : (caller.role === "admin" ? "Administrador" : "Colaborador");
+  var perfil = caller.role === "gestor" ? "Gestor" : (caller.role === "tst" ? "Técnico de Segurança" : (caller.role === "admin" ? "Administrador" : "Colaborador"));
   var lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
@@ -1939,6 +1944,33 @@ var LIB_MODOS = ["escolha", "hora", "carimbo"];
 var PIN_MAX_FALHAS = 5;
 var PIN_BLOQUEIO_MS = 15 * 60000;
 
+// Técnico de Segurança (perfil "tst"): quando a empresa tem ao menos um, só
+// eles liberam e são avisados; o gestor passa a acompanhar. Sem nenhum, o
+// gestor libera como antes.
+function equipeDoGestor_(rec) { return rec.role === "tecnico" || rec.role === "tst"; }
+function usuariosDaEmpresa_(empresaNome, role) {
+  var all = PropertiesService.getScriptProperties().getProperties(), slug = slugEmpresa(empresaNome), out = [];
+  Object.keys(all).forEach(function (k) {
+    if (k.indexOf("user_") !== 0) return;
+    try { var rec = JSON.parse(all[k]); if (rec.role === role && slugEmpresa(rec.empresa || "") === slug) out.push(rec); } catch (e) {}
+  });
+  return out;
+}
+function empresaTemTst_(empresaNome) { return !!empresaNome && usuariosDaEmpresa_(empresaNome, "tst").length > 0; }
+function podeLiberar_(caller) {
+  if (caller.role === "tst") return true;
+  return caller.role === "gestor" && !empresaTemTst_(caller.empresa);
+}
+function pushLiberadores_(empresaNome, titulo, corpo) {
+  try {
+    if (!pushAtivo_()) return;
+    var tsts = usuariosDaEmpresa_(empresaNome, "tst");
+    (tsts.length ? tsts : usuariosDaEmpresa_(empresaNome, "gestor")).forEach(function (rec) {
+      if (rec.fcmToken) { try { sendFcmPush(rec.fcmToken, titulo, corpo); } catch (e) { Logger.log("push liberador falhou: " + e.message); } }
+    });
+  } catch (e) { Logger.log("push liberadores falhou: " + e.message); }
+}
+
 function normLiberacao_(x) {
   x = x || {};
   var docs = Array.isArray(x.docs) ? DOC_TIPOS.filter(function (k) { return x.docs.indexOf(k) !== -1; }) : [];
@@ -2013,8 +2045,8 @@ function registrarPendente_(caller, empresaNome, it, file) {
 
 function listLiberacoes(data) {
   var caller = authCaller(data);
-  if (!caller || (caller.role !== "admin" && caller.role !== "gestor")) return jsonOut({ error: "não autorizado" });
-  var empresaNome = caller.role === "gestor" ? caller.empresa : (data.empresa || "").toString().trim();
+  if (!caller || (caller.role !== "admin" && caller.role !== "gestor" && caller.role !== "tst")) return jsonOut({ error: "não autorizado" });
+  var empresaNome = caller.role === "admin" ? (data.empresa || "").toString().trim() : caller.empresa;
   if (!empresaNome) return jsonOut({ error: "empresa não informada" });
   var slug = slugEmpresa(empresaNome);
   var sh = libSheet_(), n = sh.getLastRow(), pendentes = [], recentes = [];
@@ -2030,7 +2062,8 @@ function listLiberacoes(data) {
   }
   pendentes.sort(function (a, b) { return a.ts - b.ts; });
   return jsonOut({ ok: true, pendentes: pendentes, recentes: recentes, config: getEmpresaExtras(empresaNome).liberacao,
-    carimbo: caller.role === "gestor" ? carimboResumo_(caller.username, caller.rec) : null, serverNow: Date.now() });
+    carimbo: caller.role !== "admin" ? carimboResumo_(caller.username, caller.rec) : null,
+    podeLiberar: podeLiberar_(caller), temTst: empresaTemTst_(empresaNome), serverNow: Date.now() });
 }
 
 function minhasLiberacoes(data) {
@@ -2051,7 +2084,7 @@ function minhasLiberacoes(data) {
 
 function decidirLiberacao(data) {
   var caller = authCaller(data);
-  if (!caller || caller.role !== "gestor") return jsonOut({ error: "só o gestor da empresa pode liberar" });
+  if (!caller || !podeLiberar_(caller)) return jsonOut({ error: caller && caller.role === "gestor" ? "nesta empresa quem libera é o Técnico de Segurança" : "só o Técnico de Segurança ou o gestor da empresa pode liberar" });
   var decisao = data.decisao === "apto" ? "apto" : (data.decisao === "nao_apto" ? "nao_apto" : "");
   if (!decisao) return jsonOut({ error: "decisão inválida" });
   var forma = data.forma === "carimbo" ? "carimbo" : "hora";
@@ -2143,7 +2176,7 @@ function encerrarLiberacao(data) {
     var achado = acharLiberacao_(data.id);
     if (!achado) return jsonOut({ error: "documento não encontrado" });
     var dono = normUser(achado.v[LB.login]) === caller.username;
-    var gestor = caller.role === "gestor" && sameEmpresa(achado.v[LB.empresa], caller.empresa);
+    var gestor = (caller.role === "gestor" || caller.role === "tst") && sameEmpresa(achado.v[LB.empresa], caller.empresa);
     if (!dono && !gestor) return jsonOut({ error: "não autorizado" });
     if (String(achado.v[LB.status]) !== "nao_apto") return jsonOut({ error: "só um documento não apto pode ser encerrado" });
     libSheet_().getRange(achado.row, LB.status + 1).setValue("nao_executada");
@@ -2177,7 +2210,7 @@ function lembrarLiberacoesPendentes() {
     lock.releaseLock();
   }
   avisos.forEach(function (a) {
-    pushGestores_(a.empresa, "⏰ " + a.titulo + " aguardando há " + a.min + " min", a.nome + " está esperando a liberação para começar.");
+    pushLiberadores_(a.empresa, "⏰ " + a.titulo + " aguardando há " + a.min + " min", a.nome + " está esperando a liberação para começar.");
   });
 }
 
@@ -2232,14 +2265,14 @@ function verificarPin_(uname, rec, pinHash) {
 }
 function getCarimbo(data) {
   var caller = authCaller(data);
-  if (!caller || caller.role !== "gestor") return jsonOut({ error: "não autorizado" });
+  if (!caller || (caller.role !== "gestor" && caller.role !== "tst")) return jsonOut({ error: "não autorizado" });
   var out = carimboResumo_(caller.username, caller.rec);
   out.assinatura = getAssinaturaCarimbo_(caller.username);
   return jsonOut({ ok: true, carimbo: out });
 }
 function saveCarimbo(data) {
   var caller = authCaller(data);
-  if (!caller || caller.role !== "gestor") return jsonOut({ error: "não autorizado" });
+  if (!caller || (caller.role !== "gestor" && caller.role !== "tst")) return jsonOut({ error: "não autorizado" });
   var nome = (data.nome || "").toString().trim().slice(0, 80);
   if (!nome) return jsonOut({ error: "informe o nome que aparece no carimbo" });
   var assinatura = data.assinatura;

@@ -21,5 +21,7 @@ As chaves do Firebase (`fcm_client_email`, `fcm_private_key`) ficam nas
 - Os PDFs esperando avaliação ficam em `DocSeg Digital - PDFs / _Pendentes` (o cliente não vê).
 - Depois da avaliação: liberados na pasta do mês da empresa; recusados em
   `<mês> / Não Aptas` (PT) ou `<mês> / Não Aptos` (checklists).
+- Quem libera: o **Técnico de Segurança** (perfil `tst`, cadastrado pelo gestor). Se a
+  empresa não tiver nenhum, o gestor libera.
 - Tudo fica registrado na aba **Liberações** da planilha; o registro final entra
   em **Registros** com as colunas Liberação, Liberado por, Liberado em e Motivo.
