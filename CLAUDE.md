@@ -4,6 +4,11 @@ App web (PWA) de Permissão de Trabalho e checklists. Tudo do app fica em
 `index.html`; o servidor é o Google Apps Script em `apps-script/Codigo.gs`.
 Fale sempre em português com o dono do projeto.
 
+Perfis: `admin` (dono do DocSeg), `gestor` (gerencia a empresa), `tst` (Técnico
+de Segurança: avalia e libera; cadastrado pelo gestor, só com a liberação ligada)
+e `tecnico` (colaborador que preenche os documentos). Quando a empresa tem algum
+`tst`, só eles liberam e o gestor acompanha.
+
 ## Versão — a cada alteração no app
 
 Toda mudança que vai para o app sobe **os dois números juntos**, no mesmo commit:

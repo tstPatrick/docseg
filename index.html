@@ -737,6 +737,7 @@
   .urow .m{flex:1; min-width:0;}
   .urow .m b{display:block; font-size:14.5px;}
   .urow .m span{font-size:12px; color:var(--ink-soft);}
+  .user-role-tag.tst{background:#E3F4E6; color:#1F6B2A;}
   .user-role-tag.gestor{background:#E6ECF8; color:#1D3A6F;}
   .user-role-tag.tecnico{background:#E3F4E6; color:#1F6B2A;}
   .user-role-tag.consulta{background:#FDECEB; color:#A32D2D;}
@@ -1248,6 +1249,7 @@
         <option value="gestor">Gestor (acompanha o painel da empresa)</option>
         <option value="admin">Administrador (acesso completo)</option>
       </select>
+      <p class="hint" id="userFormRoleHint" style="display:none;">O Técnico de Segurança avalia e libera as PTs e checklists da sua empresa, com o próprio carimbo. Quando houver pelo menos um, só eles liberam.</p>
     </div>
     <div class="field">
       <label>Nome completo</label>
@@ -1923,9 +1925,11 @@ function isLoggedIn(){ return !!getSession(); }
 function getRole(){ const s = getSession(); return s ? s.role : null; }
 function isAdmin(){ return getRole() === 'admin'; }
 function isGestor(){ return getRole() === 'gestor'; }
+// Técnico de Segurança: avalia e libera os documentos da empresa (cadastrado pelo gestor)
+function isTst(){ return getRole() === 'tst'; }
 function isManager(){ const r = getRole(); return r === 'admin' || r === 'gestor'; }
 function getScriptUrl(){ return (loadCfg().scriptUrl) || DEFAULT_SCRIPT_URL; }
-function roleLabel(r){ return r === 'admin' ? 'Administrador' : (r === 'gestor' ? 'Gestor' : 'Colaborador'); }
+function roleLabel(r){ return r === 'admin' ? 'Administrador' : (r === 'gestor' ? 'Gestor' : (r === 'tst' ? 'Técnico de Segurança' : 'Colaborador')); }
 function escHtml(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function initialsOf(nome){
   const p = (nome||'').trim().split(/\s+/).filter(Boolean);
@@ -1972,7 +1976,7 @@ function applyRoleVisibility(){
 
 /* Transforma a resposta do servidor na "sessão" guardada no aparelho */
 function sessionFromServer(uname, passHash, r){
-  const role = (r.role === 'admin' || r.role === 'gestor' || r.role === 'tecnico') ? r.role : 'tecnico';
+  const role = (r.role === 'admin' || r.role === 'gestor' || r.role === 'tecnico' || r.role === 'tst') ? r.role : 'tecnico';
   return {
     username: r.username || uname, nome: r.nome || '', role, empresa: r.empresa || '', foto: r.foto || '',
     passwordHash: passHash, mustChange: !!r.mustChange, termsOk: r.termsOk !== false, termsVersion: r.termsVersion || '',
@@ -1981,7 +1985,7 @@ function sessionFromServer(uname, passHash, r){
     empresaLogoDataUrl2: r.empresaLogoDataUrl2 || '',
     empresaThemeColor: r.empresaThemeColor || '', empresaThemeColor2: r.empresaThemeColor2 || '',
     empresaPtPrefix: r.empresaPtPrefix || '',
-    empresaLiberacao: r.empresaLiberacao || null, carimbo: r.carimbo || null,
+    empresaLiberacao: r.empresaLiberacao || null, carimbo: r.carimbo || null, empresaTemTst: !!r.empresaTemTst,
     empresaDocumentos: Array.isArray(r.empresaDocumentos) && r.empresaDocumentos.length ? r.empresaDocumentos : null
   };
 }
@@ -2337,7 +2341,7 @@ function openProfileModal(){
   hideAllScreens();
   $('profPassCur').value = ''; $('profPassNew').value = ''; $('profPassNew2').value = '';
   $('profFotoMsg').textContent = '';
-  $('btnProfCarimbo').style.display = isGestor() ? 'block' : 'none';
+  $('btnProfCarimbo').style.display = (isGestor() || isTst()) ? 'block' : 'none';
   paintProfile();
   $('profileModal').classList.add('show');
   window.scrollTo(0,0);
@@ -3283,12 +3287,15 @@ let lastLoadedUsers = [];
 
 // Modo da tela de usuários: 'cliente' (gestores da empresa; só o admin) ou 'colab' (colaboradores)
 let usersMode = 'colab';
-function userFormRoleValue(){ return (isGestor() || usersMode === 'colab') ? 'tecnico' : $('userFormRole').value; }
+// O gestor escolhe entre Colaborador e Técnico de Segurança (este só com a liberação ligada).
+function gestorEscolhePerfil(){ return isGestor() && libCfg().ativo; }
+function userFormRoleValue(){ return gestorEscolhePerfil() ? $('userFormRole').value : ((isGestor() || usersMode === 'colab') ? 'tecnico' : $('userFormRole').value); }
 function inUsersMode(u){ return usersMode === 'cliente' ? (u.role === 'gestor' || u.role === 'admin') : (u.role !== 'gestor' && u.role !== 'admin'); }
 
 function updateUserFormFieldsByRole(){
   const role = userFormRoleValue();
-  $('userFormRoleWrap').style.display = (isGestor() || usersMode === 'colab') ? 'none' : 'block';
+  $('userFormRoleWrap').style.display = gestorEscolhePerfil() || (!isGestor() && usersMode !== 'colab') ? 'block' : 'none';
+  $('userFormRoleHint').style.display = gestorEscolhePerfil() ? 'block' : 'none';
   $('userFormEmpresaSelectWrap').style.display = (role === 'admin' || isGestor()) ? 'none' : 'block';
   $('userFormFotoWrap').style.display = role === 'admin' ? 'none' : 'block';
 }
@@ -3344,6 +3351,9 @@ function resetUserForm(){
 async function openUsersModal(mode){
   if(!isManager()){ toast('Acesso restrito.', 'err'); return; }
   usersMode = (isGestor() || mode !== 'cliente') ? 'colab' : 'cliente';
+  $('userFormRole').innerHTML = isGestor()
+    ? '<option value="tecnico">Colaborador (preenche os documentos)</option><option value="tst">Técnico de Segurança (avalia e libera)</option>'
+    : '<option value="gestor">Gestor (acompanha o painel da empresa)</option>';
   hideAllScreens();
   $('usersTitle').textContent = isGestor() ? 'Colaboradores da empresa' : (usersMode === 'cliente' ? 'Gestores' : 'Colaboradores');
   $('usersDesc').textContent = usersMode === 'cliente'
@@ -3865,7 +3875,7 @@ function docsAtivos(){
 
 /* ============ SUPORTE ============ */
 const SUPORTE_WHATS = '5571996033896';
-const APP_VERSION = '5.4';
+const APP_VERSION = '6.0';
 const SUPORTE_FAQ = [
   ['Como envio um documento?', 'Preencha o documento (PT, checklist de veículo ou de escada) e toque em Enviar. Escolha "Enviar agora" ou "Guardar e enviar depois". Em "Meus documentos" você vê o que já foi enviado.'],
   ['Estou sem internet, e agora?', 'Pode preencher normalmente. O documento fica guardado no aparelho e é enviado sozinho quando a internet voltar. Em "Meus documentos" aparece como "Aguardando envio".'],
@@ -3875,7 +3885,7 @@ const SUPORTE_FAQ = [
 ];
 function supInfoUsuario(){
   const s = getSession() || {};
-  const perfil = s.role === 'gestor' ? 'Gestor' : (s.role === 'admin' ? 'Administrador' : 'Colaborador');
+  const perfil = s.role === 'gestor' ? 'Gestor' : s.role === 'tst' ? 'Técnico de Segurança' : (s.role === 'admin' ? 'Administrador' : 'Colaborador');
   return { nome: s.nome || s.username || '', empresa: s.empresa || '', perfil, login: s.username || '' };
 }
 function supAparelho(){
@@ -6007,8 +6017,8 @@ async function openMensagens(login, nome, abertoId, refTitulo){
   hideAllScreens();
   $('msgView').style.display = 'block'; window.scrollTo(0,0);
   msg.thread = login || ''; msg.nome = nome || ''; msg.ref = abertoId || ''; msg.refTitulo = refTitulo || '';
-  $('msgNova').style.display = isGestor() ? 'block' : 'none';
-  if(isGestor()) fillMsgNova();
+  $('msgNova').style.display = (isGestor() || isTst()) ? 'block' : 'none';
+  if(isGestor() || isTst()) fillMsgNova();
   await loadMsgs();
   clearInterval(msg.timer); msg.timer = setInterval(()=>{ if($('msgView').style.display === 'block') loadMsgs(true); }, 15000);
 }
@@ -6033,7 +6043,7 @@ function renderMsgs(){
   $('msgListBox').style.display = 'block'; $('msgThreadBox').style.display = 'none'; $('msgTitle').textContent = '💬 Mensagens';
   const t = msgThreads();
   $('msgThreads').innerHTML = t.length ? t.map(x => `<button type="button" class="th-row" data-l="${escHtml(x.login)}">${avatarHtml(x.nome, '', 40)}<div class="m"><b>${escHtml(x.nome)}</b><span>${x.ultima.de === msg.eu ? 'Você: ' : ''}${escHtml(x.ultima.texto)}</span></div>${x.nao ? `<span class="n">${x.nao}</span>` : ''}</button>`).join('')
-    : '<div class="ab-empty"><div style="font-size:34px;">💬</div><b>Nenhuma conversa ainda</b>' + (isGestor() ? 'Escolha um colaborador acima para começar.' : 'Quando o seu gestor enviar uma mensagem, ela aparece aqui.') + '</div>';
+    : '<div class="ab-empty"><div style="font-size:34px;">💬</div><b>Nenhuma conversa ainda</b>' + ((isGestor() || isTst()) ? 'Escolha um colaborador acima para começar.' : 'Quando o seu gestor enviar uma mensagem, ela aparece aqui.') + '</div>';
   $('msgThreads').querySelectorAll('[data-l]').forEach(b => b.onclick = ()=>{ msg.thread = b.getAttribute('data-l'); const x = t.find(y => y.login === msg.thread); msg.nome = x ? x.nome : ''; msg.ref = ''; msg.refTitulo = ''; renderMsgs(); });
 }
 async function renderThread(){
@@ -6047,7 +6057,7 @@ async function renderThread(){
   const perto = box.scrollHeight - box.scrollTop <= box.clientHeight + 60;
   box.innerHTML = conv.length ? conv.map(m => `<div class="cb ${m.de === msg.eu ? 'me' : 'o'}">${escHtml(m.texto)}<small>${m.de === msg.eu ? 'Você' : escHtml(m.deNome)} · ${new Date(m.ts).toLocaleString('pt-BR', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'})}</small></div>`).join('')
     : '<p class="hint">Sem mensagens ainda. Escreva a primeira abaixo.</p>';
-  const rap = isGestor() ? ['Pode finalizar hoje?', 'Precisa de ajuda?', 'Obrigado!'] : ['Já estou finalizando.', 'Preciso de ajuda.', 'Ok, entendido.'];
+  const rap = (isGestor() || isTst()) ? ['Pode finalizar hoje?', 'Precisa de ajuda?', 'Obrigado!'] : ['Já estou finalizando.', 'Preciso de ajuda.', 'Ok, entendido.'];
   $('msgQuick').innerHTML = rap.map(t => `<button type="button">${escHtml(t)}</button>`).join('');
   $('msgQuick').querySelectorAll('button').forEach(b => b.onclick = ()=>{ $('msgText').value = b.textContent; $('msgText').focus(); });
   if(conv.some(m => m.para === msg.eu && !m.lida)){
@@ -6185,12 +6195,12 @@ function renderHomeMenu(){
   const box = $('homeMenuItems');
   if(!box) return;
   const s = getSession() || {};
-  const admin = isAdmin(), gestor = isGestor();
+  const admin = isAdmin(), gestor = isGestor(), tst = isTst();
 
   // Cabeçalho: foto, saudação e perfil
   const primeiro = ((s.nome || s.username || '') + '').trim().split(/\s+/)[0] || '';
   $('homeGreeting').textContent = admin ? 'Administrador' : 'Olá, ' + primeiro;
-  $('homeUserRole').textContent = admin ? 'DocSeg Digital' : (gestor ? 'Gestor' + (s.empresa ? ' · ' + s.empresa : '') : (s.empresa || 'Colaborador'));
+  $('homeUserRole').textContent = admin ? 'DocSeg Digital' : ((gestor || tst) ? (gestor ? 'Gestor' : 'Técnico de Segurança') + (s.empresa ? ' · ' + s.empresa : '') : (s.empresa || 'Colaborador'));
   $('homeAvatar').innerHTML = s.foto ? `<img src="${s.foto}" alt="">` : escHtml(initialsOf(s.nome || s.username));
   $('homeAvatar').onclick = openProfileModal;
 
@@ -6219,7 +6229,7 @@ function renderHomeMenu(){
     html += '</div>';
   } else if(gestor){
     html += '<div class="ds-sec">Acompanhamento</div><div class="ds-grid">';
-    if(libCfg().ativo) html += tileHtml('liberacoes', 'Liberações', '#E3F4E6', '#1F6B2A', {sub:'Apto / Não apto', icon:'lib'});
+    if(libCfg().ativo) html += tileHtml('liberacoes', 'Liberações', '#E3F4E6', '#1F6B2A', {sub: s.empresaTemTst ? 'Acompanhar avaliações' : 'Apto / Não apto', icon:'lib'});
     html += tileHtml('abertos', 'Em aberto', '#FFF1D6', '#8A4B00', {sub:'Documentos não finalizados', icon:'aberto'});
     html += tileHtml('mensagens', 'Mensagens', '#E6ECF8', '#1D3A6F', {sub:'Conversar com a equipe', icon:'msg'});
     html += tileHtml('painel', 'Painel', '#E6ECF8', '#12254B', {sub:'Quem enviou e quando'});
@@ -6227,6 +6237,15 @@ function renderHomeMenu(){
     html += tileHtml('users', 'Colaboradores', '#DDF1EF', '#0F6B63', {sub:'Cadastro e fotos'});
     html += tileHtml('empresa', 'Notificar equipe', '#FFF1D6', '#8A4B00', {sub:'Aviso aos colaboradores', icon:'aviso'});
     html += '</div>';
+  } else if(tst){
+    if(libCfg().ativo){
+      html += '<div class="ds-sec">Liberação</div><div class="ds-grid">';
+      html += tileHtml('liberacoes', 'Liberações', '#E3F4E6', '#1F6B2A', {sub:'Avaliar e histórico', icon:'lib'});
+      html += tileHtml('mensagens', 'Mensagens', '#E6ECF8', '#1D3A6F', {sub:'Falar com os colaboradores', icon:'msg'});
+      html += '</div>';
+    } else {
+      html += '<div class="ab-empty"><div style="font-size:30px;">🔕</div><b>Liberação desligada</b>A liberação de documentos está desligada nesta empresa, então não há nada para avaliar. Fale com o gestor.</div>';
+    }
   } else {
     html += '<div class="ds-sec">Novo documento</div><div class="ds-grid">';
     const dA = docsAtivos();
@@ -6238,21 +6257,21 @@ function renderHomeMenu(){
     html += '</div>';
   }
   if(gestor) html = '<div id="abertosCard"></div><div id="teamCard"></div>' + html;
-  if(gestor || (!admin && libCfg().ativo)) html = '<div id="libCard"></div>' + html;
-  if(!admin && !gestor) html = abertosMeusHtml() + html;
+  if(gestor || tst || (!admin && libCfg().ativo)) html = '<div id="libCard"></div>' + html;
+  if(!admin && !gestor && !tst) html = abertosMeusHtml() + html;
   if(!admin) html = '<div class="ab-card" id="msgCard" style="display:none;background:#E6ECF8;color:#12254B;border-color:rgba(18,37,75,.2);"></div>' + pushBannerHtml() + html;
   box.innerHTML = html;
   if(gestor){ loadAbertosCard(); loadTeamCard(); }
-  if(gestor) libLoadCardGestor();
+  if(gestor || tst) libLoadCardGestor();
   else if(!admin && libCfg().ativo) libLoadCardTec();
   if(!admin){ pushBannerBind(); loadMsgBadge(); }
-  if(!admin && !gestor){ abertosMeusBind(); syncAbertos(); }
+  if(!admin && !gestor && !tst){ abertosMeusBind(); syncAbertos(); }
   { const bs = document.getElementById('btnTrocarSenhaPadrao'); if(bs) bs.onclick = openAdminAccountModal; }
   box.querySelectorAll('[data-home]').forEach(btn => { btn.onclick = ()=> homeAction(btn.getAttribute('data-home')); });
 
   // Últimos documentos (neste aparelho)
   const rec = $('homeRecent');
-  if(!admin && !gestor){
+  if(!admin && !gestor && !tst){
     const hist = loadHistory().filter(h => h.status).slice(0, 3);
     if(hist.length){
       const now = Date.now();
@@ -6279,7 +6298,7 @@ function renderHomeMenu(){
     const tab = (id, label, ic, on, badge) => `<button type="button" data-home="${id}"${on ? ' class="on"' : ''}>${ICONS[ic]}${label}${badge ? `<span class="nb">${badge}</span>` : ''}</button>`;
     bar.innerHTML = tab('inicio', 'Início', 'home', true) +
       (gestor ? tab('painel', 'Painel', 'painel') : '') +
-      (gestor ? '' : tab('meusDocs', 'Documentos', 'meusDocs', false, nAction > 0 ? nAction : '')) +
+      (tst ? tab('liberacoes', 'Liberações', 'lib') : (gestor ? '' : tab('meusDocs', 'Documentos', 'meusDocs', false, nAction > 0 ? nAction : ''))) +
       tab('suporte', 'Suporte', 'suporte') +
       tab('perfil', 'Perfil', 'perfil');
     bar.querySelectorAll('[data-home]').forEach(btn => { btn.onclick = ()=> homeAction(btn.getAttribute('data-home')); });
@@ -6459,7 +6478,7 @@ const LIB_MOTIVOS = ['Item não conforme','Falta de EPI','Equipe incompleta','Fo
 const LIB_SNAP_KEY = 'lib_snaps';
 const PT_NUM_GUARDADO_KEY = 'pt_num_guardado';
 const LIB_ICON = { pt:'📄', veiculo:'🚗', escada:'🪜' };
-const lib = { modo:'', lista:[], pend:[], rec:[], cfg:null, atual:null, local:null, assinatura:'' };
+const lib = { podeLiberar:true, modo:'', lista:[], pend:[], rec:[], cfg:null, atual:null, local:null, assinatura:'' };
 
 function libCfg(){ const s = getSession(); return (s && s.empresaLiberacao) || { ativo:false, docs:[], modo:'escolha' }; }
 function libExigida(tipo){ const c = libCfg(); return !!(c.ativo && (c.docs || []).indexOf(tipo) !== -1); }
@@ -6647,6 +6666,8 @@ async function libLoadGestor(){
     const r = await api('listLiberacoes');
     if(r && r.ok){
       lib.pend = r.pendentes || []; lib.rec = r.recentes || []; lib.cfg = r.config || null;
+      lib.podeLiberar = r.podeLiberar !== false;
+      const sT = getSession(); if(sT && isGestor() && sT.empresaTemTst !== !!r.temTst){ sT.empresaTemTst = !!r.temTst; saveSession(sT); }
       const s = getSession();
       if(s && (r.carimbo || r.config)){ if(r.carimbo) s.carimbo = r.carimbo; if(r.config) s.empresaLiberacao = r.config; saveSession(s); }
     }
@@ -6664,11 +6685,11 @@ async function libLoadCardGestor(){
   const agora = Date.now();
   let h = '';
   if(lib.pend.length){
-    h += `<div class="lib-card"><h4>⚠️ Aguardando sua avaliação<span class="n">${lib.pend.length}</span></h4>` +
+    h += `<div class="lib-card"><h4>${lib.podeLiberar ? '⚠️ Aguardando sua avaliação' : '⏳ Aguardando o Técnico de Segurança'}<span class="n">${lib.pend.length}</span></h4>` +
       lib.pend.slice(0, 5).map(x => libRowHtml(x, x.nome + (x.area ? ' · ' + x.area : '') + ' · ' + timeAgo(x.ts, agora) + (x.naoConformes.length ? ' · ' + x.naoConformes.length + ' NC' : ''))).join('') +
       (lib.pend.length > 5 ? '<button type="button" class="lib-btn ghost" id="libVerTodos">Ver todos</button>' : '') + '</div>';
   }
-  if(libCfg().ativo && libSemCarimbo()){
+  if(libCfg().ativo && lib.podeLiberar && libSemCarimbo()){
     h += '<div class="home-contract urgent" style="margin:0 0 14px;"><b>🔖 Cadastre o seu carimbo</b><p>Esta empresa libera documentos só com o carimbo digital + PIN.</p><button type="button" class="btn btn-primary" id="libCadCarimbo" style="width:100%;margin-top:10px;">Cadastrar agora</button></div>';
   }
   box.innerHTML = h;
@@ -6724,7 +6745,9 @@ function libRenderAvaliar(){
     (x.horaIni ? `<span>Horário</span><span>${escHtml(x.horaIni)}${x.horaFim ? ' – ' + escHtml(x.horaFim) : ''}</span>` : '') +
     (x.resumo ? `<span>Resumo</span><span>${escHtml(x.resumo)}</span>` : '') + '</div></div>';
   h += '<button type="button" class="lib-btn ghost" id="libVerPdf">📄 Abrir PDF completo (fotos e assinaturas)</button>';
-  if(x.status === 'aguardando'){
+  if(x.status === 'aguardando' && !lib.podeLiberar){
+    h += '<div class="lib-box" style="background:#E6ECF8;border-color:rgba(18,37,75,.2);color:#12254B;margin-top:10px;"><b class="t">⏳ Aguardando a avaliação do Técnico de Segurança</b>Depois da avaliação, você vê aqui quem liberou, quando e por quê.</div>';
+  } else if(x.status === 'aguardando'){
     h += '<div class="lib-acts"><button type="button" class="lib-btn no" id="libNao">✕ Não apto</button><button type="button" class="lib-btn ok" id="libSim">✓ Apto — liberar</button></div>';
   } else {
     h += `<div class="lib-box${x.status === 'nao_apto' ? ' red' : ''}" style="margin-top:12px;"><b class="t">${x.status === 'apto' ? '✅ Liberado' : '⛔ Não apto'} por ${escHtml(x.decididoPor)} · ${libHora(x.decididoTs)}</b>${x.motivo ? escHtml(x.motivo) + (x.oQueFazer ? ' — ' + escHtml(x.oQueFazer) : '') : ''}</div>`;
@@ -7058,7 +7081,7 @@ function empresaLibForm(){
 /* ---- Atualização ao vivo ---- */
 function libOnPush(){
   if(!getSession()) return;
-  if(isGestor()){
+  if(isGestor() || isTst()){
     if($('libView').style.display === 'block' && lib.modo === 'gestor') libLoadGestor().then(libRenderGestor);
     else if($('homeMenu').style.display === 'block') libLoadCardGestor();
   } else if(!isAdmin()){
@@ -7096,7 +7119,7 @@ async function initApp(){
   updateBrand();
   applyRoleVisibility();
   const sess = getSession();
-  if(sess && (sess.role === 'tecnico' || sess.role === 'gestor' || sess.role === 'admin') && sess.username){
+  if(sess && (sess.role === 'tecnico' || sess.role === 'gestor' || sess.role === 'tst' || sess.role === 'admin') && sess.username){
     hideLoginScreen();
     if(gatesPending(sess)){ runGates().then(()=>{ initPushNotifications(getSession()); goHome(); }); }
     else { initPushNotifications(sess); goHome(); }
