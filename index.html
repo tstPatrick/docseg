@@ -211,8 +211,10 @@
   #toast{
     position:fixed; left:50%; bottom:100px; transform:translate(-50%,20px);
     background:var(--ink); color:#fff; padding:11px 16px; border-radius:9px; font-size:13.5px;
-    opacity:0; transition:all .25s ease; z-index:80; max-width:88%; text-align:center;
+    opacity:0; transition:all .25s ease; z-index:100001; max-width:88%; text-align:center; pointer-events:none; /* não bloqueia o toque no que está embaixo */
   }
+  #toast.salvo{background:#1F6B2A; font-size:14.5px; font-weight:700; border-radius:12px; padding:12px 18px; box-shadow:0 8px 24px rgba(0,0,0,.25);}
+  #toast.salvo div{font-weight:400; font-size:13px; margin-top:2px;}
   #toast.show{opacity:1; transform:translate(-50%,0);}
   #toast.err{background:var(--red-dark);}
   #toast.ok{background:var(--green);}
@@ -833,6 +835,7 @@
   .md-pill.lib-reenviada{background:#E6ECF8; color:#1D3A6F;} .md-pill.lib-nao_executada{background:#E8ECF2; color:#3B475E;}
   .eg-status{margin-top:8px; border-radius:10px; padding:8px 10px; font-size:12.5px; font-weight:700; background:#E8ECF2; color:#3B475E;}
   .eg-status.on{background:#E3F4E6; color:#1F6B2A;}
+  .sup-apagar{border:1px solid rgba(163,45,45,.4) !important; background:#fff !important; color:#A32D2D !important; border-radius:999px; padding:5px 10px; font:700 12px inherit; font-family:inherit; cursor:pointer;}
   .lib-small{font-size:12.5px; color:#566179; line-height:1.45; margin:8px 0 0;}
   .lib-err{color:#A32D2D; font-size:13px; font-weight:700; margin-top:8px; display:none;}
 </style>
@@ -997,6 +1000,7 @@
     </div>
     <div id="homeMenuItems"></div>
     <div id="homeRecent"></div>
+    <p id="homeVersao" style="text-align:center;font-size:12px;color:#8A94A6;margin:22px 0 12px;"></p>
   </div>
   <nav class="ds-tabbar" id="homeTabbar" aria-label="Navegação principal"></nav>
 </div>
@@ -1011,7 +1015,7 @@
       <button type="button" class="sup-btn2" id="supReport">⚠ Relatar um problema</button>
       <div class="ds-sec">Dúvidas rápidas</div>
       <div class="sup-faq" id="supFaq"></div>
-      <div class="ds-sec">Meus chamados</div>
+      <div class="ds-sec ds-sec-row"><span>Meus chamados</span><button type="button" id="supLimpar" style="color:#A32D2D;display:none;">🗑 Limpar histórico</button></div>
       <div id="supMine"></div>
     </div>
     <div id="supForm" class="sup-form" style="display:none;">
@@ -1041,6 +1045,7 @@
   <div class="screen-topbar"><button type="button" id="chamadosBack" title="Voltar">←</button><b>Suporte · chamados</b><button type="button" id="chamadosRefresh" title="Atualizar" style="margin-left:auto;">↻</button></div>
   <div class="sup-wrap">
     <div class="sup-tabs" id="chamadosTabs"></div>
+    <div style="text-align:right;margin:-4px 0 8px;"><button type="button" id="chamadosLimpar" style="display:none;border:0;background:none;color:#A32D2D;font:700 13px inherit;font-family:inherit;cursor:pointer;">🗑 Apagar todos os resolvidos</button></div>
     <div id="chamadosList"></div>
   </div>
 </div>
@@ -1325,6 +1330,18 @@
   <div class="modal" id="libDecBody"></div>
 </div>
 
+<!-- E-MAIL DOS PDFs (gestor) -->
+<div class="modal-bg ds" id="emailPdfModal">
+  <div class="modal">
+    <button class="modal-close" id="closeEmailPdf">←</button>
+    <h2 style="font-family:'Poppins',sans-serif;">E-mail dos PDFs</h2>
+    <p class="desc">Os documentos sempre ficam no painel e no Drive. Se a empresa quiser, cada PDF também chega por e-mail assim que é enviado (ou liberado, quando passa por liberação).</p>
+    <label style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;margin-bottom:10px;"><input type="checkbox" id="emailPdfAtivo" style="width:20px;height:20px;"> Enviar cada documento também por e-mail</label>
+    <div class="field"><label>Para quais e-mails</label><input type="text" id="emailPdfDestino" placeholder="seguranca@empresa.com, sesmt@empresa.com"><p class="hint">Um ou mais e-mails, separados por vírgula.</p></div>
+    <button type="button" class="btn btn-primary" style="width:100%;" id="emailPdfSave">Salvar</button>
+  </div>
+</div>
+
 <!-- CARIMBO DIGITAL DO LIBERADOR (gestor) -->
 <div class="modal-bg ds" id="carimboModal">
   <div class="modal">
@@ -1383,7 +1400,7 @@
   <div class="modal">
     <button class="modal-close" id="closeEmpresas">←</button>
     <h2>Empresas</h2>
-    <p class="desc">Cada empresa tem suas próprias perguntas, cor da PT, logo, aviso e a opção de envio por e-mail. Cadastre a empresa aqui primeiro; depois crie os colaboradores e o gestor dela em "Usuários".</p>
+    <p class="desc">Cada empresa tem suas próprias perguntas, cor da PT, logo, aviso e a opção de envio por e-mail. Cadastre a empresa aqui primeiro; depois crie o login do gestor dela em "Gestores" — os colaboradores quem cadastra é o próprio gestor.</p>
 
     <div id="empresasList" style="margin-bottom:18px;"></div>
 
@@ -1391,7 +1408,7 @@
     <div class="field">
       <label>Nome da empresa</label>
       <input type="text" id="empresaFormNome" placeholder="Ex: Global Seg">
-      <p class="hint">Depois de salva, essa empresa aparece na lista para escolher ao cadastrar colaboradores e gestores, em "Usuários".</p>
+      <p class="hint">Depois de salva, essa empresa aparece na lista para escolher ao cadastrar o gestor, em "Gestores".</p>
     </div>
 
     <p class="desc" style="margin-bottom:6px; margin-top:14px; border-top:1px solid var(--line); padding-top:14px;">Logo esquerda</p>
@@ -1458,13 +1475,8 @@
       <a href="#" id="empresaFormDriveLink" target="_blank" style="display:none;font-size:12px;color:var(--ui);margin-top:6px;">Abrir a pasta desta empresa no Drive ↗</a>
     </div>
 
-    <p class="desc" style="margin-bottom:6px; margin-top:14px; border-top:1px solid var(--line); padding-top:14px;">Envio por e-mail (opcional)</p>
-    <p class="hint" style="margin-top:-4px;margin-bottom:10px;">Por padrão os documentos NÃO são enviados por e-mail: eles vão para o painel do gestor, onde o PDF pode ser baixado. Se esta empresa quiser também receber cada documento por e-mail, ligue aqui.</p>
-    <label class="chk-line"><input type="checkbox" id="empresaFormEmailAtivo"> Enviar também por e-mail</label>
-    <div class="field">
-      <input type="text" id="empresaFormEmailDestino" placeholder="seguranca@empresa.com, gestor@empresa.com">
-      <p class="hint">Um ou mais e-mails, separados por vírgula.</p>
-    </div>
+    <p class="desc" style="margin-bottom:6px; margin-top:14px; border-top:1px solid var(--line); padding-top:14px;">Envio por e-mail</p>
+    <div id="empresaFormEmailInfo" style="background:#F1F4F9;border:1px solid #E1E7F1;border-radius:10px;padding:10px 12px;font-size:13px;color:#3B475E;margin-bottom:6px;"></div>
 
     <p class="desc" style="margin-bottom:6px; margin-top:14px; border-top:1px solid var(--line); padding-top:14px;">Aviso para o gestor</p>
     <p class="hint" style="margin-top:-4px;margin-bottom:10px;">Só o gestor dessa empresa vê, na tela inicial dele, e só você edita. O aviso para os colaboradores quem escreve é o próprio gestor. Deixe em branco para não mostrar nenhum aviso.</p>
@@ -1472,8 +1484,6 @@
       <textarea id="empresaFormAviso" rows="3" placeholder="Ex: Renovação do contrato em 05/11." style="width:100%;padding:11px 12px;border:1px solid #D6D3CC;border-radius:8px;font-size:14px;font-family:inherit;resize:vertical;"></textarea>
     </div>
 
-    <p class="desc" style="margin-bottom:6px; margin-top:14px; border-top:1px solid var(--line); padding-top:14px;">Perguntas dos formulários desta empresa</p>
-    <p class="hint" style="margin-top:-4px;margin-bottom:10px;">Se não personalizar, os colaboradores dessa empresa usam as perguntas padrão de fábrica. Toque no título de cada grupo para abrir.</p>
     <p class="desc" style="margin-bottom:6px; margin-top:14px; border-top:1px solid var(--line); padding-top:14px;">Documentos contratados</p>
     <p class="hint" style="margin-top:-4px;margin-bottom:8px;">Só estes aparecem para os colaboradores desta empresa. Documentos já enviados continuam no painel mesmo se você desligar um.</p>
     <div id="empresaFormDocs"></div>
@@ -1574,18 +1584,15 @@
     <h2>Configurações</h2>
 
 
-    <label style="display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600;margin-bottom:16px;">
-      <input type="checkbox" id="cfgSoundEnabled" style="width:18px;height:18px;">
-      Tocar som ao concluir o envio da PT
-    </label>
+    <p class="desc" style="margin:10px 0 6px;">🔊 Sons do app</p>
+    <p class="hint" style="margin:-4px 0 10px;">Valem para todos os usuários, em todas as empresas.</p>
+    <div id="cfgSons"></div>
 
-    <p class="desc" style="margin-bottom:6px; margin-top:18px; border-top:1px solid var(--line); padding-top:14px;">Servidor (Google Apps Script)</p>
-    <div class="warn-box">
-      1. Crie o Google Apps Script na conta do DocSeg Digital e implante como "App da Web".<br>
-      2. Cole aqui embaixo a URL gerada pelo Google (termina em <b>/exec</b>).<br>
-      3. O envio por e-mail é opcional e se liga por empresa, em 🏢 Empresas.
-    </div>
+    <details style="margin-top:14px;border-top:1px solid var(--line);padding-top:12px;">
+      <summary style="font-size:13.5px;font-weight:700;color:#3B475E;cursor:pointer;">⚙ Avançado — endereço do servidor</summary>
+      <p class="hint" style="margin:8px 0;">Só mude se o servidor (Apps Script) for publicado num endereço novo. Um endereço errado faz o app parar de funcionar.</p>
     <div class="field"><label>URL do Google Apps Script</label><input type="text" id="cfgScriptUrl" placeholder="https://script.google.com/macros/s/AKfycb.../exec"></div>
+    </details>
 
     <p class="desc" style="margin-bottom:6px; margin-top:14px; border-top:1px solid var(--line); padding-top:14px;">Backup dos dados</p>
     <div class="card-lite" id="backupBox" style="background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:12px;font-size:13px;line-height:1.5;">
@@ -1614,13 +1621,7 @@
 
     <button class="btn btn-primary" style="width:100%" id="saveSettings">Salvar configuração</button>
 
-    <p class="desc" style="margin-bottom:6px; margin-top:18px; border-top:1px solid var(--line); padding-top:14px;">Configurar um novo aparelho rapidamente</p>
-    <p class="hint" style="margin-top:-4px;margin-bottom:10px;">Gera um arquivo com logo, cores, prefixo e link do script — leve para o próximo celular.</p>
-    <div class="row2">
-      <button type="button" class="btn btn-ghost" id="btnExportCfg">⭳ Exportar configuração</button>
-      <button type="button" class="btn btn-ghost" id="btnImportCfg">⭱ Importar configuração</button>
-    </div>
-    <input type="file" accept="application/json" id="importCfgFile" style="display:none;">
+    
   </div>
 </div>
 
@@ -1639,7 +1640,7 @@
   <div class="modal">
     <button class="modal-close" id="closeAdminAccount">←</button>
     <h2>Administrador</h2>
-    <p class="hint" style="margin-top:-6px;margin-bottom:16px;">Conta própria do Administrador, separada dos usuários cadastrados em "Usuários". Use aqui só para trocar a senha de acesso do admin.</p>
+    <p class="hint" style="margin-top:-6px;margin-bottom:16px;">Conta própria do Administrador, separada dos gestores e colaboradores. Use aqui só para trocar a senha de acesso do admin.</p>
 
     <div class="field"><label>Usuário do Administrador</label>
       <div class="fixed-value">admin</div>
@@ -1986,7 +1987,7 @@ function sessionFromServer(uname, passHash, r){
     empresaLogoDataUrl2: r.empresaLogoDataUrl2 || '',
     empresaThemeColor: r.empresaThemeColor || '', empresaThemeColor2: r.empresaThemeColor2 || '',
     empresaPtPrefix: r.empresaPtPrefix || '',
-    empresaLiberacao: r.empresaLiberacao || null, carimbo: r.carimbo || null, empresaTemTst: !!r.empresaTemTst,
+    empresaLiberacao: r.empresaLiberacao || null, carimbo: r.carimbo || null, empresaTemTst: !!r.empresaTemTst, sons: r.sons || null,
     empresaDocumentos: Array.isArray(r.empresaDocumentos) && r.empresaDocumentos.length ? r.empresaDocumentos : null
   };
 }
@@ -2237,7 +2238,7 @@ $('loginServer').onclick = ()=>{
   const url = v.trim();
   if(url && !/^https:\/\/script\.google\.com\/.+\/exec$/.test(url)){ toast('Endereço inválido. Ele começa com https://script.google.com e termina em /exec.', 'err'); return; }
   const c = loadCfg(); c.scriptUrl = url || DEFAULT_SCRIPT_URL; c.serverGen = SERVER_GEN; saveCfg(c);
-  toast('Endereço do servidor atualizado.', 'ok');
+  salvo('Endereço do servidor atualizado.');
 };
 
 // Confirmação própria do app (no lugar do confirm() do navegador, que mostra o endereço do site)
@@ -2383,7 +2384,7 @@ $('btnProfPassSave').onclick = async ()=>{
     if(r.error) throw new Error(r.error);
     s.passwordHash = newHash; saveSession(s);
     $('profPassCur').value = ''; $('profPassNew').value = ''; $('profPassNew2').value = '';
-    toast('Senha alterada!', 'ok');
+    salvo('Senha alterada!');
   }catch(e){
     toast(e.message || 'Não foi possível trocar a senha.', 'err');
   }finally{ btn.disabled = false; btn.textContent = old; }
@@ -3008,9 +3009,13 @@ document.getElementById('btnNext').onclick = ()=>{
 };
 
 /* ============ TOAST ============ */
+// Confirmação padrão de tudo o que é salvo no app (+ som "ao salvar", se o admin ligou)
+function salvo(msg){ toast(msg, 'salvo'); tocarSom('salvar'); }
 function toast(msg, type){
   const t = document.getElementById('toast');
-  t.textContent = msg; t.className = 'show ' + (type||'');
+  if(type === 'salvo') t.innerHTML = '✅ Alteração concluída' + (msg ? '<div>' + escHtml(msg) + '</div>' : '');
+  else t.textContent = msg;
+  t.className = 'show ' + (type||'');
   setTimeout(()=>{ t.className = ''; }, 3600);
 }
 
@@ -3119,7 +3124,7 @@ function openSettingsModal(){
   if(!isAdmin()){ toast('Acesso restrito ao administrador.', 'err'); return; }
   const cfg = loadCfg();
   document.getElementById('cfgScriptUrl').value = cfg.scriptUrl||'';
-  document.getElementById('cfgSoundEnabled').checked = cfg.soundEnabled !== false;
+  pintaSons();
   document.getElementById('sheetAuditBox').style.display = 'none';
   hideAllScreens();
   document.getElementById('settingsModal').classList.add('show');
@@ -3146,8 +3151,7 @@ document.getElementById('saveSettings').onclick = async ()=>{
     serverGen: prevCfg.serverGen,
     empresaPadrao: prevCfg.empresaPadrao, // vem automático do login (empresa = usuário), não editável aqui
     themeColor: prevCfg.themeColor, themeColor2: prevCfg.themeColor2, // definidas no cadastro da empresa, não aqui
-    tecNome: prevCfg.tecNome,
-    soundEnabled: document.getElementById('cfgSoundEnabled').checked
+    tecNome: prevCfg.tecNome
   };
   saveCfg(cfg);
   applyTheme(cfg);
@@ -3156,9 +3160,15 @@ document.getElementById('saveSettings').onclick = async ()=>{
     saveDraft();
     if(steps[current].key === 'ident') renderCurrentStep();
   }
+  const sons = {}; Object.keys(SONS_PADRAO).forEach(k => sons[k] = $('cfgSom_' + k).value);
+  try{
+    const r = await fetchAdminAction(getScriptUrl(), 'saveSons', sons);
+    if(r.error) throw new Error(r.error);
+    const sS = getSession(); if(sS){ sS.sons = r.sons; saveSession(sS); }
+  }catch(e){ toast('Configuração salva, mas os sons não: ' + (e.message || 'sem conexão'), 'err'); return; }
   updateBrand();
   goHome();
-  toast('Configuração salva neste aparelho.', 'ok');
+  salvo('Configurações salvas.');
 };
 
 /* ============ CONTA DO ADMINISTRADOR (separada dos usuários/técnicos) ============ */
@@ -3197,7 +3207,7 @@ document.getElementById('btnAdminPassSave').onclick = async ()=>{
     // Atualiza a sessão deste aparelho pra não precisar logar de novo.
     const s = getSession();
     if(s && s.username === 'admin'){ s.passwordHash = newPasswordHash; s.senhaPadrao = false; localStorage.setItem(SESSION_KEY, JSON.stringify(s)); }
-    toast('Senha do Administrador atualizada com sucesso!', 'ok');
+    salvo('Senha do Administrador atualizada.');
     document.getElementById('adminCurPass').value = '';
     document.getElementById('adminNewPass').value = '';
     document.getElementById('adminNewPass2').value = '';
@@ -3206,48 +3216,6 @@ document.getElementById('btnAdminPassSave').onclick = async ()=>{
   }finally{
     btn.disabled = false; btn.textContent = oldTxt;
   }
-};
-
-/* ============ EXPORTAR / IMPORTAR CONFIGURAÇÃO DO DISPOSITIVO ============ */
-document.getElementById('btnExportCfg').onclick = ()=>{
-  if(!isAdmin()){ toast('Acesso restrito ao administrador.', 'err'); return; }
-  const bundle = {
-    app:'DocSeg Digital', version:1, exportedAt:new Date().toISOString(),
-    cfg: loadCfg(),
-    logos: loadLogos(),
-    ptCounter: localStorage.getItem(PT_COUNTER_KEY) || '0'
-  };
-  const blob = new Blob([JSON.stringify(bundle, null, 2)], {type:'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = 'docseg-config.json'; a.click();
-  setTimeout(()=>URL.revokeObjectURL(url), 2000);
-  toast('Configuração exportada — envie o arquivo para o próximo celular.', 'ok');
-};
-document.getElementById('btnImportCfg').onclick = ()=>{
-  if(!isAdmin()){ toast('Acesso restrito ao administrador.', 'err'); return; }
-  document.getElementById('importCfgFile').click();
-};
-document.getElementById('importCfgFile').onchange = ()=>{
-  if(!isAdmin()){ toast('Acesso restrito ao administrador.', 'err'); return; }
-  const file = document.getElementById('importCfgFile').files[0];
-  if(!file) return;
-  const reader = new FileReader();
-  reader.onload = ()=>{
-    try{
-      const bundle = JSON.parse(reader.result);
-      if(bundle.cfg) saveCfg(bundle.cfg);
-      if(bundle.logos) saveLogos(bundle.logos);
-      if(bundle.ptCounter !== undefined) localStorage.setItem(PT_COUNTER_KEY, String(bundle.ptCounter));
-      applyTheme(loadCfg());
-      updateBrand();
-      openSettingsModal();
-      toast('Configuração importada com sucesso neste aparelho.', 'ok');
-    }catch(e){
-      toast('Arquivo de configuração inválido.', 'err');
-    }
-  };
-  reader.readAsText(file);
 };
 
 /* ============ LINK DE CONFIGURAÇÃO RÁPIDA (fallback simples, sem backend) ============ */
@@ -3496,7 +3464,7 @@ $('btnUserFormSave').onclick = async ()=>{
       const r2 = await api('saveFoto', { target: username, foto: userFormFoto });
       if(r2.error) toast('Usuário salvo, mas a foto não: ' + r2.error, 'err');
     }
-    toast(password && !isEditing ? 'Usuário criado! Passe o login e a senha provisória a ele.' : 'Usuário salvo!', 'ok');
+    salvo(password && !isEditing ? 'Usuário criado! Passe o login e a senha provisória a ele.' : 'Usuário salvo!');
     resetUserForm();
     await loadUsersList();
   }catch(err){
@@ -3513,7 +3481,7 @@ async function deleteUserByUsername(username){
     const resp = await fetch(getScriptUrl(), {method:'POST', body: JSON.stringify(payload)});
     const data = await resp.json();
     if(data.error) throw new Error(data.error);
-    toast('Usuário excluído.', 'ok');
+    salvo('Usuário excluído.');
     await loadUsersList();
   }catch(err){
     toast(err.message || 'Não foi possível excluir.', 'err');
@@ -3615,8 +3583,7 @@ function resetEmpresaForm(){
   document.getElementById('empresaFormColorAccent').value = '#F4B400';
   document.getElementById('empresaFormPtPrefix').value = '';
   empresaNumAtual = 1; document.getElementById('empresaFormNextNumber').value = '1'; atualizarDicaNumero();
-  document.getElementById('empresaFormEmailAtivo').checked = false;
-  document.getElementById('empresaFormEmailDestino').value = '';
+  pintaEmailEmpresa(null);
   document.getElementById('empresaFormDriveEmails').value = '';
   { const dl = document.getElementById('empresaFormDriveLink'); dl.style.display = 'none'; dl.removeAttribute('href'); }
   empresaFormLogoDataUrl = null;
@@ -3696,6 +3663,29 @@ async function openEmpresaGestorModal(){
   }catch(err){ toast('Não foi possível carregar: ' + (err.message || 'falha de conexão'), 'err'); }
 }
 $('closeEmpresaGestor').onclick = goHome;
+async function openEmailPdfModal(){
+  if(!isGestor()) return;
+  hideAllScreens();
+  $('emailPdfAtivo').checked = false; $('emailPdfDestino').value = '';
+  $('emailPdfModal').classList.add('show');
+  try{
+    const data = await fetchAdminAction(getScriptUrl(), 'listEmpresas');
+    const emp = (data.empresas || [])[0];
+    if(emp){ $('emailPdfAtivo').checked = !!emp.emailAtivo; $('emailPdfDestino').value = emp.emailDestino || ''; }
+  }catch(e){ toast('Não foi possível carregar: verifique a internet.', 'err'); }
+}
+$('closeEmailPdf').onclick = goHome;
+$('emailPdfSave').onclick = async ()=>{
+  const btn = $('emailPdfSave'), old = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Salvando...';
+  try{
+    const r = await api('saveEmailEmpresa', { emailAtivo: $('emailPdfAtivo').checked, emailDestino: $('emailPdfDestino').value.trim() });
+    if(r.error) throw new Error(r.error === 'não autorizado' ? 'O servidor ainda não permite. Atualize o código do Apps Script.' : r.error);
+    $('emailPdfDestino').value = r.emailDestino || '';
+    salvo(r.emailAtivo ? 'Os PDFs vão também para ' + r.emailDestino + '.' : 'Envio por e-mail desligado.');
+  }catch(e){ toast(e.message || 'Não foi possível salvar.', 'err'); }
+  finally{ btn.disabled = false; btn.textContent = old; }
+};
 $('egSave').onclick = async ()=>{
   const btn = $('egSave'); const old = btn.textContent;
   btn.disabled = true; btn.textContent = 'Salvando...';
@@ -3704,7 +3694,7 @@ $('egSave').onclick = async ()=>{
     const r = await api('saveAviso', { aviso: texto });
     if(r.error) throw new Error(r.error);
     pintaStatusAviso(texto, Date.now());
-    toast(texto ? 'Aviso salvo! A equipe vê por 24 horas.' : 'Aviso removido.', 'ok');
+    salvo(texto ? 'Aviso salvo! A equipe vê por 24 horas.' : 'Aviso removido.');
   }catch(err){ toast(err.message || 'Não foi possível salvar.', 'err'); }
   finally{ btn.disabled = false; btn.textContent = old; }
 };
@@ -3770,8 +3760,7 @@ function loadEmpresaIntoForm(nome){
   document.getElementById('empresaFormColorAccent').value = emp.themeColor2 || '#F4B400';
   document.getElementById('empresaFormPtPrefix').value = emp.ptPrefix || '';
   carregarProximoNumero(emp.nome);
-  document.getElementById('empresaFormEmailAtivo').checked = !!emp.emailAtivo;
-  document.getElementById('empresaFormEmailDestino').value = emp.emailDestino || '';
+  pintaEmailEmpresa(emp);
   document.getElementById('empresaFormDriveEmails').value = emp.driveEmails || '';
   { const dl = document.getElementById('empresaFormDriveLink'); if(emp.driveFolderUrl){ dl.href = emp.driveFolderUrl; dl.style.display = 'inline-block'; } else { dl.style.display = 'none'; } }
   empresaFormLogoDataUrl = null; // ainda não mexeu — mantém a logo já salva, a não ser que troque/remova agora
@@ -3796,10 +3785,7 @@ document.getElementById('btnEmpresaFormSave').onclick = async ()=>{
     const themeColor = document.getElementById('empresaFormColorPrimary').value;
     const themeColor2 = document.getElementById('empresaFormColorAccent').value;
     const ptPrefix = document.getElementById('empresaFormPtPrefix').value.trim();
-    const emailAtivo = document.getElementById('empresaFormEmailAtivo').checked;
-    const emailDestino = document.getElementById('empresaFormEmailDestino').value.trim();
-    if(emailAtivo && !emailDestino){ toast('Informe o e-mail de destino ou desligue o envio por e-mail.', 'err'); btn.disabled = false; btn.textContent = oldTxt; return; }
-    const payload = Object.assign({action:'saveEmpresa', nome, documentos, teste: document.getElementById('empresaFormTeste').checked, relatorioMensal: document.getElementById('empresaFormRelatorio').checked, alertaHoras: +document.getElementById('empresaFormAlertaHoras').value || 24, avisoGestor: aviso, suspenso: document.getElementById('empresaFormSuspenso').checked, suspensoMsg: document.getElementById('empresaFormSuspensoMsg').value.trim(), contratoInicio: document.getElementById('empresaFormContratoIni').value, contratoFim: document.getElementById('empresaFormContratoFim').value, avisoDias: +document.getElementById('empresaFormAvisoDias').value, carenciaDias: +document.getElementById('empresaFormCarencia').value, themeColor, themeColor2, ptPrefix, emailAtivo, emailDestino, driveEmails: document.getElementById('empresaFormDriveEmails').value.trim(), liberacao: empresaLibForm()}, currentAdminCreds());
+    const payload = Object.assign({action:'saveEmpresa', nome, documentos, teste: document.getElementById('empresaFormTeste').checked, relatorioMensal: document.getElementById('empresaFormRelatorio').checked, alertaHoras: +document.getElementById('empresaFormAlertaHoras').value || 24, avisoGestor: aviso, suspenso: document.getElementById('empresaFormSuspenso').checked, suspensoMsg: document.getElementById('empresaFormSuspensoMsg').value.trim(), contratoInicio: document.getElementById('empresaFormContratoIni').value, contratoFim: document.getElementById('empresaFormContratoFim').value, avisoDias: +document.getElementById('empresaFormAvisoDias').value, carenciaDias: +document.getElementById('empresaFormCarencia').value, themeColor, themeColor2, ptPrefix, driveEmails: document.getElementById('empresaFormDriveEmails').value.trim(), liberacao: empresaLibForm()}, currentAdminCreds());
     // só manda o campo da logo quando o admin realmente mexeu nela
     // (escolheu uma nova ou clicou em "Remover logo") — null = não mexeu.
     if(empresaFormLogoDataUrl !== null) payload.logoDataUrl = empresaFormLogoDataUrl;
@@ -3808,8 +3794,8 @@ document.getElementById('btnEmpresaFormSave').onclick = async ()=>{
     const data = await resp.json();
     if(data.error) throw new Error(data.error);
     if(data.driveFalhas && data.driveFalhas.length) toast('Empresa salva, mas a pasta não foi compartilhada com: ' + data.driveFalhas.join('; '), 'err');
-    else if(data.driveShared && data.driveShared.length) toast('Empresa salva! Pasta do Drive compartilhada com ' + data.driveShared.length + ' e-mail(s).', 'ok');
-    else toast('Empresa salva! Quem é dessa empresa recebe as mudanças no próximo acesso.', 'ok');
+    else if(data.driveShared && data.driveShared.length) salvo('Empresa salva! Pasta do Drive compartilhada com ' + data.driveShared.length + ' e-mail(s).');
+    else salvo('Empresa salva! Quem é dessa empresa recebe as mudanças no próximo acesso.');
     // Próximo número: só manda quando o admin mudou (corrigir a sequência).
     const proximo = parseInt(document.getElementById('empresaFormNextNumber').value, 10);
     if(proximo > 0 && proximo !== empresaNumAtual){
@@ -3845,6 +3831,13 @@ async function carregarProximoNumero(nome){
 }
 document.getElementById('empresaFormNextNumber').addEventListener('input', atualizarDicaNumero);
 document.getElementById('empresaFormPtPrefix').addEventListener('input', atualizarDicaNumero);
+// O envio por e-mail é definido pelo gestor ("E-mail dos PDFs"): aqui o admin só consulta.
+function pintaEmailEmpresa(emp){
+  const box = document.getElementById('empresaFormEmailInfo');
+  if(!emp){ box.innerHTML = 'Definido pelo gestor da empresa depois do cadastro, em "E-mail dos PDFs".'; return; }
+  box.innerHTML = (emp.emailAtivo && emp.emailDestino ? '✉️ <b>Ligado</b> para ' + escHtml(emp.emailDestino) : '✉️ <b>Desligado</b> — os PDFs ficam só no painel e no Drive') +
+    '<div style="font-size:12px;margin-top:4px;color:#566179;">Quem define é o gestor da empresa, em "E-mail dos PDFs".</div>';
+}
 async function deleteEmpresaByNome(nome){
   if(!isAdmin()) return;
   if(!confirm('Excluir a personalização de perguntas da empresa "'+nome+'"? Os colaboradores dela voltam a usar as perguntas padrão de fábrica.')) return;
@@ -3855,7 +3848,7 @@ async function deleteEmpresaByNome(nome){
     const resp = await fetch(scriptUrl, {method:'POST', body: JSON.stringify(payload)});
     const data = await resp.json();
     if(data.error) throw new Error(data.error);
-    toast('Empresa excluída.', 'ok');
+    salvo('Empresa excluída.');
     await loadEmpresasList();
   }catch(err){
     toast(err.message || 'Não foi possível excluir.', 'err');
@@ -3876,7 +3869,7 @@ function docsAtivos(){
 
 /* ============ SUPORTE ============ */
 const SUPORTE_WHATS = '5571996033896';
-const APP_VERSION = '6.1';
+const APP_VERSION = '6.2';
 const SUPORTE_FAQ = [
   ['Como envio um documento?', 'Preencha o documento (PT, checklist de veículo ou de escada) e toque em Enviar. Escolha "Enviar agora" ou "Guardar e enviar depois". Em "Meus documentos" você vê o que já foi enviado.'],
   ['Estou sem internet, e agora?', 'Pode preencher normalmente. O documento fica guardado no aparelho e é enviado sozinho quando a internet voltar. Em "Meus documentos" aparece como "Aguardando envio".'],
@@ -3938,9 +3931,11 @@ let meusChamados = [];
 function renderMeusChamados(){
   const box = $('supMine');
   box.innerHTML = meusChamados.length ? meusChamados.slice(0, 10).map(c => `<div class="sup-card"><div class="h"><div><b>${escHtml(c.tipo)}</b><div class="meta">${escHtml(c.data)}</div></div><span class="sup-pill ${c.status === 'resolvido' ? 'o' : 'a'}">${c.status === 'resolvido' ? 'Resolvido' : (c.conversa && c.conversa.some(m => m.de === 'suporte') ? 'Respondido' : 'Em análise')}</span></div>
-      <div class="tx">${escHtml(c.descricao)}</div>${convHtml(c, false)}</div>`).join('')
+      <div class="tx">${escHtml(c.descricao)}</div>${convHtml(c, false)}<div style="text-align:right;margin-top:8px;"><button type="button" class="sup-apagar" data-apagar="${escHtml(c.id)}">🗑 Apagar</button></div></div>`).join('')
     : '<p class="hint">Você ainda não abriu nenhum chamado.</p>';
   bindConv(box, meusChamados, renderMeusChamados);
+  $('supLimpar').style.display = meusChamados.length ? 'inline-block' : 'none';
+  bindApagarChamado(box, ()=>{ loadMeusChamados(); });
 }
 async function loadMeusChamados(){
   const box = $('supMine');
@@ -4026,6 +4021,7 @@ function renderChamados(){
   $('chamadosTabs').innerHTML = `<button type="button" data-ab="aberto" class="${chamadosAba==='aberto'?'on':''}">Abertos (${nA})</button><button type="button" data-ab="resolvido" class="${chamadosAba==='resolvido'?'on':''}">Resolvidos (${nR})</button>`;
   $('chamadosTabs').querySelectorAll('button').forEach(b => b.onclick = ()=>{ chamadosAba = b.getAttribute('data-ab'); renderChamados(); });
   const lista = chamadosCache.filter(c => (c.status === 'resolvido') === (chamadosAba === 'resolvido'));
+  $('chamadosLimpar').style.display = chamadosAba === 'resolvido' && lista.length ? 'inline-block' : 'none';
   if(!lista.length){ $('chamadosList').innerHTML = '<p class="hint">Nenhum chamado ' + (chamadosAba === 'aberto' ? 'aberto' : 'resolvido') + '.</p>'; return; }
   $('chamadosList').innerHTML = lista.map(c => {
     const wa = String(c.whatsapp || '').replace(/\D/g, '');
@@ -4034,9 +4030,10 @@ function renderChamados(){
       <div class="tx">${escHtml(c.descricao)}</div>
       <div class="tec">App v${escHtml(c.versao || '?')} · ${escHtml(c.aparelho || '')}${c.erro ? '<br>Último erro de envio: ' + escHtml(c.erro) : ''}</div>
       ${convHtml(c, true)}
-      <div class="acts">${wa ? `<a href="https://wa.me/55${wa}" target="_blank" rel="noopener">Responder no WhatsApp</a>` : ''}${c.print ? `<a href="${escHtml(c.print)}" target="_blank" rel="noopener">Ver print</a>` : ''}<button type="button" data-id="${escHtml(c.id)}" data-st="${c.status === 'resolvido' ? 'aberto' : 'resolvido'}">${c.status === 'resolvido' ? 'Reabrir' : 'Marcar resolvido'}</button></div></div>`;
+      <div class="acts"><button type="button" class="sup-apagar" data-apagar="${escHtml(c.id)}">🗑 Apagar</button>${wa ? `<a href="https://wa.me/55${wa}" target="_blank" rel="noopener">Responder no WhatsApp</a>` : ''}${c.print ? `<a href="${escHtml(c.print)}" target="_blank" rel="noopener">Ver print</a>` : ''}<button type="button" data-id="${escHtml(c.id)}" data-st="${c.status === 'resolvido' ? 'aberto' : 'resolvido'}">${c.status === 'resolvido' ? 'Reabrir' : 'Marcar resolvido'}</button></div></div>`;
   }).join('');
   bindConv($('chamadosList'), chamadosCache, renderChamados);
+  bindApagarChamado($('chamadosList'), loadChamados);
   $('chamadosList').querySelectorAll('button[data-id]').forEach(b => b.onclick = async ()=>{
     b.disabled = true;
     try{
@@ -4047,6 +4044,30 @@ function renderChamados(){
     }catch(e){ toast(e.message || 'Não foi possível atualizar.', 'err'); b.disabled = false; }
   });
 }
+// Apagar chamados: o usuário tira da lista dele (o admin continua vendo);
+// o admin apaga de vez (vai para a aba "Chamados excluídos" da planilha).
+function bindApagarChamado(box, depois){
+  box.querySelectorAll('[data-apagar]').forEach(b => b.onclick = async ()=>{
+    const msg = isAdmin() ? 'Apagar este chamado? Ele sai da lista e fica guardado na aba "Chamados excluídos" da planilha.' : 'Apagar este chamado da sua lista?';
+    if(!(await dsConfirm(msg, 'Apagar'))) return;
+    try{
+      const r = await api('apagarChamado', { id: b.getAttribute('data-apagar') });
+      if(r.error) throw new Error(r.error);
+      salvo('Chamado apagado.'); depois();
+    }catch(e){ toast(e.message || 'Não foi possível apagar.', 'err'); }
+  });
+}
+async function limparChamadosUI(depois){
+  const msg = isAdmin() ? 'Apagar todos os chamados resolvidos? Eles ficam guardados na aba "Chamados excluídos" da planilha.' : 'Limpar todo o seu histórico de chamados?';
+  if(!(await dsConfirm(msg, isAdmin() ? 'Apagar' : 'Limpar'))) return;
+  try{
+    const r = await api('limparChamados');
+    if(r.error) throw new Error(r.error);
+    salvo(r.apagados ? r.apagados + (r.apagados > 1 ? ' chamados apagados.' : ' chamado apagado.') : 'Nada para apagar.'); depois();
+  }catch(e){ toast(e.message || 'Não foi possível limpar.', 'err'); }
+}
+$('supLimpar').onclick = ()=> limparChamadosUI(()=> loadMeusChamados());
+$('chamadosLimpar').onclick = ()=> limparChamadosUI(loadChamados);
 $('chamadosBack').onclick = goHome;
 $('chamadosRefresh').onclick = loadChamados;
 
@@ -4138,7 +4159,7 @@ document.getElementById('btnQSave').onclick = async ()=>{
     const data = await fetchAdminAction(getScriptUrl(), 'savePerguntas', {nome: emp.nome, perguntas: cleaned});
     if(data.error) throw new Error(data.error);
     emp.perguntas = cleaned;
-    toast('Questionários salvos! Os colaboradores recebem no próximo acesso.', 'ok');
+    salvo('Questionários salvos! Os colaboradores recebem no próximo acesso.');
   }catch(err){ toast(err.message || 'Não foi possível salvar.', 'err'); }
   finally{ btn.disabled = false; btn.textContent = old; }
 };
@@ -4532,29 +4553,41 @@ function applyTheme(cfg){
 }
 
 /* ============ SOM DE CONCLUSÃO ============ */
-function playSuccessSound(){
-  const cfg = loadCfg();
-  if(cfg.soundEnabled === false) return;
+/* Sons do app: o administrador escolhe (Configurações) e valem para todos. */
+const SONS_PADRAO = { enviar:'sino', liberar:'plim', salvar:'nenhum' };
+const SONS_ROTULO = { enviar:'Ao enviar um documento', liberar:'Ao liberar (Apto)', salvar:'Ao salvar uma alteração' };
+const SONS_OPCOES = [['sino','🔔 Sino'], ['plim','✨ Plim'], ['duplo','🔁 Duplo'], ['suave','🎵 Suave'], ['nenhum','🔕 Sem som']];
+const SONS_NOTAS = { sino:{ f:[660, 880, 1100], t:'sine', d:0.12 }, plim:{ f:[1046, 1568], t:'triangle', d:0.09 }, duplo:{ f:[880, 880], t:'square', d:0.16, v:0.25 }, suave:{ f:[523, 659, 784], t:'sine', d:0.18, v:0.5 } };
+function somDoEvento(evento){ const s = (getSession() || {}).sons || {}; return s[evento] || SONS_PADRAO[evento]; }
+function tocarSom(evento, som){
+  const n = SONS_NOTAS[som || somDoEvento(evento)];
+  if(!n) return;
   try{
     const Ctx = window.AudioContext || window.webkitAudioContext;
     const ctx = new Ctx();
-    const notes = [660, 880, 1100];
-    notes.forEach((freq, i)=>{
+    n.f.forEach((freq, i)=>{
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
-      osc.type = 'sine';
+      osc.type = n.t;
       osc.frequency.value = freq;
-      const start = ctx.currentTime + i*0.12;
+      const start = ctx.currentTime + i*n.d;
       gain.gain.setValueAtTime(0.0001, start);
       // Volume alto por padrão (perto do máximo) — assim o som acompanha o
       // volume do celular, em vez de soar baixo mesmo no talo.
-      gain.gain.exponentialRampToValueAtTime(0.9, start+0.02);
+      gain.gain.exponentialRampToValueAtTime(n.v || 0.9, start+0.02);
       gain.gain.exponentialRampToValueAtTime(0.0001, start+0.22);
       osc.connect(gain); gain.connect(ctx.destination);
       osc.start(start); osc.stop(start+0.24);
     });
-    setTimeout(()=>ctx.close(), 900);
+    setTimeout(()=>ctx.close(), 1200);
   }catch(e){ /* som indisponível neste navegador */ }
+}
+function playSuccessSound(){ tocarSom('enviar'); }
+function pintaSons(){
+  $('cfgSons').innerHTML = Object.keys(SONS_PADRAO).map(k => `<div class="field"><label>${SONS_ROTULO[k]}</label><div style="display:flex;gap:8px;">` +
+    `<select id="cfgSom_${k}" style="flex:1;height:44px;border:1.5px solid #D5DCE9;border-radius:10px;padding:0 10px;background:#fff;">${SONS_OPCOES.map(([v, l]) => `<option value="${v}"${somDoEvento(k) === v ? ' selected' : ''}>${l}</option>`).join('')}</select>` +
+    `<button type="button" class="btn btn-ghost" data-ouvir="${k}" style="padding:0 14px;">▶ Ouvir</button></div></div>`).join('');
+  $('cfgSons').querySelectorAll('[data-ouvir]').forEach(b => b.onclick = ()=> tocarSom(null, $('cfgSom_' + b.getAttribute('data-ouvir')).value));
 }
 
 /* ============ FILA OFFLINE (reenvio automático) ============ */
@@ -5594,6 +5627,7 @@ function hideAllScreens(){
   document.getElementById('libView').style.display = 'none';
   document.getElementById('libDecModal').classList.remove('show');
   document.getElementById('carimboModal').classList.remove('show');
+  document.getElementById('emailPdfModal').classList.remove('show');
   stopPainelTimers();
 }
 
@@ -5870,6 +5904,7 @@ function tileHtml(id, label, bg, fg, opts){
 
 ICONS.aberto = '<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
 ICONS.lib = '<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg>';
+ICONS.email = '<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>';
 ICONS.cliente = '<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/><path d="M3 13h18"/><path d="M11 13v2h2v-2"/></svg>';
 ICONS.pin = '<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>';
 const loc = { dias:1, filtro:'todas', data:null, empresa:'' };
@@ -6237,6 +6272,7 @@ function renderHomeMenu(){
     html += tileHtml('localizacao', 'Localização das PTs', '#FDECEB', '#A32D2D', {sub:'Onde, início e término', icon:'pin'});
     html += tileHtml('users', 'Colaboradores', '#DDF1EF', '#0F6B63', {sub:'Cadastro e fotos'});
     html += tileHtml('empresa', 'Notificar equipe', '#FFF1D6', '#8A4B00', {sub:'Aviso aos colaboradores', icon:'aviso'});
+    html += tileHtml('emailPdf', 'E-mail dos PDFs', '#E6ECF8', '#1D3A6F', {sub:'Receber cada documento', icon:'email'});
     html += '</div>';
   } else if(tst){
     if(libCfg().ativo){
@@ -6290,6 +6326,8 @@ function renderHomeMenu(){
       $('homeVerTodas').onclick = openMeusDocsScreen;
     } else rec.innerHTML = '';
   } else rec.innerHTML = '';
+
+  $('homeVersao').textContent = 'DocSeg Digital · versão ' + APP_VERSION;
 
   // Barra de navegação de baixo
   const bar = $('homeTabbar');
@@ -6351,6 +6389,7 @@ function homeAction(id){
   else if(id === 'localizacao') openLoc();
   else if(id === 'abertos') openAbertos();
   else if(id === 'liberacoes') libAbrirGestor();
+  else if(id === 'emailPdf') openEmailPdfModal();
   else if(id === 'mensagens') openMensagens();
   else if(id === 'perfil') openProfileModal();
   else if(id === 'suporte') openSuporte();
@@ -6877,7 +6916,7 @@ async function libAbrirDecisao(x, decisao){
       if(r.error){ if(r.item) await libLoadGestor(); throw new Error(r.error); }
       fechar();
       toast(nao ? libTitulo(x) + ': Não apto. O colaborador foi avisado.' : libTitulo(x) + ' liberada! O colaborador foi avisado.', 'ok');
-      if(!nao) playSuccessSound();
+      if(!nao) tocarSom('liberar');
       await libLoadGestor();
       libAbrirGestor();
     }catch(e){
@@ -7057,7 +7096,7 @@ $('carSave').onclick = async ()=>{
     const r = await api('saveCarimbo', extra);
     if(r.error) throw new Error(r.error);
     const sess = getSession(); if(sess){ sess.carimbo = r.carimbo; saveSession(sess); }
-    toast('Carimbo salvo!', 'ok');
+    salvo('Carimbo salvo!');
     goHome();
   }catch(e){ err(e.message || 'Não foi possível salvar.'); }
   finally{ btn.disabled = false; btn.textContent = 'Salvar carimbo'; }
