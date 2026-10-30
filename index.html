@@ -1429,10 +1429,16 @@
       </div>
     </div>
 
-    <p class="desc" style="margin-bottom:6px; margin-top:14px; border-top:1px solid var(--line); padding-top:14px;">Prefixo do número da PT (opcional)</p>
-    <p class="hint" style="margin-top:-4px;margin-bottom:10px;">Texto que aparece antes do número nos documentos desta empresa (ex: "TN-" vira TN-0001). A contagem em si é sempre por empresa, independente do prefixo — veja em ⚙ Configurações.</p>
+    <p class="desc" style="margin-bottom:6px; margin-top:14px; border-top:1px solid var(--line); padding-top:14px;">Numeração da PT</p>
+    <p class="hint" style="margin-top:-4px;margin-bottom:10px;">Cada empresa tem a sua própria contagem (0001, 0002…). O prefixo aparece antes do número (ex: "TN-" vira TN-0001).</p>
     <div class="field">
+      <label>Prefixo (opcional)</label>
       <input type="text" id="empresaFormPtPrefix" placeholder="Ex: PT-">
+    </div>
+    <div class="field">
+      <label>Próximo número da PT</label>
+      <input type="text" id="empresaFormNextNumber" inputmode="numeric" placeholder="1">
+      <p class="hint" id="empresaFormNextHint"></p>
     </div>
 
     <p class="desc" style="margin-bottom:6px; margin-top:14px; border-top:1px solid var(--line); padding-top:14px;">Histórico de documentos (auditoria)</p>
@@ -1561,26 +1567,12 @@
     <button class="modal-close" id="closeSettings">←</button>
     <h2>Configurações</h2>
 
-    <p class="desc" style="margin-bottom:6px; margin-top:14px;">Aparência</p>
-    <p class="hint" style="margin-top:-8px;margin-bottom:14px;">A cor da PT agora é definida no cadastro da empresa (em 🏢 Empresas) e aplicada automaticamente no login — não precisa mais configurar aqui.</p>
 
     <label style="display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600;margin-bottom:16px;">
       <input type="checkbox" id="cfgSoundEnabled" style="width:18px;height:18px;">
       Tocar som ao concluir o envio da PT
     </label>
 
-    <p class="desc" style="margin-bottom:6px; margin-top:14px; border-top:1px solid var(--line); padding-top:14px;">Numeração da PT</p>
-    <p class="hint" style="margin-top:-8px;margin-bottom:10px;">A empresa e o prefixo do número agora são definidos no cadastro da empresa (em 🏢 Empresas) — aqui dá só pra consultar ou corrigir a contagem.</p>
-    <div class="field">
-      <label>Numeração da PT — empresa</label>
-      <select id="cfgNumEmpresa"><option value="">Selecione a empresa...</option></select>
-      <p class="hint">Cada empresa cadastrada tem sua própria contagem (0001, 0002...), independente das outras. Escolha aqui a empresa pra ver ou corrigir o próximo número dela.</p>
-    </div>
-    <div class="field">
-      <label>Próximo número a ser usado (nessa empresa)</label>
-      <input type="text" id="cfgNextNumber" inputmode="numeric" placeholder="Ex: 1">
-      <p class="hint">Ajuste aqui se precisar corrigir a sequência dessa empresa (ex: recomeçar do 50).</p>
-    </div>
     <p class="desc" style="margin-bottom:6px; margin-top:18px; border-top:1px solid var(--line); padding-top:14px;">Servidor (Google Apps Script)</p>
     <div class="warn-box">
       1. Crie o Google Apps Script na conta do DocSeg Digital e implante como "App da Web".<br>
@@ -3115,43 +3107,16 @@ async function hashPin(pin){
   return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
 }
 
-function peekNumeroParaEmpresa(scriptUrl, empresaNome){
-  fetchAdminAction(scriptUrl, 'peekNumber', { empresa: empresaNome||'' })
-    .then(data=>{ if(data && typeof data.number === 'number') document.getElementById('cfgNextNumber').value = data.number; })
-    .catch(()=>{ /* mantém o valor local exibido */ });
-}
-async function populateCfgNumEmpresa(scriptUrl){
-  const sel = document.getElementById('cfgNumEmpresa');
-  sel.innerHTML = '<option value="">Selecione a empresa...</option>';
-  if(!scriptUrl) return;
-  try{
-    const data = await fetchAdminAction(scriptUrl, 'listEmpresas');
-    if(data.error) return;
-    (data.empresas||[]).forEach(emp=>{
-      const opt = document.createElement('option');
-      opt.value = emp.nome; opt.textContent = emp.nome;
-      sel.appendChild(opt);
-    });
-  }catch(e){ /* mantém só a opção vazia */ }
-}
 function openSettingsModal(){
   if(!isAdmin()){ toast('Acesso restrito ao administrador.', 'err'); return; }
   const cfg = loadCfg();
   document.getElementById('cfgScriptUrl').value = cfg.scriptUrl||'';
-  document.getElementById('cfgNextNumber').value = peekNextCounter();
   document.getElementById('cfgSoundEnabled').checked = cfg.soundEnabled !== false;
   document.getElementById('sheetAuditBox').style.display = 'none';
   hideAllScreens();
   document.getElementById('settingsModal').classList.add('show');
   loadBackups();
   if(cfg.scriptUrl){
-    populateCfgNumEmpresa(cfg.scriptUrl).then(()=>{
-      const sel = document.getElementById('cfgNumEmpresa');
-      sel.onchange = ()=>{
-        if(sel.value) peekNumeroParaEmpresa(cfg.scriptUrl, sel.value);
-        else document.getElementById('cfgNextNumber').value = peekNextCounter();
-      };
-    });
     fetchAdminAction(cfg.scriptUrl, 'sheetUrl')
       .then(data=>{
         if(data && data.url){
@@ -3178,18 +3143,6 @@ document.getElementById('saveSettings').onclick = async ()=>{
   };
   saveCfg(cfg);
   applyTheme(cfg);
-  const nextNumTyped = parseInt(document.getElementById('cfgNextNumber').value, 10);
-  const empresaSelecionada = document.getElementById('cfgNumEmpresa').value;
-  if(!isNaN(nextNumTyped) && nextNumTyped > 0){
-    localStorage.setItem(PT_COUNTER_KEY, String(nextNumTyped - 1));
-    if(cfg.scriptUrl){
-      try{
-        await fetchAdminAction(cfg.scriptUrl, 'setNumber', { value: nextNumTyped, empresa: empresaSelecionada });
-      }catch(err){
-        toast('Não foi possível atualizar o contador central — verifique a conexão.', 'err');
-      }
-    }
-  }
   if(!state.empresaNome && cfg.empresaPadrao){
     state.empresaNome = cfg.empresaPadrao;
     saveDraft();
@@ -3647,6 +3600,7 @@ function resetEmpresaForm(){
   document.getElementById('empresaFormColorPrimary').value = '#C8272A';
   document.getElementById('empresaFormColorAccent').value = '#F4B400';
   document.getElementById('empresaFormPtPrefix').value = '';
+  empresaNumAtual = 1; document.getElementById('empresaFormNextNumber').value = '1'; atualizarDicaNumero();
   document.getElementById('empresaFormEmailAtivo').checked = false;
   document.getElementById('empresaFormEmailDestino').value = '';
   document.getElementById('empresaFormDriveEmails').value = '';
@@ -3786,6 +3740,7 @@ function loadEmpresaIntoForm(nome){
   document.getElementById('empresaFormColorPrimary').value = emp.themeColor || '#C8272A';
   document.getElementById('empresaFormColorAccent').value = emp.themeColor2 || '#F4B400';
   document.getElementById('empresaFormPtPrefix').value = emp.ptPrefix || '';
+  carregarProximoNumero(emp.nome);
   document.getElementById('empresaFormEmailAtivo').checked = !!emp.emailAtivo;
   document.getElementById('empresaFormEmailDestino').value = emp.emailDestino || '';
   document.getElementById('empresaFormDriveEmails').value = emp.driveEmails || '';
@@ -3826,6 +3781,12 @@ document.getElementById('btnEmpresaFormSave').onclick = async ()=>{
     if(data.driveFalhas && data.driveFalhas.length) toast('Empresa salva, mas a pasta não foi compartilhada com: ' + data.driveFalhas.join('; '), 'err');
     else if(data.driveShared && data.driveShared.length) toast('Empresa salva! Pasta do Drive compartilhada com ' + data.driveShared.length + ' e-mail(s).', 'ok');
     else toast('Empresa salva! Quem é dessa empresa recebe as mudanças no próximo acesso.', 'ok');
+    // Próximo número: só manda quando o admin mudou (corrigir a sequência).
+    const proximo = parseInt(document.getElementById('empresaFormNextNumber').value, 10);
+    if(proximo > 0 && proximo !== empresaNumAtual){
+      const rn = await fetchAdminAction(scriptUrl, 'setNumber', { value: proximo, empresa: nome });
+      if(rn.error) toast('Empresa salva, mas o próximo número não foi alterado: ' + rn.error, 'err');
+    }
     resetEmpresaForm();
     await loadEmpresasList();
   }catch(err){
@@ -3834,6 +3795,27 @@ document.getElementById('btnEmpresaFormSave').onclick = async ()=>{
     btn.disabled = false; btn.textContent = oldTxt;
   }
 };
+// Próximo número da PT da empresa (contagem no servidor)
+let empresaNumAtual = 1;
+function atualizarDicaNumero(){
+  const n = parseInt(document.getElementById('empresaFormNextNumber').value, 10);
+  const pref = document.getElementById('empresaFormPtPrefix').value.trim();
+  document.getElementById('empresaFormNextHint').innerHTML = n > 0
+    ? 'A próxima PT desta empresa sai como <b>' + escHtml(formatPtNumber(n, pref)) + '</b>. Só mude para corrigir a sequência (ex: começar do 50 ao trocar o papel pelo app).'
+    : '<b style="color:#A32D2D">Use um número a partir de 1.</b>';
+}
+async function carregarProximoNumero(nome){
+  const campo = document.getElementById('empresaFormNextNumber');
+  campo.value = ''; campo.placeholder = 'Carregando...'; empresaNumAtual = 0; atualizarDicaNumero();
+  try{
+    const r = await fetchAdminAction(getScriptUrl(), 'peekNumber', { empresa: nome });
+    if(r && typeof r.number === 'number' && document.getElementById('empresaFormNome').value === nome){ empresaNumAtual = r.number; campo.value = String(r.number); }
+  }catch(e){ /* sem conexão: deixa em branco e não altera nada ao salvar */ }
+  campo.placeholder = '1';
+  atualizarDicaNumero();
+}
+document.getElementById('empresaFormNextNumber').addEventListener('input', atualizarDicaNumero);
+document.getElementById('empresaFormPtPrefix').addEventListener('input', atualizarDicaNumero);
 async function deleteEmpresaByNome(nome){
   if(!isAdmin()) return;
   if(!confirm('Excluir a personalização de perguntas da empresa "'+nome+'"? Os colaboradores dela voltam a usar as perguntas padrão de fábrica.')) return;
@@ -3865,7 +3847,7 @@ function docsAtivos(){
 
 /* ============ SUPORTE ============ */
 const SUPORTE_WHATS = '5571996033896';
-const APP_VERSION = '5.2';
+const APP_VERSION = '5.3';
 const SUPORTE_FAQ = [
   ['Como envio um documento?', 'Preencha o documento (PT, checklist de veículo ou de escada) e toque em Enviar. Escolha "Enviar agora" ou "Guardar e enviar depois". Em "Meus documentos" você vê o que já foi enviado.'],
   ['Estou sem internet, e agora?', 'Pode preencher normalmente. O documento fica guardado no aparelho e é enviado sozinho quando a internet voltar. Em "Meus documentos" aparece como "Aguardando envio".'],
