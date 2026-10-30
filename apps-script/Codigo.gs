@@ -69,6 +69,11 @@ function doPost(e) {
     if (a === "getCarimbo") return getCarimbo(data);
     if (a === "saveCarimbo") return saveCarimbo(data);
 
+    if (a === "saveEmailEmpresa") return saveEmailEmpresa(data);
+    if (a === "saveSons") return saveSons(data);
+    if (a === "apagarChamado") return apagarChamado(data);
+    if (a === "limparChamados") return limparChamados(data);
+
     if (a === "nextNumber" || a === "peekNumber" || a === "setNumber" || a === "sheetUrl") return numeracao(data);
 
     // Envio de um documento só (formato antigo do app, sem "action")
@@ -740,7 +745,7 @@ function loginUser(username, passwordHash) {
       ok: true, role: "admin", username: "admin", nome: "Administrador", empresa: "", cfg: {},
       mustChange: false, termsOk: true, termsVersion: TERMS_VERSION, foto: "",
       perguntas: {}, empresaAviso: "", empresaLogoDataUrl: "", empresaLogoDataUrl2: "", empresaPtPrefix: "",
-      senhaPadrao: senhaAdminEhPadrao(),
+      senhaPadrao: senhaAdminEhPadrao(), sons: getSons_(),
       serverNow: Date.now()
     });
   }
@@ -777,6 +782,7 @@ function loginUser(username, passwordHash) {
     empresaLiberacao: extras.liberacao,
     carimbo: (rec.role === "gestor" || rec.role === "tst") ? carimboResumo_(uname, rec) : null,
     empresaTemTst: rec.role === "gestor" ? empresaTemTst_(rec.empresa) : false,
+    sons: getSons_(),
     serverNow: Date.now()
   });
 }
@@ -1001,8 +1007,9 @@ function saveEmpresa(data) {
   if (!nome) return jsonOut({ error: "informe o nome da empresa" });
   var slug = slugEmpresa(nome);
   if (!slug) return jsonOut({ error: "nome de empresa inválido" });
-  var emailDestino = (data.emailDestino || "").toString().trim();
-  var emailAtivo = !!data.emailAtivo;
+  // O envio por e-mail é definido pelo gestor (saveEmailEmpresa); só muda aqui se vier no pedido.
+  var emailDestino = data.emailDestino === undefined ? undefined : (data.emailDestino || "").toString().trim();
+  var emailAtivo = data.emailAtivo === undefined ? undefined : !!data.emailAtivo;
   if (emailAtivo && !emailDestino) return jsonOut({ error: "informe o(s) e-mail(s) de destino ou desligue o envio por e-mail" });
   var driveEmails = parseEmails(data.driveEmails);
   var contratoInicio = (data.contratoInicio || "").toString().trim();
@@ -1056,8 +1063,8 @@ function saveEmpresa(data) {
       themeColor: (data.themeColor || "").toString(),
       themeColor2: (data.themeColor2 || "").toString(),
       ptPrefix: (data.ptPrefix || "").toString(),
-      emailAtivo: emailAtivo,
-      emailDestino: emailDestino,
+      emailAtivo: emailAtivo === undefined ? !!anterior.emailAtivo : emailAtivo,
+      emailDestino: emailDestino === undefined ? (anterior.emailDestino || "") : emailDestino,
       driveEmails: driveEmails.join(", "),
       driveShared: sync.shared,
       driveFolderUrl: sync.url || anterior.driveFolderUrl || "",
@@ -1488,11 +1495,15 @@ function restoreBackup(data) {
    Registro na aba "Chamados" da planilha; o print vai para a pasta
    "_Suporte" do Drive; cada chamado novo avisa o e-mail de suporte. */
 var SUPORTE_EMAIL = "docsegdigital@gmail.com";
-var CHAMADOS_HEADERS = ["ID", "Data/Hora", "Login", "Nome", "Perfil", "Empresa", "Tipo", "Descrição", "Versão do app", "Aparelho", "Último erro de envio", "WhatsApp", "Print (link)", "Status", "Conversa"];
+var CHAMADOS_HEADERS = ["ID", "Data/Hora", "Login", "Nome", "Perfil", "Empresa", "Tipo", "Descrição", "Versão do app", "Aparelho", "Último erro de envio", "WhatsApp", "Print (link)", "Status", "Conversa", "Apagado pelo usuário"];
+var CH_OCULTO = 15; // coluna (base 0) "Apagado pelo usuário": some da lista dele, o admin continua vendo
 
 function chamadosSheet() {
   var sh = getOrCreateSheet(getOrCreateSpreadsheet(), "Chamados", CHAMADOS_HEADERS);
-  try { if (sh.getRange(1, CHAMADOS_HEADERS.length).getValue() !== "Conversa") sh.getRange(1, CHAMADOS_HEADERS.length).setValue("Conversa"); } catch (e) {}
+  try {
+    if (sh.getRange(1, 15).getValue() !== "Conversa") sh.getRange(1, 15).setValue("Conversa");
+    if (sh.getRange(1, CHAMADOS_HEADERS.length).getValue() !== CHAMADOS_HEADERS[CH_OCULTO]) sh.getRange(1, CHAMADOS_HEADERS.length).setValue(CHAMADOS_HEADERS[CH_OCULTO]);
+  } catch (e) {}
   return sh;
 }
 function conversaDe_(v) {
@@ -1530,7 +1541,7 @@ function saveChamado(data) {
   var lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
-    chamadosSheet().appendRow([id, new Date(), caller.username, caller.nome, perfil, caller.empresa, tipo, descricao, versao, aparelho, erro, whats, printUrl, "aberto", "[]"]);
+    chamadosSheet().appendRow([id, new Date(), caller.username, caller.nome, perfil, caller.empresa, tipo, descricao, versao, aparelho, erro, whats, printUrl, "aberto", "[]", ""]);
   } catch (err) {
     return jsonOut({ error: err.message });
   } finally {
@@ -1562,7 +1573,7 @@ function listChamados(data) {
     var vals = sh.getRange(2, 1, n - 1, CHAMADOS_HEADERS.length).getValues();
     for (var i = vals.length - 1; i >= 0; i--) {
       if (!vals[i][0]) continue;
-      if (caller.role !== "admin" && normUser(vals[i][2]) !== caller.username) continue;
+      if (caller.role !== "admin" && (normUser(vals[i][2]) !== caller.username || String(vals[i][CH_OCULTO]) === "1")) continue;
       var c = chamadoRow(vals[i], tz);
       if (caller.role !== "admin") { c.print = ""; c.whatsapp = ""; c.erro = ""; c.aparelho = ""; }
       out.push(c);
@@ -1592,7 +1603,7 @@ function responderChamado(data) {
       var conv = conversaDe_(vals[i][14]);
       if (conv.length >= 60) return jsonOut({ error: "limite de mensagens neste chamado; abra um novo" });
       conv.push({ de: deAdmin ? "suporte" : "usuario", nome: deAdmin ? "Suporte DocSeg" : (caller.nome || caller.username), ts: Date.now(), texto: texto });
-      sh.getRange(i + 2, CHAMADOS_HEADERS.length).setValue(JSON.stringify(conv));
+      sh.getRange(i + 2, 15).setValue(JSON.stringify(conv)); // coluna "Conversa"
       if (!deAdmin) sh.getRange(i + 2, 14).setValue("aberto"); // resposta do usuário reabre
       dono = normUser(vals[i][2]); assunto = String(vals[i][6] || "chamado");
       var out = chamadoRow(sh.getRange(i + 2, 1, 1, CHAMADOS_HEADERS.length).getValues()[0], Session.getScriptTimeZone());
@@ -2299,6 +2310,110 @@ function saveCarimbo(data) {
     PropertiesService.getScriptProperties().setProperty("user_" + caller.username, JSON.stringify(rec));
     if (typeof assinatura === "string") setAssinaturaCarimbo_(caller.username, assinatura);
     return jsonOut({ ok: true, carimbo: carimboResumo_(caller.username, rec) });
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/* ============ E-MAIL DOS PDFs (definido pelo gestor) ============ */
+function saveEmailEmpresa(data) {
+  var caller = authCaller(data);
+  if (!caller || caller.role !== "gestor") return jsonOut({ error: "não autorizado" });
+  var ativo = !!data.emailAtivo;
+  var lista = parseEmails(data.emailDestino);
+  var re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  var ruins = lista.filter(function (e) { return !re.test(e); });
+  if (ruins.length) return jsonOut({ error: "e-mail inválido: " + ruins.join(", ") });
+  if (ativo && !lista.length) return jsonOut({ error: "informe pelo menos um e-mail ou desligue o envio" });
+  var slug = slugEmpresa(caller.empresa);
+  var lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    var props = PropertiesService.getScriptProperties();
+    var raw = props.getProperty("empresa_" + slug);
+    if (!raw) return jsonOut({ error: "empresa não encontrada" });
+    var rec = JSON.parse(raw);
+    rec.emailAtivo = ativo;
+    rec.emailDestino = lista.join(", ");
+    rec.updatedAt = new Date().toISOString();
+    props.setProperty("empresa_" + slug, JSON.stringify(rec));
+    return jsonOut({ ok: true, emailAtivo: rec.emailAtivo, emailDestino: rec.emailDestino });
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/* ============ SONS DO APP (definidos pelo administrador, valem para todos) ============ */
+var SONS_OPCOES = ["sino", "plim", "duplo", "suave", "nenhum"];
+var SONS_PADRAO = { enviar: "sino", liberar: "plim", salvar: "nenhum" };
+function getSons_() {
+  var s = {};
+  try { s = JSON.parse(PropertiesService.getScriptProperties().getProperty("app_sons") || "{}"); } catch (e) {}
+  var out = {};
+  Object.keys(SONS_PADRAO).forEach(function (k) { out[k] = SONS_OPCOES.indexOf(s[k]) !== -1 ? s[k] : SONS_PADRAO[k]; });
+  return out;
+}
+function saveSons(data) {
+  if (!requireAdmin(data)) return jsonOut({ error: "não autorizado" });
+  var s = {};
+  Object.keys(SONS_PADRAO).forEach(function (k) { s[k] = SONS_OPCOES.indexOf(data[k]) !== -1 ? data[k] : SONS_PADRAO[k]; });
+  PropertiesService.getScriptProperties().setProperty("app_sons", JSON.stringify(s));
+  return jsonOut({ ok: true, sons: s });
+}
+
+/* ============ APAGAR CHAMADOS DE SUPORTE ============
+   Usuário: o chamado some só da lista dele (o admin continua vendo).
+   Admin: o chamado sai da lista e vai para a aba "Chamados excluídos". */
+function chamadosExcluidosSheet_() {
+  return getOrCreateSheet(getOrCreateSpreadsheet(), "Chamados excluídos", CHAMADOS_HEADERS.concat(["Apagado em"]));
+}
+function apagarChamadoLinha_(sh, row, caller) {
+  if (caller.role === "admin") {
+    var v = sh.getRange(row, 1, 1, CHAMADOS_HEADERS.length).getValues()[0];
+    chamadosExcluidosSheet_().appendRow(v.concat([new Date()]));
+    sh.deleteRow(row);
+  } else {
+    sh.getRange(row, CH_OCULTO + 1).setValue("1");
+  }
+}
+function apagarChamado(data) {
+  var caller = authCaller(data);
+  if (!caller) return jsonOut({ error: "não autorizado" });
+  var lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    var sh = chamadosSheet(), n = sh.getLastRow();
+    if (n < 2) return jsonOut({ error: "chamado não encontrado" });
+    var vals = sh.getRange(2, 1, n - 1, CHAMADOS_HEADERS.length).getValues();
+    for (var i = 0; i < vals.length; i++) {
+      if (String(vals[i][0]) !== String(data.id || "")) continue;
+      if (caller.role !== "admin" && normUser(vals[i][2]) !== caller.username) return jsonOut({ error: "não autorizado" });
+      apagarChamadoLinha_(sh, i + 2, caller);
+      return jsonOut({ ok: true });
+    }
+    return jsonOut({ error: "chamado não encontrado" });
+  } finally {
+    lock.releaseLock();
+  }
+}
+// "Limpar histórico": o usuário esconde todos os dele; o admin apaga os já resolvidos.
+function limparChamados(data) {
+  var caller = authCaller(data);
+  if (!caller) return jsonOut({ error: "não autorizado" });
+  var lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    var sh = chamadosSheet(), n = sh.getLastRow(), qtd = 0;
+    if (n < 2) return jsonOut({ ok: true, apagados: 0 });
+    var vals = sh.getRange(2, 1, n - 1, CHAMADOS_HEADERS.length).getValues();
+    for (var i = vals.length - 1; i >= 0; i--) {
+      var meu = normUser(vals[i][2]) === caller.username;
+      var alvo = caller.role === "admin" ? String(vals[i][13]) === "resolvido" : (meu && String(vals[i][CH_OCULTO]) !== "1");
+      if (!alvo) continue;
+      apagarChamadoLinha_(sh, i + 2, caller);
+      qtd++;
+    }
+    return jsonOut({ ok: true, apagados: qtd });
   } finally {
     lock.releaseLock();
   }
