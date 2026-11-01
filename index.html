@@ -2213,8 +2213,10 @@ $('loginConfirm').onclick = async ()=>{
   btn.disabled = true; const oldTxt = btn.textContent; btn.textContent = 'Entrando...';
   try{
     const session = await attemptLogin(uname, pass);
+    const trocou = trocarDadosDoAparelho(session.username);
     saveSession(session);
     $('loginPass').value = '';
+    if(trocou){ location.reload(); return; } // abre de novo já com os documentos desta pessoa
     await runGates();           // senha provisória → termos de uso
     finishLogin(getSession());
   }catch(err){
@@ -2262,8 +2264,40 @@ function logout(){
   location.reload();
 }
 $('btnLogout').onclick = ()=>{
-  dsConfirm('Sair do DocSeg Digital?', 'Sair').then(ok => { if(ok) logout(); });
+  const n = loadQueue().length + loadPendingSend().length;
+  const msg = n ? 'Sair do DocSeg Digital?<div style="font-size:13px;font-weight:400;color:#566179;margin-top:8px;line-height:1.45;">Você tem ' + n + (n > 1 ? ' documentos ainda não enviados. Eles ficam' : ' documento ainda não enviado. Ele fica') + ' guardado' + (n > 1 ? 's' : '') + ' neste celular e ' + (n > 1 ? 'são enviados' : 'é enviado') + ' quando você entrar de novo.</div>' : 'Sair do DocSeg Digital?';
+  dsConfirm(msg, 'Sair').then(ok => { if(ok) logout(); });
 };
+
+/* ============ DADOS DE CADA USUÁRIO NESTE APARELHO ============
+   Rascunhos, histórico, fila de envio etc. ficam no celular. Quando outra
+   pessoa entra no mesmo aparelho, os dados de quem saiu são guardados à
+   parte (e voltam quando ela entrar de novo): ninguém vê os documentos do
+   outro, e a fila nunca é enviada com o login de outra pessoa. */
+const DADOS_DO_USUARIO = ['pt_draft', 'veiculo_draft', 'escada_draft', 'pt_sig_draft', 'pt_drafts_parked', 'pt_history',
+  'pt_offline_queue', 'pt_pending_send', 'lib_snaps', 'lib_vistos', 'pt_num_guardado', 'docseg_last_send_error'];
+const DONO_DOS_DADOS_KEY = 'docseg_dados_dono';
+// Devolve true quando trocou os dados (o app precisa recarregar).
+function trocarDadosDoAparelho(novo){
+  let dono = null;
+  try{ dono = localStorage.getItem(DONO_DOS_DADOS_KEY); }catch(e){ return false; }
+  if(dono === novo) return false;
+  if(dono === null){ // aparelho de antes desta versão: os dados ficam com quem entrar
+    try{ localStorage.setItem(DONO_DOS_DADOS_KEY, novo); }catch(e){}
+    return false;
+  }
+  DADOS_DO_USUARIO.forEach(k => {
+    try{
+      const v = localStorage.getItem(k);
+      if(v !== null) localStorage.setItem('u:' + dono + ':' + k, v); else localStorage.removeItem('u:' + dono + ':' + k);
+      const meu = localStorage.getItem('u:' + novo + ':' + k);
+      if(meu !== null){ localStorage.setItem(k, meu); localStorage.removeItem('u:' + novo + ':' + k); }
+      else localStorage.removeItem(k);
+    }catch(e){ /* sem espaço: segue com o que der */ }
+  });
+  try{ localStorage.setItem(DONO_DOS_DADOS_KEY, novo); }catch(e){}
+  return true;
+}
 
 /* Ao abrir o app já logado: confere com o servidor se o acesso continua valendo
    (usuário removido, senha trocada, termos novos) e atualiza foto, nome e empresa. */
@@ -3869,7 +3903,7 @@ function docsAtivos(){
 
 /* ============ SUPORTE ============ */
 const SUPORTE_WHATS = '5571996033896';
-const APP_VERSION = '6.2';
+const APP_VERSION = '6.3';
 const SUPORTE_FAQ = [
   ['Como envio um documento?', 'Preencha o documento (PT, checklist de veículo ou de escada) e toque em Enviar. Escolha "Enviar agora" ou "Guardar e enviar depois". Em "Meus documentos" você vê o que já foi enviado.'],
   ['Estou sem internet, e agora?', 'Pode preencher normalmente. O documento fica guardado no aparelho e é enviado sozinho quando a internet voltar. Em "Meus documentos" aparece como "Aguardando envio".'],
@@ -7143,6 +7177,8 @@ setInterval(()=>{
 
 
 async function initApp(){
+  // Dados do aparelho sem dono (versão anterior): ficam com quem já está logado.
+  { const s0 = getSession(); try{ if(s0 && s0.username && localStorage.getItem(DONO_DOS_DADOS_KEY) === null) localStorage.setItem(DONO_DOS_DADOS_KEY, s0.username); }catch(e){} }
   // Servidor trocado (login individual): na primeira abertura, usa o endereço atual do app.
   { const c = loadCfg(); if(c.serverGen !== SERVER_GEN){ c.scriptUrl = DEFAULT_SCRIPT_URL; c.serverGen = SERVER_GEN; saveCfg(c); } }
   const cfgApplied = applyCfgFromUrlIfPresent();
