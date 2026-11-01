@@ -2011,7 +2011,7 @@ function libObj_(v) {
     tipo: tipoDocKey(v[LB.tipo]), numero: String(v[LB.numero] || ""), revisao: Number(v[LB.rev]) || 0,
     login: normUser(v[LB.login]), nome: String(v[LB.nome] || ""), area: String(v[LB.area] || ""), resumo: String(v[LB.resumo] || ""),
     naoConformes: v[LB.nc] ? String(v[LB.nc]).split(" | ") : [], fileId: String(v[LB.arqFinal] || v[LB.arqPend] || ""),
-    status: String(v[LB.status] || "aguardando"), decididoPor: String(v[LB.decNome] || ""), decididoTs: Number(v[LB.decTs]) || 0,
+    status: String(v[LB.status] || "aguardando"), decididoPor: String(v[LB.decNome] || ""), decididoLogin: normUser(v[LB.decLogin]), decididoTs: Number(v[LB.decTs]) || 0,
     forma: String(v[LB.forma] || ""), motivo: String(v[LB.motivo] || ""), oQueFazer: String(v[LB.fazer] || ""),
     podeReenviar: String(v[LB.reenviar]) === "1", dataDoc: d.ptData || "", horaIni: d.horaIni || "", horaFim: d.horaFim || ""
   };
@@ -2172,9 +2172,21 @@ function decidirLiberacao(data) {
     }
   } catch (mailErr) { Logger.log("Falha ao enviar e-mail da liberação: " + mailErr.message); }
   if (decisao === "apto") {
-    pushParaUsuario_(item.login, "✅ " + titulo + (fem ? " liberada" : " liberado"), "Liberado por " + item.decididoPor + ". Pode iniciar a atividade.");
+    pushParaUsuario_(item.login, "✅ " + titulo + (fem ? " liberada" : " liberado") + ": você está apto",
+      "Liberado por " + (caller.nome || caller.username) + ". Pode iniciar a atividade.");
   } else {
-    pushParaUsuario_(item.login, "⛔ " + titulo + (fem ? " não liberada" : " não liberado"), "Não inicie. Motivo: " + motivo + (oQueFazer ? ". " + oQueFazer.slice(0, 90) : ""));
+    pushParaUsuario_(item.login, "⛔ " + titulo + (fem ? " não liberada" : " não liberado") + ": você não está apto",
+      "Não inicie. Entre em contato com o seu supervisor. Motivo: " + motivo + (oQueFazer ? ". " + oQueFazer.slice(0, 80) : ""));
+    // Deixa uma mensagem de quem avaliou: assim o colaborador já pode responder
+    // pelo app ("Falar com o supervisor"), sem esperar o supervisor escrever primeiro.
+    try {
+      var lockM = LockService.getScriptLock();
+      lockM.waitLock(10000);
+      try {
+        mensagensSheet().appendRow(["M" + Date.now().toString(36) + Math.floor(Math.random() * 1000), Date.now(), caller.empresa, caller.username, caller.nome || caller.username,
+          item.login, "⛔ " + titulo + " não liberada. Motivo: " + motivo + (oQueFazer ? ". O que fazer: " + oQueFazer : "") + ". Se tiver dúvida, me responda por aqui.", "", "0"]);
+      } finally { lockM.releaseLock(); }
+    } catch (e) { Logger.log("mensagem do não apto falhou: " + e.message); }
   }
   return jsonOut({ ok: true, item: item });
 }

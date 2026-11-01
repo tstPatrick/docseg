@@ -3986,7 +3986,7 @@ function docsAtivos(){
 
 /* ============ SUPORTE ============ */
 const SUPORTE_WHATS = '5571996033896';
-const APP_VERSION = '6.6';
+const APP_VERSION = '6.7';
 const SUPORTE_FAQ = [
   ['Como envio um documento?', 'Preencha o documento (PT, checklist de veículo ou de escada) e toque em Enviar. Escolha "Enviar agora" ou "Guardar e enviar depois". Em "Meus documentos" você vê o que já foi enviado.'],
   ['Estou sem internet, e agora?', 'Pode preencher normalmente. O documento fica guardado no aparelho e é enviado sozinho quando a internet voltar. Em "Meus documentos" aparece como "Aguardando envio".'],
@@ -6776,6 +6776,8 @@ function libRenderTec(){
     const snap = libLoadSnaps()[x.id];
     h += `<div class="lib-hero"><div class="big" style="background:#FDECEB">⛔</div><h3 style="color:#A32D2D">NÃO APTO — não inicie</h3><p>${titulo}${x.area ? ' · ' + escHtml(x.area) : ''}</p><p>Avaliado por <b>${escHtml(x.decididoPor)}</b> em ${libHora(x.decididoTs)}</p></div>` +
       `<div class="lib-box red"><b class="t">Motivo: ${escHtml(x.motivo)}</b>${x.oQueFazer ? escHtml(x.oQueFazer) : ''}</div>` +
+      '<div class="lib-box" style="background:#FFF1D6;border-color:rgba(138,75,0,.25);color:#5D4200;"><b class="t">📞 Entre em contato com o seu supervisor</b>Você não está apto para iniciar esta atividade. Fale com quem avaliou antes de fazer qualquer coisa.</div>' +
+      (x.decididoLogin ? '<button type="button" class="lib-btn pri" id="libFalarSup">💬 Falar com o supervisor</button>' : '') +
       (x.podeReenviar ? (snap ? '<button type="button" class="lib-btn pri" id="libCorrigir">Corrigir e reenviar</button>' : '<p class="lib-small">Os dados deste documento não estão mais neste aparelho. Para corrigir, preencha um documento novo.</p>') : '<p class="lib-small">O gestor não liberou a correção deste documento.</p>') +
       '<button type="button" class="lib-btn ghost" id="libEncerrar">Encerrar como "Não executada"</button>' +
       '<p class="lib-small" style="text-align:center;">Use "Não executada" quando o trabalho não vai acontecer (ex.: a própria pessoa não está apta). Outro colaborador pode abrir um documento novo.</p>';
@@ -6788,6 +6790,7 @@ function libRenderTec(){
   box.innerHTML = h;
   if($('libVerPdf')) $('libVerPdf').onclick = ()=> libBaixarPdf(x, $('libVerPdf'));
   if($('libCorrigir')) $('libCorrigir').onclick = ()=> libCorrigir(x);
+  if($('libFalarSup')) $('libFalarSup').onclick = ()=> openMensagens(x.decididoLogin, String(x.decididoPor || '').replace(/\s*\(.*\)$/, ''), '', libTitulo(x));
   if($('libEncerrar')) $('libEncerrar').onclick = async ()=>{
     if(!(await dsConfirm('Encerrar ' + escHtml(libTitulo(x)) + ' como "Não executada"? Ela não poderá mais ser corrigida.', 'Encerrar'))) return;
     try{
