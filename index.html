@@ -900,7 +900,8 @@
     </div>
     <p id="loginErr" style="display:none;"></p>
     <button type="button" class="btn btn-primary" id="loginConfirm">Entrar</button>
-    <p class="login-hint" style="text-align:center;">O login é pessoal e é criado pelo técnico de segurança responsável da sua empresa. Não compartilhe a sua senha.</p>
+    <button type="button" id="loginEsqueci" style="display:block;margin:14px auto 0;border:0;background:none;color:#1D3A6F;font:700 14px inherit;font-family:inherit;text-decoration:underline;cursor:pointer;">Esqueci minha senha</button>
+    <p class="login-hint" style="text-align:center;">O login é pessoal e é criado pelo gestor da sua empresa. Não compartilhe a sua senha.</p>
     <button type="button" class="login-server" id="loginServer">Endereço do servidor</button>
   </div>
 </div>
@@ -1328,6 +1329,16 @@
 <!-- LIBERAÇÃO: decisão do gestor (Apto / Não apto + assinatura) -->
 <div class="modal-bg ds" id="libDecModal">
   <div class="modal" id="libDecBody"></div>
+</div>
+
+<!-- ESQUECI MINHA SENHA (tela de login) -->
+<div class="modal-bg ds" id="esqueciModal" style="z-index:400;">
+  <div class="modal" id="esqueciBody"></div>
+</div>
+
+<!-- SENHA PROVISÓRIA (gestor / admin atendendo um pedido) -->
+<div class="modal-bg ds" id="senhaProvModal">
+  <div class="modal" id="senhaProvBody"></div>
 </div>
 
 <!-- E-MAIL DOS PDFs (gestor) -->
@@ -3709,6 +3720,73 @@ async function openEmailPdfModal(){
   }catch(e){ toast('Não foi possível carregar: verifique a internet.', 'err'); }
 }
 $('closeEmailPdf').onclick = goHome;
+
+/* ---- Esqueci minha senha: o pedido vai para o gestor (ou para o admin, se for gestor) ---- */
+function pintaEsqueci(enviado){
+  $('esqueciBody').innerHTML = enviado
+    ? '<button class="modal-close" id="esqueciFechar">←</button><div style="text-align:center;padding:10px 0;"><div style="font-size:42px;">📨</div><h2 style="font-family:Poppins,sans-serif;margin-top:6px;">Pedido enviado</h2><p class="desc" style="margin-top:8px;">Se o login estiver certo, o seu gestor já foi avisado. Assim que ele definir a senha provisória, entre com ela: o app pede para você criar uma senha nova.</p><button type="button" class="btn btn-primary" style="width:100%;" id="esqueciVoltar">Voltar para o login</button></div>'
+    : '<button class="modal-close" id="esqueciFechar">←</button><h2 style="font-family:Poppins,sans-serif;">Esqueci minha senha</h2><p class="desc">Digite o seu login. O gestor da sua empresa recebe o pedido e define uma senha provisória. Quando ele te passar, entre com ela: o app pede para você criar uma senha nova.</p>' +
+      '<div class="field"><label>Seu login</label><input type="text" id="esqueciLogin" autocapitalize="off" autocomplete="username"></div><button type="button" class="btn btn-primary" style="width:100%;" id="esqueciEnviar">Avisar meu gestor</button>';
+  const fechar = ()=> $('esqueciModal').classList.remove('show');
+  $('esqueciFechar').onclick = fechar;
+  if($('esqueciVoltar')) $('esqueciVoltar').onclick = fechar;
+  if($('esqueciEnviar')){
+    $('esqueciLogin').value = $('loginUser').value.trim();
+    $('esqueciEnviar').onclick = async ()=>{
+      const login = $('esqueciLogin').value.trim().toLowerCase();
+      if(!login){ toast('Digite o seu login.', 'err'); return; }
+      const b = $('esqueciEnviar'); b.disabled = true; b.textContent = 'Enviando...';
+      try{
+        const r = await (await fetch(getScriptUrl(), { method:'POST', body: JSON.stringify({ action:'pedirSenha', username: login }) })).json();
+        if(r.error) throw new Error(r.error);
+        pintaEsqueci(true);
+      }catch(e){ toast('Sem conexão. Tente de novo com internet.', 'err'); b.disabled = false; b.textContent = 'Avisar meu gestor'; }
+    };
+  }
+}
+$('loginEsqueci').onclick = ()=>{ pintaEsqueci(false); $('esqueciModal').classList.add('show'); };
+
+/* ---- Pedidos de senha nova: gestor (equipe dele) e admin (gestores) ---- */
+let pedidosSenha = [];
+async function loadSenhaCard(){
+  if(!$('senhaCard')) return;
+  try{
+    const r = await api('listPedidosSenha');
+    pedidosSenha = (r && r.ok) ? r.pedidos : [];
+  }catch(e){ pedidosSenha = []; }
+  const box = $('senhaCard'); if(!box) return;
+  if(!pedidosSenha.length){ box.innerHTML = ''; return; }
+  const agora = Date.now();
+  box.innerHTML = `<div class="lib-card"><h4>🔑 ${pedidosSenha.length > 1 ? 'Pedidos de senha nova' : 'Pedido de senha nova'}<span class="n">${pedidosSenha.length}</span></h4>` +
+    pedidosSenha.map((p, i) => `<div class="lib-row" style="cursor:default;"><span class="ic">${escHtml(initialsOf(p.nome))}</span><span class="m"><b>${escHtml(p.nome)}</b><span>${escHtml(p.login)}${isAdmin() && p.empresa ? ' · ' + escHtml(p.empresa) : ''} · pediu ${timeAgo(p.ts, agora)}</span></span><button type="button" class="ab-btn" data-pedido="${i}">Definir senha</button></div>`).join('') + '</div>';
+  box.querySelectorAll('[data-pedido]').forEach(b => b.onclick = ()=> abrirSenhaProv(pedidosSenha[parseInt(b.getAttribute('data-pedido'), 10)]));
+}
+function abrirSenhaProv(p){
+  const primeiro = escHtml((p.nome || '').split(' ')[0]);
+  $('senhaProvBody').innerHTML = `<button class="modal-close" id="senhaProvFechar">←</button><h2 style="font-family:'Poppins',sans-serif;">Senha provisória para ${escHtml(p.nome)}</h2>` +
+    `<p class="desc">Passe esta senha para ${primeiro} (pessoalmente ou por mensagem). No próximo acesso, o app pede para criar uma senha nova.</p>` +
+    '<div class="field"><label>Senha provisória</label><input type="text" id="senhaProvValor" autocomplete="off"><p class="hint">Mínimo de 6 caracteres.</p></div>' +
+    '<button type="button" class="btn btn-primary" style="width:100%;" id="senhaProvSalvar">Salvar senha provisória</button><button type="button" class="btn btn-ghost" style="width:100%;margin-top:10px;" id="senhaProvRecusar">Recusar pedido</button>';
+  $('senhaProvModal').classList.add('show');
+  const fechar = ()=> $('senhaProvModal').classList.remove('show');
+  $('senhaProvFechar').onclick = fechar;
+  const atender = async (extra, msg)=>{
+    try{
+      const r = await api('atenderPedidoSenha', Object.assign({ id: p.id }, extra));
+      if(r.error) throw new Error(r.error === 'não autorizado' ? 'O servidor ainda não permite. Atualize o código do Apps Script.' : r.error);
+      fechar(); salvo(msg); loadSenhaCard();
+    }catch(e){ toast(e.message || 'Não foi possível salvar.', 'err'); }
+  };
+  $('senhaProvSalvar').onclick = async ()=>{
+    const v = $('senhaProvValor').value;
+    if(v.length < 6){ toast('A senha provisória precisa ter pelo menos 6 caracteres.', 'err'); return; }
+    await atender({ senhaHash: await hashPass(v) }, 'Senha provisória definida. Passe para ' + (p.nome || '').split(' ')[0] + '.');
+  };
+  $('senhaProvRecusar').onclick = async ()=>{
+    if(!(await dsConfirm('Recusar o pedido de ' + escHtml(p.nome) + '?', 'Recusar'))) return;
+    await atender({ recusar: true }, 'Pedido recusado.');
+  };
+}
 $('emailPdfSave').onclick = async ()=>{
   const btn = $('emailPdfSave'), old = btn.textContent;
   btn.disabled = true; btn.textContent = 'Salvando...';
@@ -3903,11 +3981,11 @@ function docsAtivos(){
 
 /* ============ SUPORTE ============ */
 const SUPORTE_WHATS = '5571996033896';
-const APP_VERSION = '6.4';
+const APP_VERSION = '6.5';
 const SUPORTE_FAQ = [
   ['Como envio um documento?', 'Preencha o documento (PT, checklist de veículo ou de escada) e toque em Enviar. Escolha "Enviar agora" ou "Guardar e enviar depois". Em "Meus documentos" você vê o que já foi enviado.'],
   ['Estou sem internet, e agora?', 'Pode preencher normalmente. O documento fica guardado no aparelho e é enviado sozinho quando a internet voltar. Em "Meus documentos" aparece como "Aguardando envio".'],
-  ['Esqueci minha senha', 'Fale com o responsável da sua empresa (gestor) ou com o suporte pelo WhatsApp. Eles definem uma senha provisória e, no próximo acesso, o app pede para você criar uma nova.'],
+  ['Esqueci minha senha', 'Na tela de login, toque em "Esqueci minha senha" e digite o seu login: o gestor da sua empresa é avisado e define uma senha provisória. Entre com ela e o app pede para você criar uma nova.'],
   ['Como instalo o app no celular?', 'Abra o endereço do app no navegador do celular e use a opção "Instalar app" ou "Adicionar à tela inicial" do menu do navegador.'],
   ['O app mostra "Acesso suspenso"', 'Significa que o contrato da empresa está vencido ou foi suspenso. O gestor da empresa deve falar com o DocSeg Digital para regularizar.']
 ];
@@ -5668,6 +5746,7 @@ function hideAllScreens(){
   document.getElementById('libDecModal').classList.remove('show');
   document.getElementById('carimboModal').classList.remove('show');
   document.getElementById('emailPdfModal').classList.remove('show');
+  document.getElementById('senhaProvModal').classList.remove('show');
   stopPainelTimers();
 }
 
@@ -6335,11 +6414,13 @@ function renderHomeMenu(){
   }
   if(gestor) html = '<div id="abertosCard"></div><div id="teamCard"></div>' + html;
   if(gestor || tst || (!admin && libCfg().ativo)) html = '<div id="libCard"></div>' + html;
+  if(gestor || admin) html = '<div id="senhaCard"></div>' + html;
   if(!admin && !gestor && !tst) html = abertosMeusHtml() + html;
   if(!admin) html = '<div class="ab-card" id="msgCard" style="display:none;background:#E6ECF8;color:#12254B;border-color:rgba(18,37,75,.2);"></div>' + pushBannerHtml() + html;
   box.innerHTML = html;
   if(gestor){ loadAbertosCard(); loadTeamCard(); }
   if(gestor || tst) libLoadCardGestor();
+  if(gestor || admin) loadSenhaCard();
   else if(!admin && libCfg().ativo) libLoadCardTec();
   if(!admin){ pushBannerBind(); loadMsgBadge(); }
   if(!admin && !gestor && !tst){ abertosMeusBind(); syncAbertos(); }
