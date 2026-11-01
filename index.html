@@ -3903,7 +3903,7 @@ function docsAtivos(){
 
 /* ============ SUPORTE ============ */
 const SUPORTE_WHATS = '5571996033896';
-const APP_VERSION = '6.3';
+const APP_VERSION = '6.4';
 const SUPORTE_FAQ = [
   ['Como envio um documento?', 'Preencha o documento (PT, checklist de veículo ou de escada) e toque em Enviar. Escolha "Enviar agora" ou "Guardar e enviar depois". Em "Meus documentos" você vê o que já foi enviado.'],
   ['Estou sem internet, e agora?', 'Pode preencher normalmente. O documento fica guardado no aparelho e é enviado sozinho quando a internet voltar. Em "Meus documentos" aparece como "Aguardando envio".'],
@@ -4639,7 +4639,7 @@ function renderOfflineBanner(){
 }
 function enqueueDocument(item){
   const q = loadQueue();
-  q.push(item);
+  q.push(Object.assign({}, item, { login: loginAtual() }));
   saveQueue(q);
   renderOfflineBanner();
 }
@@ -4692,6 +4692,8 @@ async function retryQueue(){
   if(btn){ btn.disabled = true; btn.textContent = 'Reenviando...'; }
   const remaining = [];
   for(const item of q){
+    // Documento de outra pessoa: fica na fila até ela entrar (nunca vai com outro login).
+    if(item.login && item.login !== loginAtual()){ remaining.push(item); continue; }
     try{
       await sendPayload(cfg, item.payload);
       addHistoryEntry(Object.assign({}, item.meta, {status:'enviado'}));
@@ -4714,7 +4716,10 @@ setInterval(()=>{ if(navigator.onLine) autoFlushPendingIfStale(); }, 45000);
 /* ============ HISTÓRICO LOCAL ============ */
 const HISTORY_KEY = 'pt_history';
 const HISTORY_MAX = 40;
-function loadHistory(){ try{ return JSON.parse(localStorage.getItem(HISTORY_KEY)||'[]'); }catch(e){ return []; } }
+// Cada item do histórico e cada PT salva levam o login de quem criou: só o dono
+// vê. Os antigos, de antes desta regra (sem dono), não aparecem para ninguém.
+function loginAtual(){ return (getSession() || {}).username || ''; }
+function loadHistory(){ try{ const l = loginAtual(); return JSON.parse(localStorage.getItem(HISTORY_KEY)||'[]').filter(h => h.login && h.login === l); }catch(e){ return []; } }
 function saveHistoryList(list){
   try{ localStorage.setItem(HISTORY_KEY, JSON.stringify(list)); }
   catch(e){
@@ -4725,6 +4730,7 @@ function saveHistoryList(list){
   }
 }
 function addHistoryEntry(entry){
+  entry = Object.assign({}, entry, { login: loginAtual() });
   let list = loadHistory();
   list.unshift(entry);
   if(list.length > HISTORY_MAX) list = list.slice(0, HISTORY_MAX);
@@ -6447,7 +6453,7 @@ document.getElementById('meusDocsBack').onclick = goHome;
    poder começar outra sem perder a primeira — e uma PT nova e em branco
    assume o lugar de "PT atual". */
 function listPtDrafts(){
-  try{ return JSON.parse(localStorage.getItem('pt_drafts_parked') || '[]'); }
+  try{ const l = loginAtual(); return JSON.parse(localStorage.getItem('pt_drafts_parked') || '[]').filter(d => d.login && d.login === l); }
   catch(e){ return []; }
 }
 function savePtDraftsList(list){
@@ -6458,7 +6464,7 @@ async function parkCurrentPtAndGoHome(){
   const list = listPtDrafts();
   const snapshot = JSON.parse(JSON.stringify(state));
   list.unshift({
-    id: 'draft_' + Date.now(),
+    id: 'draft_' + Date.now(), login: loginAtual(),
     ptNumero: state.ptNumero || '—',
     local: state.area || '(sem local informado)',
     empresa: state.empresaNome || '',
