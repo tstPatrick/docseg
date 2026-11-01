@@ -791,6 +791,11 @@
   .ct-pill{display:inline-block; font-size:10px; font-weight:700; padding:3px 9px; border-radius:20px; text-transform:uppercase; letter-spacing:.3px; white-space:nowrap;}
   .ct-pill.ok{background:#E6F4DE; color:#1F6B2A;} .ct-pill.warn{background:#FFF1D6; color:#8A4B00;} .ct-pill.bad{background:#FDECEC; color:#A32D2D;} .ct-pill.none{background:#EEF1F7; color:#566179;}
   .ct-alert{background:#FFF8E1; border:1px solid #F5D77A; border-radius:12px; padding:10px 12px; font-size:12.5px; color:#5D4B00; margin-bottom:12px; line-height:1.45;}
+  /* Toque em texto não seleciona palavra nem abre o dicionário do Android
+     ("Tocar para pesquisar"). Só os campos de digitação continuam selecionáveis. */
+  body{-webkit-user-select:none; user-select:none; -webkit-touch-callout:none; -webkit-tap-highlight-color:transparent;}
+  input, textarea, select, [contenteditable="true"]{-webkit-user-select:text; user-select:text; -webkit-touch-callout:default;}
+
   /* ============ LIBERAÇÃO (Apto / Não apto) ============ */
   .pill.red{background:#FDECEB; color:#A32D2D;}
   .lib-card{background:#fff; border:2px solid #E3A008; border-radius:16px; padding:12px 14px; margin:0 0 14px;}
@@ -3981,7 +3986,7 @@ function docsAtivos(){
 
 /* ============ SUPORTE ============ */
 const SUPORTE_WHATS = '5571996033896';
-const APP_VERSION = '6.5';
+const APP_VERSION = '6.6';
 const SUPORTE_FAQ = [
   ['Como envio um documento?', 'Preencha o documento (PT, checklist de veículo ou de escada) e toque em Enviar. Escolha "Enviar agora" ou "Guardar e enviar depois". Em "Meus documentos" você vê o que já foi enviado.'],
   ['Estou sem internet, e agora?', 'Pode preencher normalmente. O documento fica guardado no aparelho e é enviado sozinho quando a internet voltar. Em "Meus documentos" aparece como "Aguardando envio".'],
