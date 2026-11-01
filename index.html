@@ -6420,8 +6420,8 @@ function renderHomeMenu(){
   box.innerHTML = html;
   if(gestor){ loadAbertosCard(); loadTeamCard(); }
   if(gestor || tst) libLoadCardGestor();
-  if(gestor || admin) loadSenhaCard();
   else if(!admin && libCfg().ativo) libLoadCardTec();
+  if(gestor || admin) loadSenhaCard();
   if(!admin){ pushBannerBind(); loadMsgBadge(); }
   if(!admin && !gestor && !tst){ abertosMeusBind(); syncAbertos(); }
   { const bs = document.getElementById('btnTrocarSenhaPadrao'); if(bs) bs.onclick = openAdminAccountModal; }
