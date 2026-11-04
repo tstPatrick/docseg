@@ -1860,7 +1860,7 @@ function sendFcmPush(token, title, body) {
       token: token,
       notification: { title: title, body: body },
       data: { tipo: "docseg", titulo: String(title), corpo: String(body) },
-      webpush: { headers: { Urgency: "high" }, notification: { title: title, body: body, tag: "docseg-aviso", renotify: true, icon: "/icon-192.png" }, fcm_options: { link: "/" } }
+      webpush: { headers: { Urgency: "high" }, notification: { title: title, body: body, tag: "docseg-aviso", renotify: true, icon: "/icon-192.png", badge: "/badge-96.png" }, fcm_options: { link: "/" } }
     }
   };
   var resp = UrlFetchApp.fetch(
