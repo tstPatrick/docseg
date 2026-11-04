@@ -27,7 +27,7 @@ messaging.onBackgroundMessage((payload) => {
   const options = {
     body: n.body || d.corpo || '',
     icon: './icon-192.png',
-    badge: './icon-192.png',
+    badge: './badge-96.png',  // só o formato do "DS": o Android pinta numa cor só
     tag: 'docseg-aviso',      // mesma "tag" do servidor: evita notificação repetida
     renotify: true,
     vibrate: [120, 60, 120]
@@ -48,7 +48,7 @@ self.addEventListener('notificationclick', (event) => {
   );
 });
 
-const CACHE_NAME = 'docseg-shell-v56';
+const CACHE_NAME = 'docseg-shell-v57';
 const APP_SHELL = [
   './',
   './index.html',
@@ -56,7 +56,8 @@ const APP_SHELL = [
   './icon-192.png',
   './icon-512.png',
   './icon-maskable-512.png',
-  './apple-touch-icon.png'
+  './apple-touch-icon.png',
+  './badge-96.png'
 ];
 
 self.addEventListener('install', (event) => {
