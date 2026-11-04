@@ -791,6 +791,11 @@
   .ct-pill{display:inline-block; font-size:10px; font-weight:700; padding:3px 9px; border-radius:20px; text-transform:uppercase; letter-spacing:.3px; white-space:nowrap;}
   .ct-pill.ok{background:#E6F4DE; color:#1F6B2A;} .ct-pill.warn{background:#FFF1D6; color:#8A4B00;} .ct-pill.bad{background:#FDECEC; color:#A32D2D;} .ct-pill.none{background:#EEF1F7; color:#566179;}
   .ct-alert{background:#FFF8E1; border:1px solid #F5D77A; border-radius:12px; padding:10px 12px; font-size:12.5px; color:#5D4B00; margin-bottom:12px; line-height:1.45;}
+  /* Toque em texto não seleciona palavra nem abre o dicionário do Android
+     ("Tocar para pesquisar"). Só os campos de digitação continuam selecionáveis. */
+  body{-webkit-user-select:none; user-select:none; -webkit-touch-callout:none; -webkit-tap-highlight-color:transparent;}
+  input, textarea, select, [contenteditable="true"]{-webkit-user-select:text; user-select:text; -webkit-touch-callout:default;}
+
   /* ============ LIBERAÇÃO (Apto / Não apto) ============ */
   .pill.red{background:#FDECEB; color:#A32D2D;}
   .lib-card{background:#fff; border:2px solid #E3A008; border-radius:16px; padding:12px 14px; margin:0 0 14px;}
@@ -900,7 +905,8 @@
     </div>
     <p id="loginErr" style="display:none;"></p>
     <button type="button" class="btn btn-primary" id="loginConfirm">Entrar</button>
-    <p class="login-hint" style="text-align:center;">O login é pessoal e é criado pelo técnico de segurança responsável da sua empresa. Não compartilhe a sua senha.</p>
+    <button type="button" id="loginEsqueci" style="display:block;margin:14px auto 0;border:0;background:none;color:#1D3A6F;font:700 14px inherit;font-family:inherit;text-decoration:underline;cursor:pointer;">Esqueci minha senha</button>
+    <p class="login-hint" style="text-align:center;">O login é pessoal e é criado pelo gestor da sua empresa. Não compartilhe a sua senha.</p>
     <button type="button" class="login-server" id="loginServer">Endereço do servidor</button>
   </div>
 </div>
@@ -1328,6 +1334,16 @@
 <!-- LIBERAÇÃO: decisão do gestor (Apto / Não apto + assinatura) -->
 <div class="modal-bg ds" id="libDecModal">
   <div class="modal" id="libDecBody"></div>
+</div>
+
+<!-- ESQUECI MINHA SENHA (tela de login) -->
+<div class="modal-bg ds" id="esqueciModal" style="z-index:400;">
+  <div class="modal" id="esqueciBody"></div>
+</div>
+
+<!-- SENHA PROVISÓRIA (gestor / admin atendendo um pedido) -->
+<div class="modal-bg ds" id="senhaProvModal">
+  <div class="modal" id="senhaProvBody"></div>
 </div>
 
 <!-- E-MAIL DOS PDFs (gestor) -->
@@ -3709,6 +3725,73 @@ async function openEmailPdfModal(){
   }catch(e){ toast('Não foi possível carregar: verifique a internet.', 'err'); }
 }
 $('closeEmailPdf').onclick = goHome;
+
+/* ---- Esqueci minha senha: o pedido vai para o gestor (ou para o admin, se for gestor) ---- */
+function pintaEsqueci(enviado){
+  $('esqueciBody').innerHTML = enviado
+    ? '<button class="modal-close" id="esqueciFechar">←</button><div style="text-align:center;padding:10px 0;"><div style="font-size:42px;">📨</div><h2 style="font-family:Poppins,sans-serif;margin-top:6px;">Pedido enviado</h2><p class="desc" style="margin-top:8px;">Se o login estiver certo, o seu gestor já foi avisado. Assim que ele definir a senha provisória, entre com ela: o app pede para você criar uma senha nova.</p><button type="button" class="btn btn-primary" style="width:100%;" id="esqueciVoltar">Voltar para o login</button></div>'
+    : '<button class="modal-close" id="esqueciFechar">←</button><h2 style="font-family:Poppins,sans-serif;">Esqueci minha senha</h2><p class="desc">Digite o seu login. O gestor da sua empresa recebe o pedido e define uma senha provisória. Quando ele te passar, entre com ela: o app pede para você criar uma senha nova.</p>' +
+      '<div class="field"><label>Seu login</label><input type="text" id="esqueciLogin" autocapitalize="off" autocomplete="username"></div><button type="button" class="btn btn-primary" style="width:100%;" id="esqueciEnviar">Avisar meu gestor</button>';
+  const fechar = ()=> $('esqueciModal').classList.remove('show');
+  $('esqueciFechar').onclick = fechar;
+  if($('esqueciVoltar')) $('esqueciVoltar').onclick = fechar;
+  if($('esqueciEnviar')){
+    $('esqueciLogin').value = $('loginUser').value.trim();
+    $('esqueciEnviar').onclick = async ()=>{
+      const login = $('esqueciLogin').value.trim().toLowerCase();
+      if(!login){ toast('Digite o seu login.', 'err'); return; }
+      const b = $('esqueciEnviar'); b.disabled = true; b.textContent = 'Enviando...';
+      try{
+        const r = await (await fetch(getScriptUrl(), { method:'POST', body: JSON.stringify({ action:'pedirSenha', username: login }) })).json();
+        if(r.error) throw new Error(r.error);
+        pintaEsqueci(true);
+      }catch(e){ toast('Sem conexão. Tente de novo com internet.', 'err'); b.disabled = false; b.textContent = 'Avisar meu gestor'; }
+    };
+  }
+}
+$('loginEsqueci').onclick = ()=>{ pintaEsqueci(false); $('esqueciModal').classList.add('show'); };
+
+/* ---- Pedidos de senha nova: gestor (equipe dele) e admin (gestores) ---- */
+let pedidosSenha = [];
+async function loadSenhaCard(){
+  if(!$('senhaCard')) return;
+  try{
+    const r = await api('listPedidosSenha');
+    pedidosSenha = (r && r.ok) ? r.pedidos : [];
+  }catch(e){ pedidosSenha = []; }
+  const box = $('senhaCard'); if(!box) return;
+  if(!pedidosSenha.length){ box.innerHTML = ''; return; }
+  const agora = Date.now();
+  box.innerHTML = `<div class="lib-card"><h4>🔑 ${pedidosSenha.length > 1 ? 'Pedidos de senha nova' : 'Pedido de senha nova'}<span class="n">${pedidosSenha.length}</span></h4>` +
+    pedidosSenha.map((p, i) => `<div class="lib-row" style="cursor:default;"><span class="ic">${escHtml(initialsOf(p.nome))}</span><span class="m"><b>${escHtml(p.nome)}</b><span>${escHtml(p.login)}${isAdmin() && p.empresa ? ' · ' + escHtml(p.empresa) : ''} · pediu ${timeAgo(p.ts, agora)}</span></span><button type="button" class="ab-btn" data-pedido="${i}">Definir senha</button></div>`).join('') + '</div>';
+  box.querySelectorAll('[data-pedido]').forEach(b => b.onclick = ()=> abrirSenhaProv(pedidosSenha[parseInt(b.getAttribute('data-pedido'), 10)]));
+}
+function abrirSenhaProv(p){
+  const primeiro = escHtml((p.nome || '').split(' ')[0]);
+  $('senhaProvBody').innerHTML = `<button class="modal-close" id="senhaProvFechar">←</button><h2 style="font-family:'Poppins',sans-serif;">Senha provisória para ${escHtml(p.nome)}</h2>` +
+    `<p class="desc">Passe esta senha para ${primeiro} (pessoalmente ou por mensagem). No próximo acesso, o app pede para criar uma senha nova.</p>` +
+    '<div class="field"><label>Senha provisória</label><input type="text" id="senhaProvValor" autocomplete="off"><p class="hint">Mínimo de 6 caracteres.</p></div>' +
+    '<button type="button" class="btn btn-primary" style="width:100%;" id="senhaProvSalvar">Salvar senha provisória</button><button type="button" class="btn btn-ghost" style="width:100%;margin-top:10px;" id="senhaProvRecusar">Recusar pedido</button>';
+  $('senhaProvModal').classList.add('show');
+  const fechar = ()=> $('senhaProvModal').classList.remove('show');
+  $('senhaProvFechar').onclick = fechar;
+  const atender = async (extra, msg)=>{
+    try{
+      const r = await api('atenderPedidoSenha', Object.assign({ id: p.id }, extra));
+      if(r.error) throw new Error(r.error === 'não autorizado' ? 'O servidor ainda não permite. Atualize o código do Apps Script.' : r.error);
+      fechar(); salvo(msg); loadSenhaCard();
+    }catch(e){ toast(e.message || 'Não foi possível salvar.', 'err'); }
+  };
+  $('senhaProvSalvar').onclick = async ()=>{
+    const v = $('senhaProvValor').value;
+    if(v.length < 6){ toast('A senha provisória precisa ter pelo menos 6 caracteres.', 'err'); return; }
+    await atender({ senhaHash: await hashPass(v) }, 'Senha provisória definida. Passe para ' + (p.nome || '').split(' ')[0] + '.');
+  };
+  $('senhaProvRecusar').onclick = async ()=>{
+    if(!(await dsConfirm('Recusar o pedido de ' + escHtml(p.nome) + '?', 'Recusar'))) return;
+    await atender({ recusar: true }, 'Pedido recusado.');
+  };
+}
 $('emailPdfSave').onclick = async ()=>{
   const btn = $('emailPdfSave'), old = btn.textContent;
   btn.disabled = true; btn.textContent = 'Salvando...';
@@ -3903,11 +3986,11 @@ function docsAtivos(){
 
 /* ============ SUPORTE ============ */
 const SUPORTE_WHATS = '5571996033896';
-const APP_VERSION = '6.4';
+const APP_VERSION = '6.7';
 const SUPORTE_FAQ = [
   ['Como envio um documento?', 'Preencha o documento (PT, checklist de veículo ou de escada) e toque em Enviar. Escolha "Enviar agora" ou "Guardar e enviar depois". Em "Meus documentos" você vê o que já foi enviado.'],
   ['Estou sem internet, e agora?', 'Pode preencher normalmente. O documento fica guardado no aparelho e é enviado sozinho quando a internet voltar. Em "Meus documentos" aparece como "Aguardando envio".'],
-  ['Esqueci minha senha', 'Fale com o responsável da sua empresa (gestor) ou com o suporte pelo WhatsApp. Eles definem uma senha provisória e, no próximo acesso, o app pede para você criar uma nova.'],
+  ['Esqueci minha senha', 'Na tela de login, toque em "Esqueci minha senha" e digite o seu login: o gestor da sua empresa é avisado e define uma senha provisória. Entre com ela e o app pede para você criar uma nova.'],
   ['Como instalo o app no celular?', 'Abra o endereço do app no navegador do celular e use a opção "Instalar app" ou "Adicionar à tela inicial" do menu do navegador.'],
   ['O app mostra "Acesso suspenso"', 'Significa que o contrato da empresa está vencido ou foi suspenso. O gestor da empresa deve falar com o DocSeg Digital para regularizar.']
 ];
@@ -5668,6 +5751,7 @@ function hideAllScreens(){
   document.getElementById('libDecModal').classList.remove('show');
   document.getElementById('carimboModal').classList.remove('show');
   document.getElementById('emailPdfModal').classList.remove('show');
+  document.getElementById('senhaProvModal').classList.remove('show');
   stopPainelTimers();
 }
 
@@ -6335,12 +6419,14 @@ function renderHomeMenu(){
   }
   if(gestor) html = '<div id="abertosCard"></div><div id="teamCard"></div>' + html;
   if(gestor || tst || (!admin && libCfg().ativo)) html = '<div id="libCard"></div>' + html;
+  if(gestor || admin) html = '<div id="senhaCard"></div>' + html;
   if(!admin && !gestor && !tst) html = abertosMeusHtml() + html;
   if(!admin) html = '<div class="ab-card" id="msgCard" style="display:none;background:#E6ECF8;color:#12254B;border-color:rgba(18,37,75,.2);"></div>' + pushBannerHtml() + html;
   box.innerHTML = html;
   if(gestor){ loadAbertosCard(); loadTeamCard(); }
   if(gestor || tst) libLoadCardGestor();
   else if(!admin && libCfg().ativo) libLoadCardTec();
+  if(gestor || admin) loadSenhaCard();
   if(!admin){ pushBannerBind(); loadMsgBadge(); }
   if(!admin && !gestor && !tst){ abertosMeusBind(); syncAbertos(); }
   { const bs = document.getElementById('btnTrocarSenhaPadrao'); if(bs) bs.onclick = openAdminAccountModal; }
@@ -6690,6 +6776,8 @@ function libRenderTec(){
     const snap = libLoadSnaps()[x.id];
     h += `<div class="lib-hero"><div class="big" style="background:#FDECEB">⛔</div><h3 style="color:#A32D2D">NÃO APTO — não inicie</h3><p>${titulo}${x.area ? ' · ' + escHtml(x.area) : ''}</p><p>Avaliado por <b>${escHtml(x.decididoPor)}</b> em ${libHora(x.decididoTs)}</p></div>` +
       `<div class="lib-box red"><b class="t">Motivo: ${escHtml(x.motivo)}</b>${x.oQueFazer ? escHtml(x.oQueFazer) : ''}</div>` +
+      '<div class="lib-box" style="background:#FFF1D6;border-color:rgba(138,75,0,.25);color:#5D4200;"><b class="t">📞 Entre em contato com o seu supervisor</b>Você não está apto para iniciar esta atividade. Fale com quem avaliou antes de fazer qualquer coisa.</div>' +
+      (x.decididoLogin ? '<button type="button" class="lib-btn pri" id="libFalarSup">💬 Falar com o supervisor</button>' : '') +
       (x.podeReenviar ? (snap ? '<button type="button" class="lib-btn pri" id="libCorrigir">Corrigir e reenviar</button>' : '<p class="lib-small">Os dados deste documento não estão mais neste aparelho. Para corrigir, preencha um documento novo.</p>') : '<p class="lib-small">O gestor não liberou a correção deste documento.</p>') +
       '<button type="button" class="lib-btn ghost" id="libEncerrar">Encerrar como "Não executada"</button>' +
       '<p class="lib-small" style="text-align:center;">Use "Não executada" quando o trabalho não vai acontecer (ex.: a própria pessoa não está apta). Outro colaborador pode abrir um documento novo.</p>';
@@ -6702,6 +6790,7 @@ function libRenderTec(){
   box.innerHTML = h;
   if($('libVerPdf')) $('libVerPdf').onclick = ()=> libBaixarPdf(x, $('libVerPdf'));
   if($('libCorrigir')) $('libCorrigir').onclick = ()=> libCorrigir(x);
+  if($('libFalarSup')) $('libFalarSup').onclick = ()=> openMensagens(x.decididoLogin, String(x.decididoPor || '').replace(/\s*\(.*\)$/, ''), '', libTitulo(x));
   if($('libEncerrar')) $('libEncerrar').onclick = async ()=>{
     if(!(await dsConfirm('Encerrar ' + escHtml(libTitulo(x)) + ' como "Não executada"? Ela não poderá mais ser corrigida.', 'Encerrar'))) return;
     try{

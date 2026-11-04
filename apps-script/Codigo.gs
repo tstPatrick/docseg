@@ -70,6 +70,9 @@ function doPost(e) {
     if (a === "saveCarimbo") return saveCarimbo(data);
 
     if (a === "saveEmailEmpresa") return saveEmailEmpresa(data);
+    if (a === "pedirSenha") return pedirSenha(data);
+    if (a === "listPedidosSenha") return listPedidosSenha(data);
+    if (a === "atenderPedidoSenha") return atenderPedidoSenha(data);
     if (a === "saveSons") return saveSons(data);
     if (a === "apagarChamado") return apagarChamado(data);
     if (a === "limparChamados") return limparChamados(data);
@@ -2008,7 +2011,7 @@ function libObj_(v) {
     tipo: tipoDocKey(v[LB.tipo]), numero: String(v[LB.numero] || ""), revisao: Number(v[LB.rev]) || 0,
     login: normUser(v[LB.login]), nome: String(v[LB.nome] || ""), area: String(v[LB.area] || ""), resumo: String(v[LB.resumo] || ""),
     naoConformes: v[LB.nc] ? String(v[LB.nc]).split(" | ") : [], fileId: String(v[LB.arqFinal] || v[LB.arqPend] || ""),
-    status: String(v[LB.status] || "aguardando"), decididoPor: String(v[LB.decNome] || ""), decididoTs: Number(v[LB.decTs]) || 0,
+    status: String(v[LB.status] || "aguardando"), decididoPor: String(v[LB.decNome] || ""), decididoLogin: normUser(v[LB.decLogin]), decididoTs: Number(v[LB.decTs]) || 0,
     forma: String(v[LB.forma] || ""), motivo: String(v[LB.motivo] || ""), oQueFazer: String(v[LB.fazer] || ""),
     podeReenviar: String(v[LB.reenviar]) === "1", dataDoc: d.ptData || "", horaIni: d.horaIni || "", horaFim: d.horaFim || ""
   };
@@ -2169,9 +2172,21 @@ function decidirLiberacao(data) {
     }
   } catch (mailErr) { Logger.log("Falha ao enviar e-mail da liberação: " + mailErr.message); }
   if (decisao === "apto") {
-    pushParaUsuario_(item.login, "✅ " + titulo + (fem ? " liberada" : " liberado"), "Liberado por " + item.decididoPor + ". Pode iniciar a atividade.");
+    pushParaUsuario_(item.login, "✅ " + titulo + (fem ? " liberada" : " liberado") + ": você está apto",
+      "Liberado por " + (caller.nome || caller.username) + ". Pode iniciar a atividade.");
   } else {
-    pushParaUsuario_(item.login, "⛔ " + titulo + (fem ? " não liberada" : " não liberado"), "Não inicie. Motivo: " + motivo + (oQueFazer ? ". " + oQueFazer.slice(0, 90) : ""));
+    pushParaUsuario_(item.login, "⛔ " + titulo + (fem ? " não liberada" : " não liberado") + ": você não está apto",
+      "Não inicie. Entre em contato com o seu supervisor. Motivo: " + motivo + (oQueFazer ? ". " + oQueFazer.slice(0, 80) : ""));
+    // Deixa uma mensagem de quem avaliou: assim o colaborador já pode responder
+    // pelo app ("Falar com o supervisor"), sem esperar o supervisor escrever primeiro.
+    try {
+      var lockM = LockService.getScriptLock();
+      lockM.waitLock(10000);
+      try {
+        mensagensSheet().appendRow(["M" + Date.now().toString(36) + Math.floor(Math.random() * 1000), Date.now(), caller.empresa, caller.username, caller.nome || caller.username,
+          item.login, "⛔ " + titulo + " não liberada. Motivo: " + motivo + (oQueFazer ? ". O que fazer: " + oQueFazer : "") + ". Se tiver dúvida, me responda por aqui.", "", "0"]);
+      } finally { lockM.releaseLock(); }
+    } catch (e) { Logger.log("mensagem do não apto falhou: " + e.message); }
   }
   return jsonOut({ ok: true, item: item });
 }
@@ -2338,6 +2353,96 @@ function saveEmailEmpresa(data) {
     rec.updatedAt = new Date().toISOString();
     props.setProperty("empresa_" + slug, JSON.stringify(rec));
     return jsonOut({ ok: true, emailAtivo: rec.emailAtivo, emailDestino: rec.emailDestino });
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/* ============ ESQUECI MINHA SENHA (pedido ao gestor / ao admin) ============
+   Na tela de login a pessoa pede uma senha nova. Colaborador e Técnico de
+   Segurança: o gestor da empresa atende. Gestor: o administrador atende.
+   Quem atende define uma senha provisória (a pessoa troca no 1º acesso). */
+var PEDIDOS_HEADERS = ["ID", "Data/Hora", "Login", "Nome", "Empresa", "Perfil", "Status", "Atendido por", "Atendido em"];
+function pedidosSenhaSheet_() { return getOrCreateSheet(getOrCreateSpreadsheet(), "Pedidos de senha", PEDIDOS_HEADERS); }
+// Resposta sempre igual: não revela se o login existe.
+function pedirSenha(data) {
+  var uname = normUser(data.username);
+  var resp = jsonOut({ ok: true });
+  if (!uname || uname === "admin") return resp;
+  var rec = getUserRec(uname);
+  if (!rec || (rec.role !== "tecnico" && rec.role !== "tst" && rec.role !== "gestor")) return resp;
+  if (empresaSuspensa(rec.empresa)) return resp;
+  var lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    var sh = pedidosSenhaSheet_(), n = sh.getLastRow();
+    if (n > 1) {
+      var vals = sh.getRange(2, 1, n - 1, PEDIDOS_HEADERS.length).getValues();
+      for (var i = 0; i < vals.length; i++) {
+        if (normUser(vals[i][2]) === uname && String(vals[i][6]) === "aberto") {
+          sh.getRange(i + 2, 2).setValue(new Date()); // já tem pedido aberto: só atualiza a hora
+          return resp;
+        }
+      }
+    }
+    sh.appendRow(["S" + Date.now().toString(36), new Date(), uname, rec.nome || uname, rec.empresa || "", rec.role, "aberto", "", ""]);
+  } finally {
+    lock.releaseLock();
+  }
+  if (rec.role !== "gestor" && pushAtivo_()) {
+    usuariosDaEmpresa_(rec.empresa, "gestor").forEach(function (g) {
+      if (g.fcmToken) { try { sendFcmPush(g.fcmToken, "🔑 " + (rec.nome || uname) + " pediu uma senha nova", "Defina uma senha provisória na tela inicial do app."); } catch (e) {} }
+    });
+  }
+  return resp;
+}
+// Quem pode atender o pedido: gestor (colaborador/TST da empresa dele) ou admin (gestores).
+function podeAtenderPedido_(caller, v) {
+  if (caller.role === "admin") return String(v[5]) === "gestor";
+  return caller.role === "gestor" && String(v[5]) !== "gestor" && sameEmpresa(v[4], caller.empresa);
+}
+function listPedidosSenha(data) {
+  var caller = authCaller(data);
+  if (!caller || (caller.role !== "admin" && caller.role !== "gestor")) return jsonOut({ error: "não autorizado" });
+  var sh = pedidosSenhaSheet_(), n = sh.getLastRow(), out = [];
+  if (n > 1) {
+    var vals = sh.getRange(2, 1, n - 1, PEDIDOS_HEADERS.length).getValues();
+    for (var i = 0; i < vals.length; i++) {
+      if (String(vals[i][6]) !== "aberto" || !podeAtenderPedido_(caller, vals[i])) continue;
+      var ts = vals[i][1] instanceof Date ? vals[i][1].getTime() : new Date(vals[i][1]).getTime();
+      out.push({ id: String(vals[i][0]), ts: ts, login: normUser(vals[i][2]), nome: String(vals[i][3] || ""), empresa: String(vals[i][4] || ""), perfil: String(vals[i][5] || "") });
+    }
+  }
+  out.sort(function (a, b) { return a.ts - b.ts; });
+  return jsonOut({ ok: true, pedidos: out });
+}
+function atenderPedidoSenha(data) {
+  var caller = authCaller(data);
+  if (!caller || (caller.role !== "admin" && caller.role !== "gestor")) return jsonOut({ error: "não autorizado" });
+  var recusar = !!data.recusar, novo = (data.senhaHash || "").toString();
+  if (!recusar && !/^[0-9a-f]{64}$/.test(novo)) return jsonOut({ error: "senha inválida" });
+  var lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    var sh = pedidosSenhaSheet_(), n = sh.getLastRow();
+    if (n < 2) return jsonOut({ error: "pedido não encontrado" });
+    var vals = sh.getRange(2, 1, n - 1, PEDIDOS_HEADERS.length).getValues();
+    for (var i = 0; i < vals.length; i++) {
+      if (String(vals[i][0]) !== String(data.id || "")) continue;
+      if (!podeAtenderPedido_(caller, vals[i])) return jsonOut({ error: "não autorizado" });
+      if (String(vals[i][6]) !== "aberto") return jsonOut({ error: "este pedido já foi atendido" });
+      if (!recusar) {
+        var uname = normUser(vals[i][2]), rec = getUserRec(uname);
+        if (!rec) return jsonOut({ error: "usuário não encontrado" });
+        rec.passwordHash = novo;
+        rec.mustChange = true; // troca a senha no primeiro acesso
+        rec.updatedAt = new Date().toISOString();
+        PropertiesService.getScriptProperties().setProperty("user_" + uname, JSON.stringify(rec));
+      }
+      sh.getRange(i + 2, 7, 1, 3).setValues([[recusar ? "recusado" : "atendido", caller.nome || caller.username, new Date()]]);
+      return jsonOut({ ok: true });
+    }
+    return jsonOut({ error: "pedido não encontrado" });
   } finally {
     lock.releaseLock();
   }
