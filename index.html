@@ -1426,6 +1426,13 @@
       <input type="text" id="empresaFormNome" placeholder="Ex: Global Seg">
       <p class="hint">Depois de salva, essa empresa aparece na lista para escolher ao cadastrar o gestor, em "Gestores".</p>
     </div>
+    <div class="field">
+      <label for="empresaFormRamo">Ramo de atividade</label>
+      <select id="empresaFormRamo" style="width:100%;padding:11px 12px;border:1px solid #D6D3CC;border-radius:8px;font-size:15px;background:#fff;">
+        <option value="telecom">Telecom</option><option value="eletrica">Elétrica</option><option value="construcao">Construção civil</option><option value="industria">Indústria / Manutenção</option>
+      </select>
+      <p class="hint">Define os tipos de trabalho, ferramentas, EPIs e perguntas da PT desta empresa. Dá para ajustar tudo depois em <b>Questionários</b>.</p>
+    </div>
 
     <p class="desc" style="margin-bottom:6px; margin-top:14px; border-top:1px solid var(--line); padding-top:14px;">Logo esquerda</p>
     <p class="hint" style="margin-top:-4px;margin-bottom:10px;">Aparece no menu inicial dos usuários dessa empresa (acima dos botões) e no canto esquerdo do cabeçalho do PDF gerado. Imagem pequena (ex: o símbolo da empresa).</p>
@@ -1693,6 +1700,8 @@ function makeEmptyState(){
     ferramentas:[], ferramentasOutros:"",
     eletrico:{}, altura:{}, alturaProtecaoColetiva:"",
     outrasAtividades:{cabo:false, tipoCabo:"", postes:false, carga:false, telhado:false},
+    outras:[], outrasDetalhe:"",
+    confinado:{}, quente:{}, escavacao:{}, icamento:{}, maquinas:{}, quimicos:{},
     epis:[], episOutros:"",
     saude:{}, colaboradorNome:"",
     instalacao:{},
@@ -1752,7 +1761,7 @@ function syncAbertos(){
 }
 function fechaAberto(id){ if(id && navigator.onLine){ try{ api('docFechado', { abertoId: id }).catch(()=>{}); }catch(e){} } }
 function saveDraft(){ markAberto('pt', state); try{ localStorage.setItem('pt_draft', JSON.stringify(state)); }catch(e){} pingAberto('pt', state); }
-function loadDraft(){ try{ const d=localStorage.getItem('pt_draft'); if(d){ Object.assign(state, JSON.parse(d)); } }catch(e){} }
+function loadDraft(){ try{ const d=localStorage.getItem('pt_draft'); if(d){ const o = JSON.parse(d); Object.assign(state, o); ptCompatOutras(state, o); } }catch(e){} }
 
 /* ============ QUESTION SETS (padrões de fábrica) ============ */
 const Q_ELETRICO_DEFAULT = [
@@ -1785,6 +1794,110 @@ const Q_INSTALACAO_DEFAULT = [
 ];
 const EPI_LIST = ["Capacete de segurança com jugular","Cinto de segurança com talabarte","Calçado de segurança","Blusão e calça com faixa refletiva","Óculos de segurança","Luvas de segurança"];
 const FERRAMENTAS_LIST = ["Kit FTTH","Alicate de corte","Fusimec catraca","Furadeira","Martelo"];
+const OUTRAS_TELECOM = ["Posteação / lançamento de cabo","Equipagem de postes","Carga e descarga de material","Acesso a telhado / forro / cobertura"];
+
+/* ============ RAMO DE ATIVIDADE DA EMPRESA ============
+   O administrador escolhe o ramo no cadastro da empresa. Ele define os tipos de
+   trabalho, as ferramentas, os EPIs, as outras atividades e as perguntas da PT.
+   "telecom" é o formato original (e o padrão das empresas antigas): sem riscos
+   para marcar, com as etapas de choque elétrico e altura sempre presentes.
+   Nos outros ramos, cada risco marcado em "Tipo de trabalho" acrescenta a etapa
+   de perguntas dele (e a seção dele no PDF). Para um ramo novo: acrescente em
+   RAMOS, em RAMO_PRESET e na lista RAMOS do servidor. */
+const RAMOS = [
+  {key:'telecom', label:'Telecom'},
+  {key:'eletrica', label:'Elétrica'},
+  {key:'construcao', label:'Construção civil'},
+  {key:'industria', label:'Indústria / Manutenção'}
+];
+function ramoValido(r){ return RAMOS.some(x => x.key === r) ? r : 'telecom'; }
+function ramoLabel(r){ return (RAMOS.find(x => x.key === r) || RAMOS[0]).label; }
+// Riscos que podem ser marcados na PT. key = grupo de perguntas (state[key]).
+const RISCOS_PT = [
+  {tipo:'ALTURA', key:'altura', label:'Trabalho em altura (NR-35)'},
+  {tipo:'ELETRICIDADE', key:'eletrico', label:'Eletricidade (NR-10)'},
+  {tipo:'CONFINADO', key:'confinado', label:'Espaço confinado (NR-33)'},
+  {tipo:'QUENTE', key:'quente', label:'Trabalho a quente (solda, corte)'},
+  {tipo:'ESCAVACAO', key:'escavacao', label:'Escavação'},
+  {tipo:'ICAMENTO', key:'icamento', label:'Içamento de carga'},
+  {tipo:'MAQUINAS', key:'maquinas', label:'Máquinas e equipamentos (NR-12)'},
+  {tipo:'QUIMICOS', key:'quimicos', label:'Produtos químicos'}
+];
+const Q_CONFINADO_DEFAULT = [
+  ["c1","Os trabalhadores e o vigia têm treinamento de NR-33 válido?"],
+  ["c2","Foi feita a medição de gases (oxigênio, inflamáveis e tóxicos) antes da entrada?"],
+  ["c3","A ventilação do espaço está funcionando?"],
+  ["c4","Há vigia do lado de fora durante toda a atividade?"],
+  ["c5","O equipamento de resgate está disponível no local?"],
+  ["c6","A Permissão de Entrada e Trabalho (PET) foi emitida?"]
+];
+const Q_QUENTE_DEFAULT = [
+  ["q1","Os materiais inflamáveis foram retirados da área ou protegidos?"],
+  ["q2","Há extintor de incêndio adequado e carregado no local?"],
+  ["q3","Os equipamentos de solda e corte (cabos, mangueiras, válvulas e cilindros) estão em boas condições?"],
+  ["q4","Os cilindros estão presos, em pé e com válvula contra retrocesso de chama?"],
+  ["q5","Há um observador de incêndio durante a atividade e depois do término?"]
+];
+const Q_ESCAVACAO_DEFAULT = [
+  ["x1","Foi verificado se há redes subterrâneas (água, gás, energia, telecom) antes de escavar?"],
+  ["x2","As paredes da escavação estão escoradas ou com talude adequado?"],
+  ["x3","A área está isolada e sinalizada, com proteção contra queda de pessoas?"],
+  ["x4","O material retirado está a mais de 1 m da borda?"],
+  ["x5","Há escada ou rampa para entrar e sair da vala?"]
+];
+const Q_ICAMENTO_DEFAULT = [
+  ["ic1","O operador do equipamento é qualificado e habilitado?"],
+  ["ic2","Os acessórios (cintas, cabos, manilhas e ganchos) foram inspecionados e estão em boas condições?"],
+  ["ic3","A carga está dentro da capacidade do equipamento?"],
+  ["ic4","A área embaixo da carga está isolada e sem pessoas?"],
+  ["ic5","Há sinaleiro designado e comunicação combinada com o operador?"]
+];
+const Q_MAQUINAS_DEFAULT = [
+  ["m1","Os trabalhadores são capacitados para operar a máquina (NR-12)?"],
+  ["m2","As proteções fixas e móveis da máquina estão instaladas?"],
+  ["m3","Os botões de parada de emergência funcionam?"],
+  ["m4","Para manutenção, a máquina foi bloqueada e etiquetada (LOTO)?"]
+];
+const Q_QUIMICOS_DEFAULT = [
+  ["pq1","A FDS (antiga FISPQ) dos produtos está disponível e foi lida pela equipe?"],
+  ["pq2","Os produtos estão rotulados e armazenados corretamente?"],
+  ["pq3","O local tem ventilação adequada?"],
+  ["pq4","Há chuveiro, lava-olhos ou outro recurso de emergência por perto?"]
+];
+const RAMO_PRESET = {
+  telecom: { riscos: [], ferramentas: FERRAMENTAS_LIST, epis: EPI_LIST, outras: OUTRAS_TELECOM },
+  eletrica: {
+    riscos: ['ELETRICIDADE','ALTURA','CONFINADO','ESCAVACAO','ICAMENTO','QUENTE'],
+    ferramentas: ["Ferramentas manuais isoladas","Detector de tensão","Multímetro / alicate amperímetro","Conjunto de aterramento temporário","Vara de manobra","Furadeira","Escada isolada"],
+    epis: ["Capacete com jugular (classe B)","Vestimenta antichama","Luvas isolantes de borracha","Luvas de cobertura","Calçado de segurança sem metal","Óculos de segurança","Protetor facial","Cinto paraquedista com talabarte"],
+    outras: ["Manobra em rede ou painel","Poda de árvore perto da rede","Trabalho em subestação","Carga e descarga de material"]
+  },
+  construcao: {
+    riscos: ['ALTURA','ELETRICIDADE','CONFINADO','QUENTE','ESCAVACAO','ICAMENTO','MAQUINAS','QUIMICOS'],
+    ferramentas: ["Esmerilhadeira","Serra circular","Furadeira / martelete","Betoneira","Andaime","Ferramentas manuais"],
+    epis: ["Capacete com jugular","Cinto paraquedista com talabarte duplo","Calçado de segurança","Óculos de segurança","Luvas de segurança","Protetor auricular","Máscara PFF2"],
+    outras: ["Montagem de andaime","Carga e descarga de material","Demolição","Concretagem"]
+  },
+  industria: {
+    riscos: ['ALTURA','ELETRICIDADE','CONFINADO','QUENTE','ICAMENTO','MAQUINAS','QUIMICOS'],
+    ferramentas: ["Ferramentas manuais","Esmerilhadeira","Furadeira","Máquina de solda","Maçarico / oxicorte","Talha / ponte rolante","Empilhadeira"],
+    epis: ["Capacete com jugular","Óculos de segurança","Protetor auricular","Luvas de segurança","Calçado de segurança","Máscara / respirador","Avental de raspa (solda)","Cinto paraquedista com talabarte"],
+    outras: ["Bloqueio e etiquetagem (LOTO)","Limpeza industrial","Manutenção de equipamento","Carga e descarga de material"]
+  }
+};
+// Ramo da empresa de quem está logado (o PT é sempre preenchido pelo ramo da empresa).
+function ptRamo(){ try{ const s = getSession(); return ramoValido(s && s.empresaRamo); }catch(e){ return 'telecom'; } }
+function ramoRiscos(ramo){ const ids = RAMO_PRESET[ramoValido(ramo)].riscos; return RISCOS_PT.filter(r => ids.indexOf(r.tipo) !== -1); }
+// Listas editáveis (ferramentas, EPIs, outras atividades): guardadas como as perguntas, [id, texto].
+const LISTAS_PT = ['ferramentas','epis','outras'];
+function getLista(key){ return getQ(key).map(x => x[1]).filter(Boolean); }
+// Rascunhos antigos guardavam "outras atividades" em campos fixos de telecom.
+function ptCompatOutras(st, src){
+  if(src && Array.isArray(src.outras)) return;
+  const o = (src && src.outrasAtividades) || {};
+  st.outras = [['cabo',0],['postes',1],['carga',2],['telhado',3]].filter(([k]) => o[k]).map(([,i]) => OUTRAS_TELECOM[i]);
+  st.outrasDetalhe = o.tipoCabo || st.outrasDetalhe || '';
+}
 
 /* ============ PERGUNTAS PERSONALIZÁVEIS (override salvo pelo gerente) ============ */
 // Cache local (por aparelho) das perguntas da empresa do usuário logado —
@@ -1796,9 +1909,15 @@ function saveCustomQuestions(obj){ try{ localStorage.setItem(QUESTIONS_KEY, JSON
 // Função (não objeto no topo do arquivo) porque VEICULO_BASICO_DEFAULT e
 // ESCADA_ITEMS_DEFAULT só são declaradas mais abaixo no script — chamando
 // isso depois de tudo carregado evita erro de inicialização.
-function getDefaultQuestions(key){
+function getDefaultQuestions(key, ramo){
+  if(LISTAS_PT.indexOf(key) !== -1){
+    const pre = {ferramentas:'f', epis:'ep', outras:'o'}[key];
+    return RAMO_PRESET[ramoValido(ramo === undefined ? ptRamo() : ramo)][key].map((t, i) => [pre + (i + 1), t]);
+  }
   const map = {
     eletrico: Q_ELETRICO_DEFAULT, altura: Q_ALTURA_DEFAULT, saude: Q_SAUDE_DEFAULT, instalacao: Q_INSTALACAO_DEFAULT,
+    confinado: Q_CONFINADO_DEFAULT, quente: Q_QUENTE_DEFAULT, escavacao: Q_ESCAVACAO_DEFAULT, icamento: Q_ICAMENTO_DEFAULT,
+    maquinas: Q_MAQUINAS_DEFAULT, quimicos: Q_QUIMICOS_DEFAULT,
     veiculoBasico: VEICULO_BASICO_DEFAULT, veiculoManut: VEICULO_MANUT_DEFAULT, escada: ESCADA_ITEMS_DEFAULT
   };
   return map[key] || [];
@@ -1816,9 +1935,20 @@ const QUESTION_DOCS = [
   {key:'veiculo', label:'Checklist de Veículo'},
   {key:'escada', label:'Checklist de Escada'}
 ];
+// "lista": ferramentas/EPIs/outras (itens para marcar). "risco": só aparece
+// para os ramos que têm aquele risco (telecom tem só choque elétrico e altura).
 const QUESTION_GROUPS = [
-  {doc:'pt', key:'eletrico', label:'Proteção contra choque elétrico'},
-  {doc:'pt', key:'altura', label:'Trabalhos em altura'},
+  {doc:'pt', key:'ferramentas', label:'Ferramentas', lista:true},
+  {doc:'pt', key:'epis', label:'EPIs', lista:true},
+  {doc:'pt', key:'outras', label:'Outras atividades', lista:true},
+  {doc:'pt', key:'eletrico', label:'Proteção contra choque elétrico', risco:'ELETRICIDADE'},
+  {doc:'pt', key:'altura', label:'Trabalhos em altura', risco:'ALTURA'},
+  {doc:'pt', key:'confinado', label:'Espaço confinado (NR-33)', risco:'CONFINADO'},
+  {doc:'pt', key:'quente', label:'Trabalho a quente', risco:'QUENTE'},
+  {doc:'pt', key:'escavacao', label:'Escavação', risco:'ESCAVACAO'},
+  {doc:'pt', key:'icamento', label:'Içamento de carga', risco:'ICAMENTO'},
+  {doc:'pt', key:'maquinas', label:'Máquinas e equipamentos (NR-12)', risco:'MAQUINAS'},
+  {doc:'pt', key:'quimicos', label:'Produtos químicos', risco:'QUIMICOS'},
   {doc:'pt', key:'saude', label:'Questionário de saúde'},
   {doc:'pt', key:'instalacao', label:'Checklist da instalação'},
   {doc:'veiculo', key:'veiculoBasico', label:'Itens básicos'},
@@ -1827,11 +1957,19 @@ const QUESTION_GROUPS = [
 ];
 let questionEditorState = null;
 let questionEditorDoc = 'pt';
-function initQuestionEditorFromPerguntas(perguntas){
+let questionEditorRamo = 'telecom';
+// Grupos que valem para o ramo da empresa escolhida no editor.
+function qGrupoNoRamo(g, ramo){
+  if(!g.risco) return true;
+  if(ramoValido(ramo) === 'telecom') return g.risco === 'ELETRICIDADE' || g.risco === 'ALTURA';
+  return RAMO_PRESET[ramoValido(ramo)].riscos.indexOf(g.risco) !== -1;
+}
+function initQuestionEditorFromPerguntas(perguntas, ramo){
   perguntas = perguntas || {};
+  questionEditorRamo = ramoValido(ramo);
   questionEditorState = {};
   QUESTION_GROUPS.forEach(g=>{
-    const custom = Array.isArray(perguntas[g.key]) && perguntas[g.key].length ? perguntas[g.key] : getDefaultQuestions(g.key);
+    const custom = Array.isArray(perguntas[g.key]) && perguntas[g.key].length ? perguntas[g.key] : getDefaultQuestions(g.key, questionEditorRamo);
     questionEditorState[g.key] = custom.map(item=>item.slice());
   });
   paintQuestionEditor();
@@ -1840,16 +1978,17 @@ function paintQuestionEditor(){
   const box = document.getElementById('questionariosEditor');
   if(!box || !questionEditorState) return;
   const abertos = new Set([...box.querySelectorAll('details[open]')].map(d=>d.getAttribute('data-g')));
-  box.innerHTML = QUESTION_GROUPS.filter(g=>g.doc===questionEditorDoc).map(g=>{
+  const gruposDoc = QUESTION_GROUPS.filter(g=>g.doc===questionEditorDoc && qGrupoNoRamo(g, questionEditorRamo));
+  box.innerHTML = (questionEditorDoc === 'pt' ? `<p class="hint" style="margin:0 0 8px;">Ramo da empresa: <b>${ramoLabel(questionEditorRamo)}</b> (muda no cadastro da empresa).</p>` : '') + gruposDoc.map(g=>{
     const rows = questionEditorState[g.key].map((item,idx)=>`
       <div style="display:flex;gap:6px;margin-bottom:6px;align-items:flex-start;">
         <textarea data-qgroup="${g.key}" data-qidx="${idx}" style="flex:1;min-height:40px;font-size:12.5px;padding:7px 9px;border:1px solid #D6D3CC;border-radius:8px;font-family:inherit;">${(item[1]||'').replace(/</g,'&lt;')}</textarea>
         <button type="button" data-qrm="${g.key}:${idx}" style="width:32px;height:32px;flex-shrink:0;border:1.5px solid #D6D3CC;background:#fff;border-radius:8px;cursor:pointer;">✕</button>
       </div>`).join('');
-    return `<details data-g="${g.key}"${(abertos.has(g.key) || QUESTION_GROUPS.filter(x=>x.doc===questionEditorDoc).length===1) ? ' open' : ''} style="border:1px solid var(--line);border-radius:8px;margin-bottom:8px;padding:8px 10px;">
+    return `<details data-g="${g.key}"${(abertos.has(g.key) || gruposDoc.length===1) ? ' open' : ''} style="border:1px solid var(--line);border-radius:8px;margin-bottom:8px;padding:8px 10px;">
       <summary style="font-size:12.5px;font-weight:700;cursor:pointer;">${g.label} <span style="font-weight:400;color:#918E86;">(${questionEditorState[g.key].length})</span></summary>
       <div style="margin-top:10px;">${rows}</div>
-      <button type="button" data-qadd="${g.key}" style="margin-top:2px;border:1.5px dashed #D6D3CC;background:#fff;border-radius:8px;padding:7px 10px;font-size:12px;cursor:pointer;color:var(--ui-dark);">+ Adicionar pergunta</button>
+      <button type="button" data-qadd="${g.key}" style="margin-top:2px;border:1.5px dashed #D6D3CC;background:#fff;border-radius:8px;padding:7px 10px;font-size:12px;cursor:pointer;color:var(--ui-dark);">+ ${g.lista ? 'Adicionar item' : 'Adicionar pergunta'}</button>
     </details>`;
   }).join('');
   box.querySelectorAll('textarea[data-qgroup]').forEach(ta=>{
@@ -2003,6 +2142,7 @@ function sessionFromServer(uname, passHash, r){
     empresaLogoDataUrl2: r.empresaLogoDataUrl2 || '',
     empresaThemeColor: r.empresaThemeColor || '', empresaThemeColor2: r.empresaThemeColor2 || '',
     empresaPtPrefix: r.empresaPtPrefix || '',
+    empresaRamo: ramoValido(r.empresaRamo),
     empresaLiberacao: r.empresaLiberacao || null, carimbo: r.carimbo || null, empresaTemTst: !!r.empresaTemTst, sons: r.sons || null,
     empresaDocumentos: Array.isArray(r.empresaDocumentos) && r.empresaDocumentos.length ? r.empresaDocumentos : null
   };
@@ -2441,12 +2581,36 @@ $('btnProfPassSave').onclick = async ()=>{
 };
 
 /* ============ STEP DEFINITIONS ============ */
-const steps = [
+// As etapas mudam com o ramo da empresa e com os riscos marcados em "Tipo de
+// trabalho" (montadas de novo a cada etapa desenhada, em buildSteps).
+const STEP_ELETRICO = {key:"eletrico", name:"Proteção contra choque elétrico", render: () => renderQuestions("eletrico", getQ('eletrico'), true)};
+const STEP_ALTURA = {key:"altura", name:"Trabalhos em altura", render: renderAltura};
+function stepRisco(r){
+  if(r.key === 'altura') return {key:'altura', name:r.label, render: renderAltura};
+  return {key:r.key, name:r.label, render: () => sectionShell(r.label, "Qualquer resposta NÃO deve ser justificada", getQ(r.key).map(([id,txt])=>questionRow(r.key,id,txt,true)).join(''))};
+}
+// Riscos marcados na PT (fora de telecom), na ordem da lista do ramo.
+function ptRiscosMarcados(T, ramo){
+  T = T || state;
+  return ramoRiscos(ramo === undefined ? ptRamo() : ramo).filter(r => (T.tipoTrabalho || []).indexOf(r.tipo) !== -1);
+}
+function stepsDoRamo(ramo){
+  const riscos = ramoValido(ramo) === 'telecom' ? [STEP_ELETRICO, STEP_ALTURA] : ptRiscosMarcados(state, ramo).map(stepRisco);
+  return STEPS_INICIO.concat(riscos, STEPS_FIM);
+}
+function buildSteps(){
+  const atual = steps[current] && steps[current].key;
+  steps = stepsDoRamo(ptRamo());
+  const i = steps.findIndex(s => s.key === atual);
+  if(i !== -1) current = i;
+  if(current >= steps.length) current = steps.length - 1;
+}
+const STEPS_INICIO = [
   {key:"ident", name:"Identificação", render: renderIdent},
   {key:"trabalho", name:"Trabalho a ser realizado", render: renderTrabalho},
-  {key:"ferramentas", name:"Ferramentas", render: renderFerramentas},
-  {key:"eletrico", name:"Proteção contra choque elétrico", render: () => renderQuestions("eletrico", getQ('eletrico'), true)},
-  {key:"altura", name:"Trabalhos em altura", render: renderAltura},
+  {key:"ferramentas", name:"Ferramentas", render: renderFerramentas}
+];
+const STEPS_FIM = [
   {key:"outras", name:"Outras atividades", render: renderOutras},
   {key:"epis", name:"Equipamentos de Proteção (EPIs)", render: renderEpis},
   {key:"saude", name:"Questionário de saúde", render: renderSaude},
@@ -2455,6 +2619,7 @@ const steps = [
   {key:"final", name:"Responsáveis e encerramento", render: renderFinal}
 ];
 let current = 0;
+let steps = stepsDoRamo('telecom');
 
 /* ============ RENDER HELPERS ============ */
 function el(html){ const d=document.createElement('div'); d.innerHTML=html.trim(); return d.firstChild; }
@@ -2496,12 +2661,14 @@ function renderIdent(){
 }
 
 function renderTrabalho(){
+  const tele = ptRamo() === 'telecom';
   return sectionShell("Trabalho a ser realizado","Tipo de atividade e descrição", `
     <div class="field">
       <label>Tipo de trabalho</label>
+      ${tele ? '' : '<p class="hint" style="margin:-2px 0 8px;">Cada tipo marcado acrescenta as perguntas daquele risco na PT.</p>'}
       <div class="chip-grid">
-        ${chip(state.tipoTrabalho,"ALTURA","Trabalho em altura (NR 35)")}
-        ${chip(state.tipoTrabalho,"TELHADO","Trabalhos em telhados e coberturas")}
+        ${tele ? chip(state.tipoTrabalho,"ALTURA","Trabalho em altura (NR 35)") + chip(state.tipoTrabalho,"TELHADO","Trabalhos em telhados e coberturas")
+          : ramoRiscos(ptRamo()).map(r => chip(state.tipoTrabalho, r.tipo, r.label)).join('')}
       </div>
     </div>
     <div class="field">
@@ -2515,7 +2682,7 @@ function renderFerramentas(){
   return sectionShell("Ferramentas a serem utilizadas","Selecione todas que se aplicam", `
     <div class="field">
       <div class="chip-grid">
-        ${FERRAMENTAS_LIST.map(f=>chip(state.ferramentas,f,f)).join('')}
+        ${getLista('ferramentas').map(f=>chip(state.ferramentas,escHtml(f),escHtml(f))).join('')}
       </div>
     </div>
     <div class="field"><label>Outros</label><input type="text" id="f_ferrOutros" value="${state.ferramentasOutros}" placeholder="Especifique"></div>
@@ -2544,7 +2711,7 @@ function questionRow(prefix, id, text, threeState){
 }
 
 function renderQuestions(prefix, list, threeState){
-  const title = prefix==="eletrico" ? "Proteção contra choque elétrico" : "Checklist da instalação";
+  const title = prefix==="eletrico" ? "Proteção contra choque elétrico" : (ptRamo()==='telecom' ? "Checklist da instalação" : "Checklist da atividade");
   const sub = "Qualquer resposta NÃO deve ser justificada";
   return sectionShell(title, sub, list.map(([id,txt])=>questionRow(prefix,id,txt,threeState)).join(''));
 }
@@ -2558,27 +2725,21 @@ function renderAltura(){
   return sectionShell("Trabalhos em altura","Qualquer resposta NÃO deve ser justificada", body);
 }
 
+function outrasDetalheRotulo(){ return ptRamo() === 'telecom' ? 'Qual tipo de cabo?' : 'Detalhes (opcional)'; }
 function renderOutras(){
-  const o = state.outrasAtividades;
+  if(!Array.isArray(state.outras)) ptCompatOutras(state, state);
   return sectionShell("Outras atividades a serem executadas","Marque o que se aplica", `
-    <div class="field">
-      <label class="chip ${o.cabo?'checked':''}" id="chk_cabo" style="display:flex;justify-content:space-between;align-items:center;">
-        <span>Posteação / lançamento de cabo</span>
-      </label>
-      <input type="text" id="f_tipoCabo" style="margin-top:8px" value="${o.tipoCabo}" placeholder="Qual tipo de cabo?">
-    </div>
     <div class="chip-grid" style="margin-bottom:6px">
-      <label class="chip ${o.postes?'checked':''}" id="chk_postes">Equipagem de postes</label>
-      <label class="chip ${o.carga?'checked':''}" id="chk_carga">Carga e descarga de material</label>
-      <label class="chip ${o.telhado?'checked':''}" id="chk_telhado">Acesso a telhado / forro / cobertura</label>
+      ${getLista('outras').map(t=>chip(state.outras,escHtml(t),escHtml(t))).join('')}
     </div>
+    <div class="field" style="margin-top:12px"><label>${outrasDetalheRotulo()}</label><input type="text" id="f_outrasDet" value="${escHtml(state.outrasDetalhe||'')}" placeholder="Especifique"></div>
   `);
 }
 
 function renderEpis(){
   return sectionShell("Equipamentos de Proteção Individual","EPIs utilizados na atividade", `
     <div class="chip-grid">
-      ${EPI_LIST.map(e=>chip(state.epis,e,e)).join('')}
+      ${getLista('epis').map(e=>chip(state.epis,escHtml(e),escHtml(e))).join('')}
     </div>
     <div class="field" style="margin-top:12px"><label>Outros</label><input type="text" id="f_episOutros" value="${state.episOutros}" placeholder="Especifique"></div>
   `);
@@ -2887,11 +3048,14 @@ function bindStepEvents(stepKey){
       if(stepKey==="trabalho") target = state.tipoTrabalho;
       else if(stepKey==="ferramentas") target = state.ferramentas;
       else if(stepKey==="epis") target = state.epis;
+      else if(stepKey==="outras") target = state.outras;
       if(!target) return;
       const idx = target.indexOf(val);
       if(chipEl.classList.contains('checked')){ if(idx===-1) target.push(val); }
       else { if(idx!==-1) target.splice(idx,1); }
       saveDraft();
+      // riscos marcados/desmarcados mudam as etapas seguintes
+      if(stepKey==="trabalho" && ptRamo() !== 'telecom'){ buildSteps(); pintaProgresso(); }
     };
   });
 
@@ -2904,6 +3068,7 @@ function bindStepEvents(stepKey){
         qEl.querySelectorAll('.seg-btn').forEach(b=>b.classList.remove('active'));
         btn.classList.add('active');
         const val = btn.getAttribute('data-val');
+        if(!state[prefix]) state[prefix] = {};
         if(!state[prefix][qid]) state[prefix][qid] = {val:"",just:""};
         state[prefix][qid].val = val;
         const justBox = qEl.querySelector('.justif');
@@ -2924,7 +3089,7 @@ function bindStepEvents(stepKey){
     f_protColetiva:['alturaProtecaoColetiva'], f_episOutros:['episOutros'],
     f_colabNome:['colaboradorNome'], f_respNome:['respNome'],
     f_naoConf:['naoConformidades'], f_acoes:['acoesGerais'], f_encHora:['encHora'], f_encMotivo:['encMotivo'],
-    f_tipoCabo:['outrasAtividades','tipoCabo']
+    f_tipoCabo:['outrasAtividades','tipoCabo'], f_outrasDet:['outrasDetalhe']
   };
   Object.keys(bindMap).forEach(id=>{
     const node = document.getElementById(id);
@@ -2973,12 +3138,17 @@ function bindStepEvents(stepKey){
 }
 
 /* ============ STEP NAV ============ */
+function pintaProgresso(){
+  document.getElementById('stepLabel').textContent = `Etapa ${current+1} de ${steps.length}`;
+  document.getElementById('stepName').textContent = steps[current].name;
+  document.getElementById('progressFill').style.width = Math.round(((current+1)/steps.length)*100)+'%';
+  document.getElementById('btnNext').textContent = current===steps.length-1 ? 'Gerar PDF e enviar' : 'Avançar';
+}
 function renderCurrentStep(){
+  buildSteps();
   const s = steps[current];
   document.getElementById('formSections').innerHTML = s.render();
-  document.getElementById('stepLabel').textContent = `Etapa ${current+1} de ${steps.length}`;
-  document.getElementById('stepName').textContent = s.name;
-  document.getElementById('progressFill').style.width = Math.round(((current+1)/steps.length)*100)+'%';
+  pintaProgresso();
   document.getElementById('btnBack').style.visibility = current===0 ? 'hidden':'visible';
   document.getElementById('btnNext').textContent = current===steps.length-1 ? 'Gerar PDF e enviar' : 'Avançar';
   bindStepEvents(s.key);
@@ -2988,7 +3158,8 @@ function renderCurrentStep(){
 /* ============ VALIDAÇÃO DE CAMPOS OBRIGATÓRIOS ============ */
 const REQUIRED_BY_STEP = { ident:['f_area'], saude:['f_colabNome'], final:['f_respNome'] };
 // Etapas com perguntas Sim/Não/N.A. — nenhuma pode ficar sem resposta.
-const QUESTION_STEPS = { eletrico:'eletrico', altura:'altura', saude:'saude', instalacao:'instalacao' };
+const QUESTION_STEPS = { eletrico:'eletrico', altura:'altura', saude:'saude', instalacao:'instalacao',
+  confinado:'confinado', quente:'quente', escavacao:'escavacao', icamento:'icamento', maquinas:'maquinas', quimicos:'quimicos' };
 function validateRequiredFields(ids){
   let missing = 0;
   ids.forEach(id=>{
@@ -3617,6 +3788,7 @@ function resetEmpresaForm(){
   paintEmpresaDocs(DOCS_CATALOGO.map(d => d.key));
   paintEmpresaLib(null);
   document.getElementById('empresaFormNome').value = '';
+  document.getElementById('empresaFormRamo').value = 'telecom';
   document.getElementById('empresaFormAviso').value = '';
   document.getElementById('empresaFormSuspenso').checked = false;
   document.getElementById('empresaFormSuspensoMsg').value = '';
@@ -3859,6 +4031,7 @@ function loadEmpresaIntoForm(nome){
   const emp = lastLoadedEmpresas.find(x=>x.nome===nome);
   if(!emp) return;
   document.getElementById('empresaFormNome').value = emp.nome;
+  document.getElementById('empresaFormRamo').value = ramoValido(emp.ramo);
   paintEmpresaDocs(Array.isArray(emp.documentos) && emp.documentos.length ? emp.documentos : DOCS_CATALOGO.map(d => d.key));
   paintEmpresaLib(emp.liberacao);
   document.getElementById('empresaFormAviso').value = emp.avisoGestor || '';
@@ -3902,7 +4075,7 @@ document.getElementById('btnEmpresaFormSave').onclick = async ()=>{
     const themeColor = document.getElementById('empresaFormColorPrimary').value;
     const themeColor2 = document.getElementById('empresaFormColorAccent').value;
     const ptPrefix = document.getElementById('empresaFormPtPrefix').value.trim();
-    const payload = Object.assign({action:'saveEmpresa', nome, documentos, teste: document.getElementById('empresaFormTeste').checked, relatorioMensal: document.getElementById('empresaFormRelatorio').checked, alertaHoras: +document.getElementById('empresaFormAlertaHoras').value || 24, avisoGestor: aviso, suspenso: document.getElementById('empresaFormSuspenso').checked, suspensoMsg: document.getElementById('empresaFormSuspensoMsg').value.trim(), contratoInicio: document.getElementById('empresaFormContratoIni').value, contratoFim: document.getElementById('empresaFormContratoFim').value, avisoDias: +document.getElementById('empresaFormAvisoDias').value, carenciaDias: +document.getElementById('empresaFormCarencia').value, themeColor, themeColor2, ptPrefix, driveEmails: document.getElementById('empresaFormDriveEmails').value.trim(), liberacao: empresaLibForm()}, currentAdminCreds());
+    const payload = Object.assign({action:'saveEmpresa', nome, documentos, teste: document.getElementById('empresaFormTeste').checked, relatorioMensal: document.getElementById('empresaFormRelatorio').checked, alertaHoras: +document.getElementById('empresaFormAlertaHoras').value || 24, avisoGestor: aviso, suspenso: document.getElementById('empresaFormSuspenso').checked, suspensoMsg: document.getElementById('empresaFormSuspensoMsg').value.trim(), contratoInicio: document.getElementById('empresaFormContratoIni').value, contratoFim: document.getElementById('empresaFormContratoFim').value, avisoDias: +document.getElementById('empresaFormAvisoDias').value, carenciaDias: +document.getElementById('empresaFormCarencia').value, themeColor, themeColor2, ptPrefix, driveEmails: document.getElementById('empresaFormDriveEmails').value.trim(), liberacao: empresaLibForm(), ramo: document.getElementById('empresaFormRamo').value}, currentAdminCreds());
     // só manda o campo da logo quando o admin realmente mexeu nela
     // (escolheu uma nova ou clicou em "Remover logo") — null = não mexeu.
     if(empresaFormLogoDataUrl !== null) payload.logoDataUrl = empresaFormLogoDataUrl;
@@ -3986,7 +4159,7 @@ function docsAtivos(){
 
 /* ============ SUPORTE ============ */
 const SUPORTE_WHATS = '5571996033896';
-const APP_VERSION = '6.8';
+const APP_VERSION = '7.0';
 const SUPORTE_FAQ = [
   ['Como envio um documento?', 'Preencha o documento (PT, checklist de veículo ou de escada) e toque em Enviar. Escolha "Enviar agora" ou "Guardar e enviar depois". Em "Meus documentos" você vê o que já foi enviado.'],
   ['Estou sem internet, e agora?', 'Pode preencher normalmente. O documento fica guardado no aparelho e é enviado sozinho quando a internet voltar. Em "Meus documentos" aparece como "Aguardando envio".'],
@@ -4239,7 +4412,7 @@ function qLoadSelected(){
   const emp = qCurrentEmpresa();
   const perm = qDocsPermitidos();
   if(!perm.some(x => x.key === questionEditorDoc)) questionEditorDoc = perm[0] ? perm[0].key : 'pt';
-  initQuestionEditorFromPerguntas(emp ? emp.perguntas : {});
+  initQuestionEditorFromPerguntas(emp ? emp.perguntas : {}, emp && emp.ramo);
   paintQDocTabs();
 }
 async function openQuestionarios(){
@@ -4267,8 +4440,11 @@ document.getElementById('btnQSave').onclick = async ()=>{
   const emp = qCurrentEmpresa();
   if(!emp){ toast('Escolha a empresa.', 'err'); return; }
   const cleaned = {};
+  // Só guarda o que é diferente do padrão do ramo: assim, se o ramo da empresa
+  // mudar, as listas e perguntas não mexidas acompanham o ramo novo.
   Object.keys(questionEditorState||{}).forEach(k=>{
-    cleaned[k] = questionEditorState[k].filter(([id,txt])=>txt && txt.trim());
+    const lista = questionEditorState[k].filter(([id,txt])=>txt && txt.trim());
+    if(JSON.stringify(lista) !== JSON.stringify(getDefaultQuestions(k, questionEditorRamo))) cleaned[k] = lista;
   });
   const btn = document.getElementById('btnQSave'); const old = btn.textContent;
   btn.disabled = true; btn.textContent = 'Salvando...';
@@ -4283,7 +4459,7 @@ document.getElementById('btnQSave').onclick = async ()=>{
 document.getElementById('btnQReset').onclick = ()=>{
   const doc = QUESTION_DOCS.find(d => d.key === questionEditorDoc);
   if(!confirm('Restaurar "' + doc.label + '" para o padrão de fábrica? (só vale de verdade ao clicar em "Salvar questionários")')) return;
-  QUESTION_GROUPS.filter(g => g.doc === questionEditorDoc).forEach(g => { questionEditorState[g.key] = getDefaultQuestions(g.key).map(i => i.slice()); });
+  QUESTION_GROUPS.filter(g => g.doc === questionEditorDoc).forEach(g => { questionEditorState[g.key] = getDefaultQuestions(g.key, questionEditorRamo).map(i => i.slice()); });
   paintQuestionEditor();
   toast('Restaurado na tela — clique em "Salvar questionários" para confirmar.', 'ok');
 };
@@ -4378,17 +4554,32 @@ function ansCell(prefix,id){
   return {SIM:"X / /", NAO:"/ X /", NA:"/ / X", "": "/ /"}[v] || "/ /";
 }
 function threeCells(prefix,id){
-  const v = (state[prefix][id]||{}).val || "";
+  const v = ((state[prefix]||{})[id]||{}).val || "";
   return `<td class="ans">${v==="SIM"?"X":""}</td><td class="ans">${v==="NAO"?"X":""}</td><td class="ans">${v==="NA"?"X":""}</td>`;
 }
 function twoCells(prefix,id){
-  const v = (state[prefix][id]||{}).val || "";
+  const v = ((state[prefix]||{})[id]||{}).val || "";
   return `<td class="ans">${v==="SIM"?"X":""}</td><td class="ans">${v==="NAO"?"X":""}</td>`;
 }
 function chk(mark){ return mark ? "☑" : "☐"; }
 
+// Linhas de tabela do PDF com "n" itens por linha.
+function pdfLinhas(itens, n){
+  let rows = '';
+  for(let i = 0; i < itens.length; i += n){
+    const cel = itens.slice(i, i + n);
+    while(cel.length < n) cel.push('');
+    rows += '<tr>' + cel.map(c => `<td>${c}</td>`).join('') + '</tr>';
+  }
+  return rows;
+}
 function buildPrintTemplate(){
   const T = state;
+  if(!Array.isArray(T.outras)) ptCompatOutras(T, T);
+  const ramo = ptRamo(), tele = ramo === 'telecom';
+  const ferr = getLista('ferramentas');
+  const riscosPdf = tele ? [{key:'eletrico', titulo:'PROTEÇÃO CONTRA CHOQUE ELÉTRICOS'}, {key:'altura', titulo:'TRABALHOS EM ALTURA'}]
+    : ptRiscosMarcados(T, ramo).map(r => ({key:r.key, titulo:r.label.toUpperCase()}));
   const equipeRows = T.equipe.map(p=>`<tr><td>${p.nome||''}</td><td></td></tr>`).join('');
   const sigImg = id => sigData[id] ? `<img src="${sigData[id]}" style="max-height:50px">` : '';
   const logos = currentPdfLogos();
@@ -4407,38 +4598,33 @@ function buildPrintTemplate(){
       <td style="width:35%"><b>ÁREA/LOCAL:</b> ${T.area||''}</td><td style="width:15%"><b>Nº PT:</b> ${T.ptNumero||''}</td></tr>
     </table>
     <div class="bar">TRABALHO A SER REALIZADO</div>
-    <table><tr>
+    ${tele ? `<table><tr>
       <td>${chk(T.tipoTrabalho.includes('ALTURA'))} TRABALHO EM ALTURA (NR 35)</td>
       <td>${chk(T.tipoTrabalho.includes('TELHADO'))} TRABALHOS EM TELHADOS E COBERTURAS</td>
-    </tr></table>
+    </tr></table>` : `<table>${pdfLinhas(ramoRiscos(ramo).map(r => chk(T.tipoTrabalho.includes(r.tipo)) + ' ' + r.label.toUpperCase()), 2)}</table>`}
     <table><tr><td><b>DESCRIÇÃO DA ATIVIDADE:</b> ${T.descricaoAtividade||''}</td></tr></table>
 
     <div class="bar">FERRAMENTAS A SEREM UTILIZADAS</div>
-    <table><tr>${FERRAMENTAS_LIST.map(f=>`<td>${chk(T.ferramentas.includes(f))} ${f.toUpperCase()}</td>`).join('')}<td>OUTROS: ${T.ferramentasOutros||''}</td></tr></table>
+    ${ferr.length <= 5 ? `<table><tr>${ferr.map(f=>`<td>${chk(T.ferramentas.includes(f))} ${escHtml(f.toUpperCase())}</td>`).join('')}<td>OUTROS: ${T.ferramentasOutros||''}</td></tr></table>`
+      : `<table>${pdfLinhas(ferr.map(f => chk(T.ferramentas.includes(f)) + ' ' + escHtml(f.toUpperCase())), 3)}<tr><td colspan="3">OUTROS: ${T.ferramentasOutros||''}</td></tr></table>`}
 
     <div class="ybar">Qualquer resposta NÃO deve ser justificada e seguida de medidas de prevenção suplementares em OBSERVAÇÕES</div>
-    <div class="bar">PROTEÇÃO CONTRA CHOQUE ELÉTRICOS</div>
+    ${riscosPdf.map(r => `<div class="bar">${r.titulo}</div>
     <table>
       <tr><th class="ans">SIM</th><th class="ans">NÃO</th><th class="ans">N/A</th><th>PERGUNTA</th></tr>
-      ${getQ('eletrico').map(([id,txt])=>`<tr>${threeCells('eletrico',id)}<td>${txt}</td></tr>`).join('')}
-    </table>
-
-    <div class="bar">TRABALHOS EM ALTURA</div>
-    <table>
-      <tr><th class="ans">SIM</th><th class="ans">NÃO</th><th class="ans">N/A</th><th>PERGUNTA</th></tr>
-      ${getQ('altura').map(([id,txt])=>`<tr>${threeCells('altura',id)}<td>${txt}</td></tr>`).join('')}
-      <tr><td colspan="3">Medidas de proteção coletiva:</td><td>${T.alturaProtecaoColetiva||''}</td></tr>
-    </table>
+      ${getQ(r.key).map(([id,txt])=>`<tr>${threeCells(r.key,id)}<td>${txt}</td></tr>`).join('')}
+      ${r.key === 'altura' ? `<tr><td colspan="3">Medidas de proteção coletiva:</td><td>${T.alturaProtecaoColetiva||''}</td></tr>` : ''}
+    </table>`).join('\n')}
 
     <div class="bar">OUTRAS ATIVIDADES A SEREM EXECUTADAS</div>
     <table>
-      <tr><td>${chk(T.outrasAtividades.cabo)} POSTEAÇÃO/LANÇAMENTO DE CABO — Tipo: ${T.outrasAtividades.tipoCabo||''}</td><td>${chk(T.outrasAtividades.postes)} EQUIPAGEM DE POSTES</td></tr>
-      <tr><td>${chk(T.outrasAtividades.carga)} CARGA E DESCARGA DE MATERIAL</td><td>${chk(T.outrasAtividades.telhado)} ACESSO A TELHADO/FORRO/COBERTURA</td></tr>
+      ${pdfLinhas(getLista('outras').map(t => chk((T.outras||[]).includes(t)) + ' ' + escHtml(t.toUpperCase())), 2)}
+      <tr><td colspan="2">${tele ? 'TIPO DE CABO' : 'DETALHES'}: ${escHtml(T.outrasDetalhe||'')}</td></tr>
     </table>
 
     <div class="bar">EQUIPAMENTOS DE PROTEÇÃO INDIVIDUAL - EPI's</div>
     <table>
-      ${(()=>{ let rows=''; for(let i=0;i<EPI_LIST.length;i+=2){ rows+=`<tr><td>${chk(T.epis.includes(EPI_LIST[i]))} ${EPI_LIST[i].toUpperCase()}</td><td>${EPI_LIST[i+1]?chk(T.epis.includes(EPI_LIST[i+1]))+' '+EPI_LIST[i+1].toUpperCase():''}</td></tr>`; } return rows; })()}
+      ${pdfLinhas(getLista('epis').map(e => chk(T.epis.includes(e)) + ' ' + escHtml(e.toUpperCase())), 2)}
       <tr><td colspan="2">OUTROS: ${T.episOutros||''}</td></tr>
     </table>
 
@@ -4449,7 +4635,7 @@ function buildPrintTemplate(){
     </table>
     <table><tr><td>Colaborador avaliado: ${T.colaboradorNome||''}</td></tr></table>
 
-    <div class="bar">CHECKLIST DA INSTALAÇÃO</div>
+    <div class="bar">${tele ? 'CHECKLIST DA INSTALAÇÃO' : 'CHECKLIST DA ATIVIDADE'}</div>
     <table>
       <tr><th class="ans">SIM</th><th class="ans">NÃO</th><th>PERGUNTA</th></tr>
       ${getQ('instalacao').map(([id,txt])=>`<tr>${twoCells('instalacao',id)}<td>${txt}</td></tr>`).join('')}
@@ -6574,6 +6760,7 @@ function resumePtDraft(id){
   list.splice(idx,1);
   savePtDraftsList(list);
   Object.assign(state, entry.data);
+  ptCompatOutras(state, entry.data);
   saveDraft();
   { const sg = entry.sigs || { sigResp: entry.sig || null };
     ['sigResp','sigLib','sigTec'].forEach(k => { if(sg[k]) sigData[k] = sg[k]; else delete sigData[k]; }); }
@@ -6661,7 +6848,8 @@ function libPill(st){
 // Itens marcados como "não conforme" na PT (o gestor vê primeiro).
 function ptNaoConformes(){
   const out = [];
-  [['eletrico','NAO'],['altura','NAO'],['instalacao','NAO'],['saude','SIM']].forEach(([prefix, ruim]) => {
+  const riscos = ptRamo() === 'telecom' ? [['eletrico','NAO'],['altura','NAO']] : ptRiscosMarcados().map(r => [r.key,'NAO']);
+  riscos.concat([['instalacao','NAO'],['saude','SIM']]).forEach(([prefix, ruim]) => {
     getQ(prefix).forEach(([id, txt]) => {
       const it = state[prefix] && state[prefix][id];
       if(it && it.val === ruim) out.push((prefix === 'saude' ? 'Saúde: ' : '') + txt + (it.just ? ' — ' + it.just : ''));
@@ -6811,6 +6999,7 @@ async function libCorrigir(x){
     // A PT em branco já tinha um número reservado: guarda para a próxima PT nova.
     if(state.ptNumero && !state.libRevisao){ try{ localStorage.setItem(PT_NUM_GUARDADO_KEY, state.ptNumero); }catch(e){} }
     Object.assign(state, makeEmptyState(), snap.state);
+    ptCompatOutras(state, snap.state);
     state.ptNumero = String(snap.state.ptNumero || '').replace(/-R\d+$/, '') + '-R' + rev;
     state.libRevisao = rev; state.libRevisaoDe = x.id; state.abertoId = ''; state.abertoInicio = 0;
     Object.keys(sigData).forEach(k => delete sigData[k]);

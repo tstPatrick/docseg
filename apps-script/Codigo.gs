@@ -782,6 +782,7 @@ function loginUser(username, passwordHash) {
     empresaLogoDataUrl2: extras.logoDataUrl2,
     empresaThemeColor: extras.themeColor, empresaThemeColor2: extras.themeColor2,
     empresaPtPrefix: extras.ptPrefix,
+    empresaRamo: extras.ramo,
     empresaLiberacao: extras.liberacao,
     carimbo: (rec.role === "gestor" || rec.role === "tst") ? carimboResumo_(uname, rec) : null,
     empresaTemTst: rec.role === "gestor" ? empresaTemTst_(rec.empresa) : false,
@@ -1004,6 +1005,11 @@ function slugEmpresa(nome) {
     .replace(/^_+|_+$/g, "");
 }
 
+// Ramo de atividade da empresa: define tipos de trabalho, ferramentas, EPIs e
+// perguntas da PT no app. Empresas antigas (sem ramo) contam como "telecom".
+var RAMOS = ["telecom", "eletrica", "construcao", "industria"];
+function normRamo_(r) { r = (r || "").toString(); return RAMOS.indexOf(r) !== -1 ? r : "telecom"; }
+
 function saveEmpresa(data) {
   if (!requireAdmin(data)) return jsonOut({ error: "não autorizado" });
   var nome = (data.nome || "").toString().trim();
@@ -1072,6 +1078,7 @@ function saveEmpresa(data) {
       driveShared: sync.shared,
       driveFolderUrl: sync.url || anterior.driveFolderUrl || "",
       liberacao: liberacao || normLiberacao_(anterior.liberacao),
+      ramo: data.ramo === undefined ? normRamo_(anterior.ramo) : normRamo_(data.ramo),
       updatedAt: new Date().toISOString()
     };
     props.setProperty("empresa_" + slug, JSON.stringify(rec));
@@ -1716,6 +1723,7 @@ function listEmpresas(params) {
           driveEmails: rec.driveEmails || "",
           driveFolderUrl: rec.driveFolderUrl || "",
           liberacao: normLiberacao_(rec.liberacao),
+          ramo: normRamo_(rec.ramo),
           logoDataUrl: all["empresa_" + slug + "_logo"] || "",
           logoDataUrl2: all["empresa_" + slug + "_logo2"] || ""
         });
@@ -1737,7 +1745,7 @@ function deleteEmpresa(data) {
 }
 
 function getEmpresaExtras(nome) {
-  var out = { alertaHoras: 24, teste: false, documentos: DOC_TIPOS.slice(), perguntas: {}, aviso: "", avisoEm: 0, avisoGestor: "", suspenso: false, suspensoMsg: "", contratoInicio: "", contratoFim: "", avisoDias: 30, carenciaDias: 0, contratoVencido: false, diasRestantes: null, themeColor: "", themeColor2: "", ptPrefix: "", logoDataUrl: "", logoDataUrl2: "", emailAtivo: false, emailDestino: "", liberacao: normLiberacao_(null) };
+  var out = { alertaHoras: 24, teste: false, documentos: DOC_TIPOS.slice(), perguntas: {}, aviso: "", avisoEm: 0, avisoGestor: "", suspenso: false, suspensoMsg: "", contratoInicio: "", contratoFim: "", avisoDias: 30, carenciaDias: 0, contratoVencido: false, diasRestantes: null, themeColor: "", themeColor2: "", ptPrefix: "", logoDataUrl: "", logoDataUrl2: "", emailAtivo: false, emailDestino: "", liberacao: normLiberacao_(null), ramo: "telecom" };
   if (!nome) return out;
   var slug = slugEmpresa(nome);
   if (!slug) return out;
@@ -1768,6 +1776,7 @@ function getEmpresaExtras(nome) {
       out.emailAtivo = !!rec.emailAtivo;
       out.emailDestino = rec.emailDestino || "";
       out.liberacao = normLiberacao_(rec.liberacao);
+      out.ramo = normRamo_(rec.ramo);
     } catch (e) { /* ignora registro corrompido */ }
   }
   out.logoDataUrl = props.getProperty("empresa_" + slug + "_logo") || "";
