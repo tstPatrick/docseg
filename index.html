@@ -4159,7 +4159,7 @@ function docsAtivos(){
 
 /* ============ SUPORTE ============ */
 const SUPORTE_WHATS = '5571996033896';
-const APP_VERSION = '7.0';
+const APP_VERSION = '7.1';
 const SUPORTE_FAQ = [
   ['Como envio um documento?', 'Preencha o documento (PT, checklist de veículo ou de escada) e toque em Enviar. Escolha "Enviar agora" ou "Guardar e enviar depois". Em "Meus documentos" você vê o que já foi enviado.'],
   ['Estou sem internet, e agora?', 'Pode preencher normalmente. O documento fica guardado no aparelho e é enviado sozinho quando a internet voltar. Em "Meus documentos" aparece como "Aguardando envio".'],
@@ -6442,7 +6442,7 @@ $('msgNovaSel').onchange = ()=>{ const sel = $('msgNovaSel'); if(!sel.value) ret
 const ab = { data:null, tipo:'', empresa:'' };
 function abTipoKey(x){ const k = tipoKey(x.tipoDocumento); return k === 'pt' || k === 'veiculo' || k === 'escada' ? k : 'outro'; }
 async function openAbertos(){
-  if(!isManager()) return;
+  if(!isManager() && !isTst()) return;
   hideAllScreens();
   $('abView').style.display = 'block'; window.scrollTo(0,0);
   ab.data = null; ab.tipo = '';
@@ -6588,6 +6588,7 @@ function renderHomeMenu(){
     if(libCfg().ativo){
       html += '<div class="ds-sec">Liberação</div><div class="ds-grid">';
       html += tileHtml('liberacoes', 'Liberações', '#E3F4E6', '#1F6B2A', {sub:'Avaliar e histórico', icon:'lib'});
+      html += tileHtml('abertos', 'Em aberto', '#FFF1D6', '#8A4B00', {sub:'Documentos não finalizados', icon:'aberto'});
       html += tileHtml('mensagens', 'Mensagens', '#E6ECF8', '#1D3A6F', {sub:'Falar com os colaboradores', icon:'msg'});
       html += '</div>';
     } else {
@@ -6604,12 +6605,14 @@ function renderHomeMenu(){
     html += '</div>';
   }
   if(gestor) html = '<div id="abertosCard"></div><div id="teamCard"></div>' + html;
+  else if(tst) html = '<div id="abertosCard"></div>' + html;
   if(gestor || tst || (!admin && libCfg().ativo)) html = '<div id="libCard"></div>' + html;
   if(gestor || admin) html = '<div id="senhaCard"></div>' + html;
   if(!admin && !gestor && !tst) html = abertosMeusHtml() + html;
   if(!admin) html = '<div class="ab-card" id="msgCard" style="display:none;background:#E6ECF8;color:#12254B;border-color:rgba(18,37,75,.2);"></div>' + pushBannerHtml() + html;
   box.innerHTML = html;
   if(gestor){ loadAbertosCard(); loadTeamCard(); }
+  else if(tst) loadAbertosCard();
   if(gestor || tst) libLoadCardGestor();
   else if(!admin && libCfg().ativo) libLoadCardTec();
   if(gestor || admin) loadSenhaCard();

@@ -1274,7 +1274,7 @@ function docFechado(data) {
     var linha = sh.getRange(r, 1, 1, ABERTOS_HEADERS.length).getValues()[0];
     var dono = normUser(linha[1]);
     // O gestor da empresa também pode tirar um aviso que ficou preso.
-    var gestorDaEmpresa = caller.role === "gestor" && sameEmpresa(linha[3], caller.empresa);
+    var gestorDaEmpresa = (caller.role === "gestor" || caller.role === "tst") && sameEmpresa(linha[3], caller.empresa);
     if (caller.role !== "admin" && dono !== caller.username && !gestorDaEmpresa) return jsonOut({ error: "não autorizado" });
     removerAberto_(id);
   }
@@ -1282,8 +1282,9 @@ function docFechado(data) {
 }
 function listAbertos(data) {
   var caller = authCaller(data);
-  if (!caller || (caller.role !== "admin" && caller.role !== "gestor")) return jsonOut({ error: "não autorizado" });
-  var empresaNome = caller.role === "gestor" ? caller.empresa : (data.empresa || "").toString().trim();
+  // O Técnico de Segurança também acompanha os documentos em aberto da empresa dele.
+  if (!caller || (caller.role !== "admin" && caller.role !== "gestor" && caller.role !== "tst")) return jsonOut({ error: "não autorizado" });
+  var empresaNome = caller.role !== "admin" ? caller.empresa : (data.empresa || "").toString().trim();
   if (!empresaNome) return jsonOut({ error: "empresa não informada" });
   var slug = slugEmpresa(empresaNome);
   var sh = abertosSheet();
@@ -1316,12 +1317,12 @@ function listAbertos(data) {
 }
 function lembrarColaborador(data) {
   var caller = authCaller(data);
-  if (!caller || (caller.role !== "admin" && caller.role !== "gestor")) return jsonOut({ error: "não autorizado" });
+  if (!caller || (caller.role !== "admin" && caller.role !== "gestor" && caller.role !== "tst")) return jsonOut({ error: "não autorizado" });
   var login = normUser(data.login);
   var raw = PropertiesService.getScriptProperties().getProperty("user_" + login);
   if (!raw) return jsonOut({ error: "colaborador não encontrado" });
   var rec = JSON.parse(raw);
-  if (caller.role === "gestor" && !(rec.role === "tecnico" && sameEmpresa(rec.empresa, caller.empresa))) return jsonOut({ error: "não autorizado" });
+  if (caller.role !== "admin" && !(rec.role === "tecnico" && sameEmpresa(rec.empresa, caller.empresa))) return jsonOut({ error: "não autorizado" });
   var doc = (data.documento || "documento").toString().slice(0, 60);
   var msg = enviarMensagem_(caller, login, rec, "Lembrete: finalize e envie o documento em aberto (" + doc + ").", (data.abertoId || "").toString());
   return jsonOut({ ok: true, push: msg.push, aviso: msg.push ? "" : (!pushAtivo_() ? "Mensagem entregue dentro do app. As notificações do celular ainda não foram configuradas no servidor." : "Mensagem entregue dentro do app. Este colaborador ainda não ativou as notificações do celular.") });
