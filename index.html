@@ -630,6 +630,68 @@
   .stat b{font-family:'Poppins',sans-serif; font-size:24px; font-weight:700; color:#12254B; line-height:1.1;}
   .stat span{font-size:11.5px; color:#566179; line-height:1.3;}
   .stat.alert b{color:#B26A00;}
+  /* ===== Chat (Mensagens) ===== */
+  #msgView{background:#EEF1F6; min-height:100vh;}
+  body:has(#msgView[style*="block"]){background:#EEF1F6;}
+  #msgView .cx-wrap{padding:0 0 10px; max-width:720px; margin:0 auto;}
+  .cx-topbar .cx-avbox:empty{display:none;}
+  .cx-topbar .cx-avbox .av{width:40px; height:40px; font-size:14px;}
+  .cx-who{flex:1; min-width:0; line-height:1.2;} .cx-who b{display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;} .cx-who span{display:block; font-size:12px; opacity:.75; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .cx-ref{margin:10px 14px 0; background:#fff; border-radius:12px; padding:9px 12px; font-size:12.5px; color:#12254B; display:flex; align-items:center; gap:6px; box-shadow:0 1px 2px rgba(15,27,51,.06);}
+  .cx-ref .tag{margin-left:auto; font-size:11px; font-weight:700; color:#A32D2D; background:#FDECEB; border-radius:8px; padding:2px 7px; white-space:nowrap;}
+  .cx-msgs{display:flex; flex-direction:column; gap:3px; padding:6px 14px 0;}
+  .cx-day{align-self:center; font-size:11px; font-weight:700; color:#566179; background:#DDE3EE; border-radius:10px; padding:3px 10px; margin:10px 0 6px;}
+  .cx-b{max-width:80%; padding:8px 11px 6px; border-radius:18px; font-size:14.5px; line-height:1.38; white-space:pre-wrap; word-break:break-word;}
+  .cx-b .t{display:inline-block; float:right; margin:6px 0 -2px 10px; font-size:10.5px; opacity:.72; white-space:nowrap;}
+  .cx-b .t .lida{color:#8FD3FF; opacity:1;}
+  .cx-b.me{align-self:flex-end; background:#1D3A6F; color:#fff;}
+  .cx-b.o{align-self:flex-start; background:#fff; color:#12254B; box-shadow:0 1px 2px rgba(15,27,51,.08);}
+  .cx-b.me.last{border-bottom-right-radius:6px;} .cx-b.o.last{border-bottom-left-radius:6px;}
+  .cx-b.gap{margin-top:8px;} .cx-b.env{opacity:.6;}
+  .cx-b.img{padding:4px;} .cx-b.img .cap{padding:4px 7px 2px;}
+  .cx-img{display:block; width:230px; max-width:100%; min-height:150px; border-radius:14px; background:#C9D2E3; border:0; padding:0; cursor:pointer; overflow:hidden;}
+  .cx-img img{display:block; width:100%; max-height:320px; object-fit:cover;}
+  .cx-img span{display:grid; place-items:center; height:150px; color:#566179; font-size:12px;}
+  .cx-file{display:flex; align-items:center; gap:10px; min-width:200px; background:none; border:0; padding:0; color:inherit; font:inherit; text-align:left; cursor:pointer;}
+  .cx-file .ic{width:40px; height:46px; border-radius:8px; background:#FDECEB; color:#A32D2D; display:grid; place-items:center; font-weight:800; font-size:11px; flex-shrink:0;}
+  .cx-file b{display:block; font-size:13.5px; word-break:break-all;} .cx-file small{display:block; font-size:11.5px; opacity:.75;}
+  .cx-bot{position:fixed; left:0; right:0; bottom:0; background:#fff; border-top:1px solid #E1E6EF; padding:8px 10px calc(10px + env(safe-area-inset-bottom)); z-index:45;}
+  .cx-bot > *{max-width:700px; margin-left:auto; margin-right:auto;}
+  .cx-quick{display:flex; gap:6px; overflow-x:auto; padding:2px 2px 8px; scrollbar-width:none;} .cx-quick::-webkit-scrollbar{display:none;}
+  .cx-quick button{flex-shrink:0; border:1.5px solid #D5DCE9; background:#fff; color:#1D3A6F; border-radius:16px; padding:6px 12px; font-weight:600; font-size:12.5px; font-family:inherit; cursor:pointer;}
+  .cx-quick .lb{flex-shrink:0; font-size:11.5px; color:#8A93A6; align-self:center; padding-right:2px;}
+  .cx-pend{display:flex; align-items:center; gap:10px; background:#F1F4F9; border-radius:14px; padding:6px 8px; margin-bottom:8px; font-size:13px; color:#12254B;}
+  .cx-pend img{width:44px; height:44px; border-radius:10px; object-fit:cover;} .cx-pend .ic{width:44px; height:44px; border-radius:10px; background:#FDECEB; color:#A32D2D; display:grid; place-items:center; font-weight:800; font-size:11px;}
+  .cx-pend .nm{flex:1; min-width:0;} .cx-pend .nm b{display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;} .cx-pend .nm small{color:#566179;}
+  .cx-pend button{width:32px; height:32px; border-radius:50%; border:0; background:#fff; color:#566179; font-size:15px; cursor:pointer;}
+  .cx-row{display:flex; align-items:flex-end; gap:8px;}
+  .cx-row textarea{flex:1; min-width:0; min-height:44px; max-height:120px; height:44px; border:0; outline:none; background:#F1F4F9; border-radius:22px; padding:11px 16px; font:inherit; font-size:15px; color:#12254B; line-height:1.35; resize:none;}
+  .cx-clip,.cx-send{width:44px; height:44px; border-radius:50%; border:0; display:grid; place-items:center; flex-shrink:0; cursor:pointer;}
+  .cx-clip{background:#F1F4F9; color:#1D3A6F; font-size:20px;}
+  .cx-send{background:#C9D2E3; color:#fff;} .cx-send.on{background:#1D3A6F;} .cx-send:disabled{opacity:.6;}
+  .cx-list{padding:12px 14px;}
+  .cx-new{width:100%; height:46px; border:0; border-radius:14px; background:#1D3A6F; color:#fff; font-weight:700; font-size:14px; font-family:inherit; margin-bottom:12px; cursor:pointer;}
+  .cx-search{width:100%; box-sizing:border-box; background:#fff; border-radius:12px; padding:11px 14px; font-size:14px; margin-bottom:10px; border:1.5px solid #E1E6EF; font-family:inherit; color:#12254B;}
+  .cx-th{display:flex; align-items:center; gap:11px; width:100%; text-align:left; background:#fff; border:0; border-radius:16px; padding:11px 12px; margin-bottom:8px; box-shadow:0 1px 2px rgba(15,27,51,.06); font-family:inherit; cursor:pointer;}
+  .cx-th .av{width:44px; height:44px; font-size:15px;}
+  .cx-th .m{flex:1; min-width:0;} .cx-th .m b{display:block; font-size:15px; color:#12254B;} .cx-th .m span{display:block; font-size:13px; color:#566179; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; margin-top:2px;}
+  .cx-th .r{display:flex; flex-direction:column; align-items:flex-end; gap:5px; font-size:11.5px; color:#8A93A6; flex-shrink:0;}
+  .cx-th .n{background:#2FA36B; color:#fff; border-radius:10px; min-width:20px; height:20px; font-size:11px; font-weight:700; display:grid; place-items:center; padding:0 6px;}
+  .cx-th.un .m span{color:#12254B; font-weight:600;} .cx-th.un .r{color:#2FA36B; font-weight:700;}
+  .cx-dim{position:fixed; inset:0; background:rgba(15,27,51,.4); z-index:300; display:none;} .cx-dim.show{display:block;}
+  .cx-sheet{position:fixed; left:0; right:0; bottom:0; max-height:80vh; overflow:auto; background:#fff; border-radius:20px 20px 0 0; box-shadow:0 -8px 30px rgba(15,27,51,.18); padding:10px 18px calc(22px + env(safe-area-inset-bottom)); z-index:301; display:none;}
+  .cx-sheet.show{display:block;}
+  .cx-sheet .hd{width:40px; height:5px; border-radius:3px; background:#D5DCE9; margin:0 auto 14px;}
+  .cx-sheet h4{margin:0 0 12px; font-size:15px; color:#12254B;}
+  .cx-opts{display:grid; grid-template-columns:repeat(3,1fr); gap:10px;}
+  .cx-opts button{border:0; background:none; font-family:inherit; font-size:12.5px; font-weight:600; color:#12254B; cursor:pointer;}
+  .cx-opts i{display:grid; place-items:center; width:58px; height:58px; border-radius:18px; margin:0 auto 6px; font-style:normal; font-size:26px;}
+  .cx-sheet p.nota{font-size:11.5px; color:#8A93A6; margin:14px 0 0; text-align:center;}
+  .cx-viewer{position:fixed; inset:0; background:#0A1428; z-index:400; display:none; flex-direction:column;}
+  .cx-viewer.show{display:flex;}
+  .cx-viewer .bar{display:flex; justify-content:space-between; padding:12px; gap:8px;}
+  .cx-viewer .bar button{height:40px; border:0; border-radius:12px; background:rgba(255,255,255,.14); color:#fff; padding:0 14px; font-family:inherit; font-size:14px; font-weight:600; cursor:pointer;}
+  .cx-viewer .pic{flex:1; display:flex; align-items:center; justify-content:center; overflow:auto;} .cx-viewer img{max-width:100%; max-height:100%;}
   .cb{max-width:84%;padding:8px 11px;border-radius:14px;font-size:13px;line-height:1.4;white-space:pre-wrap;word-break:break-word;}
   .cb small{display:block;font-size:10px;opacity:.7;margin-top:3px;}
   .cb.me{align-self:flex-end;background:#1D3A6F;color:#fff;border-bottom-right-radius:4px;}
@@ -1058,21 +1120,45 @@
 
 <!-- ===================== TELA: MENSAGENS ===================== -->
 <div id="msgView" class="ds" style="display:none;">
-  <div class="screen-topbar"><button type="button" id="msgBack" title="Voltar">←</button><b id="msgTitle">💬 Mensagens</b><button type="button" id="msgRefresh" title="Atualizar" style="margin-left:auto;">↻</button></div>
-  <div class="painel-wrap">
-    <div id="msgListBox">
-      <div id="msgNova" style="display:none;margin-bottom:10px;">
-        <select id="msgNovaSel" style="width:100%;height:46px;border:1.5px solid #D5DCE9;border-radius:12px;background:#fff;font-size:14px;padding:0 12px;"><option value="">+ Nova conversa com colaborador...</option></select>
-      </div>
+  <div class="screen-topbar cx-topbar"><button type="button" id="msgBack" title="Voltar">←</button><span class="cx-avbox" id="msgAv"></span><div class="cx-who"><b id="msgTitle">Mensagens</b><span id="msgSub"></span></div><button type="button" id="msgRefresh" title="Atualizar">↻</button></div>
+  <div class="cx-wrap">
+    <div id="msgListBox" class="cx-list">
+      <button type="button" class="cx-new" id="msgNovaBtn" style="display:none;">+ Nova conversa</button>
+      <input type="search" class="cx-search" id="msgBusca" placeholder="🔍 Buscar pessoa" autocomplete="off">
       <div id="msgThreads"></div>
     </div>
     <div id="msgThreadBox" style="display:none;">
-      <div class="ab-card" id="msgRef" style="display:none;margin-bottom:8px;"></div>
-      <div class="cb-wrap" id="msgBubbles"></div>
-      <div class="quick" id="msgQuick"></div>
-      <div class="msg-in"><textarea id="msgText" maxlength="500" placeholder="Escrever mensagem..."></textarea><button type="button" id="msgSend">Enviar</button></div>
+      <div class="cx-ref" id="msgRef" style="display:none;"></div>
+      <div class="cx-msgs" id="msgBubbles"></div>
+      <div id="msgFim" style="height:150px;"></div>
     </div>
   </div>
+  <div class="cx-bot" id="msgBot" style="display:none;">
+    <div class="cx-quick" id="msgQuick"></div>
+    <div id="msgPend"></div>
+    <div class="cx-row">
+      <button type="button" class="cx-clip" id="msgClip" title="Enviar foto ou PDF">📎</button>
+      <textarea id="msgText" rows="1" maxlength="500" placeholder="Mensagem"></textarea>
+      <button type="button" class="cx-send" id="msgSend" title="Enviar"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7z"/></svg></button>
+    </div>
+  </div>
+  <input type="file" id="msgFileCam" accept="image/*" capture="environment" style="display:none;">
+  <input type="file" id="msgFileGal" accept="image/*" style="display:none;">
+  <input type="file" id="msgFileDoc" accept="application/pdf,image/*" style="display:none;">
+  <div class="cx-dim" id="msgDim"></div>
+  <div class="cx-sheet" id="msgSheetAnexo"><div class="hd"></div><h4>Enviar arquivo</h4>
+    <div class="cx-opts">
+      <button type="button" data-anx="msgFileCam"><i style="background:#E6ECF8">📷</i>Câmera</button>
+      <button type="button" data-anx="msgFileGal"><i style="background:#E3F4E6">🖼️</i>Galeria</button>
+      <button type="button" data-anx="msgFileDoc"><i style="background:#FDECEB">📄</i>Documento</button>
+    </div>
+    <p class="nota">Fotos e PDF de até 5 MB. As fotos são reduzidas antes de enviar.</p>
+  </div>
+  <div class="cx-sheet" id="msgSheetNova"><div class="hd"></div><h4>Nova conversa</h4>
+    <input type="search" class="cx-search" id="msgNovaBusca" placeholder="🔍 Buscar colaborador" autocomplete="off">
+    <div id="msgNovaLista"></div>
+  </div>
+  <div class="cx-viewer" id="msgViewer"><div class="bar"><button type="button" id="msgViewerFechar">✕ Fechar</button><button type="button" id="msgViewerBaixar">⬇ Baixar</button></div><div class="pic"><img id="msgViewerImg" alt="Foto"></div></div>
 </div>
 
 <!-- ===================== TELA: DOCUMENTOS EM ABERTO ===================== -->
@@ -4159,7 +4245,7 @@ function docsAtivos(){
 
 /* ============ SUPORTE ============ */
 const SUPORTE_WHATS = '5571996033896';
-const APP_VERSION = '7.1';
+const APP_VERSION = '8.0';
 const SUPORTE_FAQ = [
   ['Como envio um documento?', 'Preencha o documento (PT, checklist de veículo ou de escada) e toque em Enviar. Escolha "Enviar agora" ou "Guardar e enviar depois". Em "Meus documentos" você vê o que já foi enviado.'],
   ['Estou sem internet, e agora?', 'Pode preencher normalmente. O documento fica guardado no aparelho e é enviado sozinho quando a internet voltar. Em "Meus documentos" aparece como "Aguardando envio".'],
@@ -6352,29 +6438,41 @@ async function loadAbertosCard(){
   }catch(e){}
 }
 ICONS.msg = '<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>';
-const msg = { list:[], eu:'', thread:'', nome:'', ref:'', refTitulo:'', timer:null };
+const msg = { list:[], eu:'', thread:'', nome:'', ref:'', refTitulo:'', timer:null, pend:null, enviando:false, colabs:null };
+// Arquivos já baixados nesta sessão (id da mensagem → data URL), para não baixar de novo a cada atualização.
+const msgAnexos = {}, msgBaixando = {};
+const MSG_MAX_BYTES = 5 * 1024 * 1024;
 function msgThreads(){
   const g = {};
-  msg.list.forEach(m => { const k = m.outro; if(!g[k]) g[k] = { login:k, nome:m.outroNome || k, ultima:m, nao:0 }; g[k].ultima = m; if(m.para === msg.eu && !m.lida) g[k].nao++; });
+  msg.list.forEach(m => { const k = m.outro; if(!g[k]) g[k] = { login:k, nome:m.outroNome || k, role:m.outroRole || '', ultima:m, nao:0 }; g[k].ultima = m; if(m.para === msg.eu && !m.lida) g[k].nao++; });
   return Object.values(g).sort((a, b) => b.ultima.ts - a.ultima.ts);
 }
+// Cor fixa do avatar de cada pessoa (pelas letras do nome).
+const MSG_CORES = ['#2FA36B','#C77A12','#5B5FC7','#1F7A8C','#B8476A','#4C9A2A','#8A5A2B','#3B6FB6'];
+function msgAv(nome, size){
+  let h = 0; String(nome || '').split('').forEach(c => { h = (h * 31 + c.charCodeAt(0)) >>> 0; });
+  return avatarHtml(nome, '', size).replace('<span class="av"', `<span class="av" data-cor="1"`).replace('style="', `style="background:${MSG_CORES[h % MSG_CORES.length]};`);
+}
+function msgDia(ts){
+  const d = new Date(ts), hoje = new Date(); hoje.setHours(0,0,0,0);
+  const dd = new Date(d); dd.setHours(0,0,0,0);
+  const dif = Math.round((hoje - dd) / 86400000);
+  return dif === 0 ? 'Hoje' : (dif === 1 ? 'Ontem' : d.toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit', year: d.getFullYear() === hoje.getFullYear() ? undefined : 'numeric'}));
+}
+function msgHora(ts){ return new Date(ts).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'}); }
+function msgQuando(ts){ const d = msgDia(ts); return d === 'Hoje' ? msgHora(ts) : d; }
+function msgTam(b){ return b >= 1048576 ? (b / 1048576).toFixed(1).replace('.', ',') + ' MB' : Math.max(1, Math.round(b / 1024)) + ' KB'; }
+function msgResumo(m){ return m.texto || (m.anexo ? (/^image\//.test(m.anexo.tipo) ? '📷 Foto' : '📄 ' + m.anexo.nome) : ''); }
+function msgPapel(role){ return role === 'tecnico' ? 'Colaborador' : (role ? roleLabel(role) : ''); }
 async function openMensagens(login, nome, abertoId, refTitulo){
   const s = getSession(); if(!s || isAdmin()) return;
   hideAllScreens();
   $('msgView').style.display = 'block'; window.scrollTo(0,0);
   msg.thread = login || ''; msg.nome = nome || ''; msg.ref = abertoId || ''; msg.refTitulo = refTitulo || '';
-  $('msgNova').style.display = (isGestor() || isTst()) ? 'block' : 'none';
-  if(isGestor() || isTst()) fillMsgNova();
+  $('msgNovaBtn').style.display = (isGestor() || isTst()) ? 'block' : 'none';
+  $('msgBusca').value = '';
   await loadMsgs();
   clearInterval(msg.timer); msg.timer = setInterval(()=>{ if($('msgView').style.display === 'block') loadMsgs(true); }, 15000);
-}
-async function fillMsgNova(){
-  const sel = $('msgNovaSel');
-  if(sel.options.length > 1) return;
-  try{
-    const r = await api('listUsers'); if(r.error) return;
-    (r.users || []).filter(u => u.role === 'tecnico').forEach(u => { const o = document.createElement('option'); o.value = u.username; o.textContent = u.nome || u.username; sel.appendChild(o); });
-  }catch(e){}
 }
 async function loadMsgs(silent){
   try{
@@ -6382,47 +6480,166 @@ async function loadMsgs(silent){
     msg.list = r.mensagens || []; msg.eu = r.eu;
     renderMsgs();
     setMsgBadge(r.naoLidas || 0);
-  }catch(e){ if(!silent) $('msgThreads').innerHTML = '<div class="ab-err"><b>Não foi possível carregar</b><br>' + escHtml(e.message || 'falha de conexão') + ' — confira se a nova versão do Apps Script foi publicada.</div>'; }
+  }catch(e){ if(!silent){ $('msgThreads').innerHTML = '<div class="ab-err"><b>Não foi possível carregar</b><br>' + escHtml(e.message || 'falha de conexão') + ' — confira se a nova versão do Apps Script foi publicada.</div>'; } }
 }
 function renderMsgs(){
   if(msg.thread){ renderThread(); return; }
-  $('msgListBox').style.display = 'block'; $('msgThreadBox').style.display = 'none'; $('msgTitle').textContent = '💬 Mensagens';
+  $('msgListBox').style.display = 'block'; $('msgThreadBox').style.display = 'none'; $('msgBot').style.display = 'none';
   const t = msgThreads();
-  $('msgThreads').innerHTML = t.length ? t.map(x => `<button type="button" class="th-row" data-l="${escHtml(x.login)}">${avatarHtml(x.nome, '', 40)}<div class="m"><b>${escHtml(x.nome)}</b><span>${x.ultima.de === msg.eu ? 'Você: ' : ''}${escHtml(x.ultima.texto)}</span></div>${x.nao ? `<span class="n">${x.nao}</span>` : ''}</button>`).join('')
-    : '<div class="ab-empty"><div style="font-size:34px;">💬</div><b>Nenhuma conversa ainda</b>' + ((isGestor() || isTst()) ? 'Escolha um colaborador acima para começar.' : 'Quando o seu gestor enviar uma mensagem, ela aparece aqui.') + '</div>';
-  $('msgThreads').querySelectorAll('[data-l]').forEach(b => b.onclick = ()=>{ msg.thread = b.getAttribute('data-l'); const x = t.find(y => y.login === msg.thread); msg.nome = x ? x.nome : ''; msg.ref = ''; msg.refTitulo = ''; renderMsgs(); });
+  $('msgTitle').textContent = 'Mensagens';
+  $('msgSub').textContent = t.length ? t.length + (t.length > 1 ? ' conversas' : ' conversa') : '';
+  $('msgAv').innerHTML = '';
+  const busca = ($('msgBusca').value || '').trim().toLowerCase();
+  $('msgBusca').style.display = t.length > 3 ? 'block' : 'none';
+  const vis = busca ? t.filter(x => x.nome.toLowerCase().indexOf(busca) !== -1) : t;
+  $('msgThreads').innerHTML = vis.length ? vis.map(x => `<button type="button" class="cx-th${x.nao ? ' un' : ''}" data-l="${escHtml(x.login)}">${msgAv(x.nome, 44)}<div class="m"><b>${escHtml(x.nome)}</b><span>${x.ultima.de === msg.eu ? 'Você: ' : ''}${escHtml(msgResumo(x.ultima))}</span></div><div class="r">${msgQuando(x.ultima.ts)}${x.nao ? `<span class="n">${x.nao}</span>` : ''}</div></button>`).join('')
+    : (t.length ? '<p class="hint" style="text-align:center;">Ninguém encontrado com esse nome.</p>'
+      : '<div class="ab-empty"><div style="font-size:34px;">💬</div><b>Nenhuma conversa ainda</b>' + ((isGestor() || isTst()) ? 'Toque em "Nova conversa" para começar.' : 'Quando o seu gestor enviar uma mensagem, ela aparece aqui.') + '</div>');
+  $('msgThreads').querySelectorAll('[data-l]').forEach(b => b.onclick = ()=>{ msg.thread = b.getAttribute('data-l'); const x = t.find(y => y.login === msg.thread); msg.nome = x ? x.nome : ''; msg.ref = ''; msg.refTitulo = ''; msgLimparPend(); renderMsgs(); window.scrollTo(0, 0); });
+}
+function msgBolha(m, ant, prox){
+  const eu = m.de === msg.eu;
+  const junto = (a, b) => a && b && a.de === b.de && msgDia(a.ts) === msgDia(b.ts) && Math.abs(b.ts - a.ts) < 5 * 60000;
+  const cls = ['cx-b', eu ? 'me' : 'o'];
+  if(!junto(ant, m)) cls.push('gap');
+  if(!junto(m, prox)) cls.push('last');
+  if(m.enviando) cls.push('env');
+  const hora = `<span class="t">${msgHora(m.ts)}${eu ? (m.enviando ? ' ⏳' : (m.lida ? ' <span class="lida">✓✓</span>' : ' ✓')) : ''}</span>`;
+  let corpo = '';
+  if(m.anexo && /^image\//.test(m.anexo.tipo)){
+    cls.push('img');
+    const src = msgAnexos[m.id];
+    corpo = `<button type="button" class="cx-img" data-ver="${escHtml(m.id)}">${src ? `<img src="${src}" alt="Foto">` : '<span>Carregando foto…</span>'}</button>` +
+      `<div class="cap">${escHtml(m.texto || '')}${hora}</div>`;
+  } else if(m.anexo){
+    corpo = `<button type="button" class="cx-file" data-doc="${escHtml(m.id)}"><span class="ic">PDF</span><span><b>${escHtml(m.anexo.nome)}</b><small>${msgTam(m.anexo.tamanho)} · ${msgBaixando[m.id] ? 'abrindo…' : 'tocar para abrir'}</small></span></button>` +
+      (m.texto ? `<div style="margin-top:6px;">${escHtml(m.texto)}${hora}</div>` : hora);
+  } else corpo = escHtml(m.texto) + hora;
+  return `<div class="${cls.join(' ')}">${corpo}</div>`;
 }
 async function renderThread(){
-  $('msgListBox').style.display = 'none'; $('msgThreadBox').style.display = 'block';
+  $('msgListBox').style.display = 'none'; $('msgThreadBox').style.display = 'block'; $('msgBot').style.display = 'block';
   const conv = msg.list.filter(m => m.outro === msg.thread);
+  if(msg.enviando && msg.enviando.outro === msg.thread) conv.push(msg.enviando);
   const nome = msg.nome || (conv[0] && conv[0].outroNome) || msg.thread;
-  $('msgTitle').textContent = '💬 ' + nome;
+  const role = (conv.find(m => m.outroRole) || {}).outroRole || ((isGestor() || isTst()) ? 'tecnico' : '');
+  const emp = (getSession() || {}).empresa || '';
+  $('msgTitle').textContent = nome;
+  $('msgSub').textContent = [msgPapel(role), emp].filter(Boolean).join(' · ');
+  $('msgAv').innerHTML = msgAv(nome, 40);
   const ref = $('msgRef');
-  if(msg.refTitulo){ ref.style.display = 'block'; ref.innerHTML = '📎 Sobre: ' + escHtml(msg.refTitulo); } else ref.style.display = 'none';
-  const box = $('msgBubbles');
-  const perto = box.scrollHeight - box.scrollTop <= box.clientHeight + 60;
-  box.innerHTML = conv.length ? conv.map(m => `<div class="cb ${m.de === msg.eu ? 'me' : 'o'}">${escHtml(m.texto)}<small>${m.de === msg.eu ? 'Você' : escHtml(m.deNome)} · ${new Date(m.ts).toLocaleString('pt-BR', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'})}</small></div>`).join('')
-    : '<p class="hint">Sem mensagens ainda. Escreva a primeira abaixo.</p>';
-  const rap = (isGestor() || isTst()) ? ['Pode finalizar hoje?', 'Precisa de ajuda?', 'Obrigado!'] : ['Já estou finalizando.', 'Preciso de ajuda.', 'Ok, entendido.'];
-  $('msgQuick').innerHTML = rap.map(t => `<button type="button">${escHtml(t)}</button>`).join('');
-  $('msgQuick').querySelectorAll('button').forEach(b => b.onclick = ()=>{ $('msgText').value = b.textContent; $('msgText').focus(); });
+  if(msg.refTitulo){
+    const ab = (abertosGestor && abertosGestor.abertos || []).find(x => x.abertoId === msg.ref);
+    ref.style.display = 'flex';
+    ref.innerHTML = '📎 Sobre: <b>' + escHtml(msg.refTitulo) + '</b>' + (ab ? `<span class="tag">Em aberto · ${escHtml(abHa(ab.inicioTs).replace('há ', ''))}</span>` : '');
+  } else ref.style.display = 'none';
+  const perto = (window.innerHeight + window.scrollY) >= document.body.scrollHeight - 160;
+  const antes = $('msgBubbles').getAttribute('data-n');
+  let html = '', dia = '';
+  conv.forEach((m, i) => {
+    const d = msgDia(m.ts);
+    if(d !== dia){ html += `<div class="cx-day">${d}</div>`; dia = d; }
+    html += msgBolha(m, i > 0 && msgDia(conv[i-1].ts) === d ? conv[i-1] : null, conv[i+1]);
+  });
+  $('msgBubbles').innerHTML = conv.length ? html : '<div class="ab-empty" style="margin-top:20px;"><div style="font-size:30px;">👋</div><b>Comece a conversa</b>Escreva uma mensagem ou envie uma foto ou PDF.</div>';
+  $('msgBubbles').setAttribute('data-n', String(conv.length));
+  $('msgBubbles').querySelectorAll('[data-ver]').forEach(b => b.onclick = ()=> msgVerFoto(b.getAttribute('data-ver')));
+  $('msgBubbles').querySelectorAll('[data-doc]').forEach(b => b.onclick = ()=> msgAbrirDoc(b.getAttribute('data-doc')));
+  msgPintaRodape();
   if(conv.some(m => m.para === msg.eu && !m.lida)){
     conv.forEach(m => { if(m.para === msg.eu) m.lida = true; });
     api('marcarLidas', { com: msg.thread }).then(()=> loadMsgBadge()).catch(()=>{});
   }
-  window.scrollTo(0, document.body.scrollHeight);
+  if(perto || antes !== String(conv.length)) window.scrollTo(0, document.body.scrollHeight);
+  // fotos: baixa as que ainda não estão aqui (as mais novas primeiro)
+  conv.filter(m => m.anexo && /^image\//.test(m.anexo.tipo) && !msgAnexos[m.id] && !m.enviando).slice(-12).reverse().forEach(m => msgBaixar(m.id).then(()=>{ if(msg.thread === m.outro) renderThread(); }).catch(()=>{}));
 }
+async function msgBaixar(id){
+  if(msgAnexos[id]) return msgAnexos[id];
+  if(msgBaixando[id]) return msgBaixando[id];
+  msgBaixando[id] = (async ()=>{
+    try{
+      const r = await api('baixarAnexo', { id });
+      if(r.error) throw new Error(r.error);
+      msgAnexos[id] = 'data:' + r.tipo + ';base64,' + r.base64;
+      return msgAnexos[id];
+    } finally { delete msgBaixando[id]; }
+  })();
+  return msgBaixando[id];
+}
+function msgDataUrlParaBlob(u){
+  const [cab, b64] = u.split(','); const tipo = (cab.match(/data:([^;]+)/) || [])[1] || 'application/octet-stream';
+  const bin = atob(b64), arr = new Uint8Array(bin.length); for(let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  return new Blob([arr], { type: tipo });
+}
+function msgSalvar(id){
+  const m = msg.list.find(x => x.id === id); const u = msgAnexos[id]; if(!u) return;
+  const a = document.createElement('a'); a.href = URL.createObjectURL(msgDataUrlParaBlob(u));
+  a.download = (m && m.anexo && m.anexo.nome) || 'arquivo'; document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 4000);
+}
+async function msgVerFoto(id){
+  try{
+    const u = await msgBaixar(id);
+    $('msgViewerImg').src = u; $('msgViewer').classList.add('show');
+    $('msgViewerBaixar').onclick = ()=> msgSalvar(id);
+  }catch(e){ toast(e.message || 'Não foi possível abrir a foto.', 'err'); }
+}
+async function msgAbrirDoc(id){
+  try{
+    const espera = !msgAnexos[id]; const p = msgBaixar(id); if(espera) renderThread();
+    await p; msgSalvar(id);
+  }catch(e){ toast(e.message || 'Não foi possível abrir o arquivo.', 'err'); }
+  renderThread();
+}
+$('msgViewerFechar').onclick = ()=>{ $('msgViewer').classList.remove('show'); $('msgViewerImg').src = ''; };
+function msgPintaRodape(){
+  const ta = $('msgText'), vazio = !ta.value.trim();
+  const rap = (isGestor() || isTst()) ? ['Pode finalizar hoje?', 'Precisa de ajuda?', 'Obrigado!'] : ['Já estou finalizando.', 'Preciso de ajuda.', 'Ok, entendido.'];
+  const q = $('msgQuick');
+  if(vazio && !msg.pend){
+    if(!q.childElementCount){
+      q.innerHTML = '<span class="lb">Respostas rápidas</span>' + rap.map(t => `<button type="button">${escHtml(t)}</button>`).join('');
+      q.querySelectorAll('button').forEach(b => b.onclick = ()=>{ ta.value = b.textContent; msgAjustaCampo(); ta.focus(); });
+    }
+    q.style.display = 'flex';
+  } else q.style.display = 'none';
+  const p = msg.pend;
+  $('msgPend').innerHTML = p ? `<div class="cx-pend">${/^image\//.test(p.tipo) ? `<img src="${p.dataUrl}" alt="">` : '<span class="ic">PDF</span>'}<div class="nm"><b>${escHtml(p.nome)}</b><small>${msgTam(p.tamanho)} · escreva uma legenda, se quiser</small></div><button type="button" id="msgPendX" title="Tirar arquivo">✕</button></div>` : '';
+  if(p) $('msgPendX').onclick = ()=>{ msgLimparPend(); msgPintaRodape(); };
+  $('msgSend').classList.toggle('on', !vazio || !!p);
+  $('msgSend').disabled = !!msg.enviando;
+  $('msgClip').disabled = !!msg.enviando;
+}
+function msgAjustaCampo(){
+  const ta = $('msgText'); ta.style.height = '44px'; ta.style.height = Math.min(120, ta.scrollHeight) + 'px';
+  msgPintaRodape();
+}
+function msgLimparPend(){ msg.pend = null; }
+$('msgText').addEventListener('input', msgAjustaCampo);
 async function sendMsg(){
   const ta = $('msgText'), texto = ta.value.trim();
-  if(!texto || !msg.thread) return;
-  const b = $('msgSend'); b.disabled = true; b.textContent = '...';
+  if((!texto && !msg.pend) || !msg.thread || msg.enviando) return;
+  const p = msg.pend;
+  const extra = { para: msg.thread, texto, abertoId: msg.ref };
+  if(p) extra.anexo = { nome: p.nome, tipo: p.tipo, base64: p.dataUrl.split(',')[1] };
+  msg.enviando = { id:'_env', ts: Date.now(), de: msg.eu, para: msg.thread, outro: msg.thread, texto, enviando:true, anexo: p ? { nome:p.nome, tipo:p.tipo, tamanho:p.tamanho } : null };
+  if(p) msgAnexos._env = p.dataUrl;
+  ta.value = ''; msgLimparPend(); msgAjustaCampo(); renderThread();
   try{
-    const r = await api('enviarMensagem', { para: msg.thread, texto, abertoId: msg.ref });
+    const r = await api('enviarMensagem', extra);
     if(r.error) throw new Error(r.error);
-    ta.value = '';
+    if(p && r.id) msgAnexos[r.id] = p.dataUrl;
+    msg.enviando = false;
     await loadMsgs(true);
-  }catch(e){ toast(e.message || 'Não foi possível enviar.', 'err'); }
-  b.disabled = false; b.textContent = 'Enviar';
+  }catch(e){
+    msg.enviando = false;
+    ta.value = texto; if(p) msg.pend = p; msgAjustaCampo();
+    toast(e.message || 'Não foi possível enviar.', 'err');
+    renderThread();
+  }
+  delete msgAnexos._env;
+  msgPintaRodape();
 }
 function setMsgBadge(n){
   document.querySelectorAll('#homeMenuItems [data-home="mensagens"] .badge').forEach(x => x.remove());
@@ -6435,10 +6652,55 @@ async function loadMsgBadge(){
   try{ if(!getSession() || isAdmin()) return; const r = await api('listMensagens'); if(!r.error) setMsgBadge(r.naoLidas || 0); }catch(e){}
 }
 function onMsgPush(){ if($('msgView').style.display === 'block') loadMsgs(true); else loadMsgBadge(); }
-$('msgBack').onclick = ()=>{ if(msg.thread && $('msgThreadBox').style.display === 'block'){ msg.thread = ''; msg.ref = ''; msg.refTitulo = ''; renderMsgs(); } else goHome(); };
+function msgFecharFolhas(){ ['msgSheetAnexo','msgSheetNova','msgDim'].forEach(id => $(id).classList.remove('show')); }
+$('msgDim').onclick = msgFecharFolhas;
+$('msgBack').onclick = ()=>{
+  if($('msgViewer').classList.contains('show')){ $('msgViewerFechar').onclick(); return; }
+  if($('msgDim').classList.contains('show')){ msgFecharFolhas(); return; }
+  if(msg.thread && $('msgThreadBox').style.display === 'block'){ msg.thread = ''; msg.ref = ''; msg.refTitulo = ''; msgLimparPend(); $('msgText').value = ''; msgAjustaCampo(); renderMsgs(); window.scrollTo(0, 0); } else goHome();
+};
 $('msgRefresh').onclick = ()=> loadMsgs();
 $('msgSend').onclick = sendMsg;
-$('msgNovaSel').onchange = ()=>{ const sel = $('msgNovaSel'); if(!sel.value) return; msg.thread = sel.value; msg.nome = sel.options[sel.selectedIndex].textContent; msg.ref = ''; msg.refTitulo = ''; sel.value = ''; renderMsgs(); };
+$('msgBusca').oninput = renderMsgs;
+// anexos: câmera, galeria ou documento
+$('msgClip').onclick = ()=>{ $('msgDim').classList.add('show'); $('msgSheetAnexo').classList.add('show'); };
+document.querySelectorAll('#msgSheetAnexo [data-anx]').forEach(b => b.onclick = ()=>{ msgFecharFolhas(); const inp = $(b.getAttribute('data-anx')); inp.value = ''; inp.click(); });
+['msgFileCam','msgFileGal','msgFileDoc'].forEach(id => $(id).onchange = ()=>{
+  const f = $(id).files && $(id).files[0]; if(!f) return;
+  if(/^image\//.test(f.type)){
+    resizeImageFile(f, 1600, dataUrl => {
+      const tam = Math.round((dataUrl.length - dataUrl.indexOf(',') - 1) * 3 / 4);
+      if(tam > MSG_MAX_BYTES){ toast('Foto muito grande, mesmo reduzida (máx. 5 MB).', 'err'); return; }
+      msg.pend = { nome: (f.name || 'foto').replace(/\.[^.]+$/, '') + '.jpg', tipo:'image/jpeg', dataUrl, tamanho: tam };
+      msgPintaRodape(); $('msgText').focus();
+    });
+  } else if(f.type === 'application/pdf' || /\.pdf$/i.test(f.name)){
+    if(f.size > MSG_MAX_BYTES){ toast('O PDF tem ' + msgTam(f.size) + '. O limite é 5 MB.', 'err'); return; }
+    const rd = new FileReader();
+    rd.onload = ()=>{ msg.pend = { nome: f.name || 'documento.pdf', tipo:'application/pdf', dataUrl: String(rd.result).replace(/^data:[^,]*,/, 'data:application/pdf;base64,'), tamanho: f.size }; msgPintaRodape(); };
+    rd.readAsDataURL(f);
+  } else toast('Envie uma foto ou um PDF.', 'err');
+});
+// nova conversa (gestor e Técnico de Segurança)
+async function msgAbrirNova(){
+  $('msgDim').classList.add('show'); $('msgSheetNova').classList.add('show');
+  $('msgNovaBusca').value = '';
+  if(!msg.colabs){
+    $('msgNovaLista').innerHTML = '<p class="hint">Carregando…</p>';
+    try{ const r = await api('listUsers'); if(r.error) throw new Error(r.error); msg.colabs = (r.users || []).filter(u => u.role === 'tecnico').sort((a, b) => (a.nome || a.username).localeCompare(b.nome || b.username)); }
+    catch(e){ $('msgNovaLista').innerHTML = '<p class="hint">Não foi possível carregar os colaboradores.</p>'; return; }
+  }
+  msgPintaNova();
+}
+function msgPintaNova(){
+  const q = ($('msgNovaBusca').value || '').trim().toLowerCase();
+  const l = (msg.colabs || []).filter(u => !q || (u.nome || u.username).toLowerCase().indexOf(q) !== -1);
+  $('msgNovaLista').innerHTML = l.length ? l.map(u => `<button type="button" class="cx-th" data-nl="${escHtml(u.username)}">${u.foto ? avatarHtml(u.nome || u.username, u.foto, 44) : msgAv(u.nome || u.username, 44)}<div class="m"><b>${escHtml(u.nome || u.username)}</b><span>Colaborador</span></div></button>`).join('')
+    : '<p class="hint">Nenhum colaborador encontrado.</p>';
+  $('msgNovaLista').querySelectorAll('[data-nl]').forEach(b => b.onclick = ()=>{ const u = msg.colabs.find(x => x.username === b.getAttribute('data-nl')); msgFecharFolhas(); msg.thread = u.username; msg.nome = u.nome || u.username; msg.ref = ''; msg.refTitulo = ''; msgLimparPend(); renderMsgs(); window.scrollTo(0, 0); });
+}
+$('msgNovaBtn').onclick = msgAbrirNova;
+$('msgNovaBusca').oninput = msgPintaNova;
 const ab = { data:null, tipo:'', empresa:'' };
 function abTipoKey(x){ const k = tipoKey(x.tipoDocumento); return k === 'pt' || k === 'veiculo' || k === 'escada' ? k : 'outro'; }
 async function openAbertos(){

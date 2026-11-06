@@ -40,6 +40,7 @@ function doPost(e) {
 
     if (a === "enviarMensagem") return enviarMensagem(data);
     if (a === "listMensagens") return listMensagens(data);
+    if (a === "baixarAnexo") return baixarAnexo(data);
     if (a === "marcarLidas") return marcarLidas(data);
     if (a === "docAberto") return docAberto(data);
     if (a === "docFechado") return docFechado(data);
@@ -1125,23 +1126,45 @@ function savePerguntas(data) {
 
 // O gestor edita só o aviso aos técnicos da PRÓPRIA empresa.
 /* ============ MENSAGENS (chat do gestor com o colaborador) ============ */
-var MENSAGENS_HEADERS = ["ID", "Data/Hora", "Empresa", "De (login)", "De (nome)", "Para (login)", "Texto", "Documento em aberto", "Lida"];
-function mensagensSheet() { return getOrCreateSheet(getOrCreateSpreadsheet(), "Mensagens", MENSAGENS_HEADERS); }
-function msgObj_(v) {
-  return { id: String(v[0]), ts: Number(v[1]), empresa: String(v[2] || ""), de: normUser(v[3]), deNome: String(v[4] || ""), para: normUser(v[5]),
-           texto: String(v[6] || ""), abertoId: String(v[7] || ""), lida: v[8] === true || String(v[8]) === "1" || String(v[8]).toLowerCase() === "true" };
+var MENSAGENS_HEADERS = ["ID", "Data/Hora", "Empresa", "De (login)", "De (nome)", "Para (login)", "Texto", "Documento em aberto", "Lida",
+  "Anexo (arquivo no Drive)", "Anexo (nome)", "Anexo (tipo)", "Anexo (tamanho)"];
+function mensagensSheet() {
+  var sh = getOrCreateSheet(getOrCreateSpreadsheet(), "Mensagens", MENSAGENS_HEADERS);
+  // planilhas antigas: acrescenta o título das colunas de anexo
+  if (!sh.getRange(1, 10).getValue()) sh.getRange(1, 1, 1, MENSAGENS_HEADERS.length).setValues([MENSAGENS_HEADERS]);
+  return sh;
 }
-function enviarMensagem_(caller, paraLogin, paraRec, texto, abertoId) {
+function msgObj_(v) {
+  var m = { id: String(v[0]), ts: Number(v[1]), empresa: String(v[2] || ""), de: normUser(v[3]), deNome: String(v[4] || ""), para: normUser(v[5]),
+           texto: String(v[6] || ""), abertoId: String(v[7] || ""), lida: v[8] === true || String(v[8]) === "1" || String(v[8]).toLowerCase() === "true" };
+  if (v[9]) m.anexo = { nome: String(v[10] || "arquivo"), tipo: String(v[11] || ""), tamanho: Number(v[12]) || 0 };
+  return m;
+}
+
+/* ---- Anexos do chat (fotos e PDF) ----
+   Ficam no Drive em "_Anexos do chat/<empresa>", fora da pasta compartilhada da
+   empresa: só quem está na conversa abre, pelo próprio app (baixarAnexo). */
+var ANEXO_TIPOS = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
+var ANEXO_MAX_BYTES = 5 * 1024 * 1024;
+function pastaAnexos_(empresaNome) { return subpasta(subpasta(getRaiz(), "_Anexos do chat"), slugSheetTabName(empresaNome || "Sem empresa")); }
+function anexoRotulo_(a) { return a ? (a.tipo.indexOf("image/") === 0 ? "📷 Foto" : "📄 " + a.nome) : ""; }
+function enviarMensagem_(caller, paraLogin, paraRec, texto, abertoId, anexo) {
   var id = "M" + Date.now().toString(36) + Math.floor(Math.random() * 1000);
+  var empresa = caller.empresa || paraRec.empresa || "";
+  var arq = ["", "", "", ""];
+  if (anexo) {
+    var f = pastaAnexos_(empresa).createFile(Utilities.newBlob(anexo.bytes, anexo.tipo, id + "_" + anexo.nome));
+    arq = [f.getId(), anexo.nome, anexo.tipo, anexo.bytes.length];
+  }
   var lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
-    mensagensSheet().appendRow([id, Date.now(), caller.empresa || paraRec.empresa || "", caller.username, caller.nome || caller.username, paraLogin, texto, abertoId || "", "0"]);
+    mensagensSheet().appendRow([id, Date.now(), empresa, caller.username, caller.nome || caller.username, paraLogin, texto, abertoId || "", "0"].concat(arq));
   } finally { lock.releaseLock(); }
   var enviouPush = false;
   try {
     if (pushAtivo_() && paraRec.fcmToken) {
-      sendFcmPush(paraRec.fcmToken, "Mensagem de " + (caller.nome || caller.username), texto.slice(0, 140));
+      sendFcmPush(paraRec.fcmToken, "Mensagem de " + (caller.nome || caller.username), (texto || anexoRotulo_(anexo && { nome: anexo.nome, tipo: anexo.tipo })).slice(0, 140));
       enviouPush = true;
     }
   } catch (e) { Logger.log("push da mensagem falhou: " + e.message); }
@@ -1151,7 +1174,18 @@ function enviarMensagem(data) {
   var caller = authCaller(data);
   if (!caller || caller.role === "admin") return jsonOut({ error: "não autorizado" });
   var texto = (data.texto || "").toString().trim().slice(0, 500);
-  if (!texto) return jsonOut({ error: "escreva a mensagem" });
+  var anexo = null;
+  if (data.anexo && typeof data.anexo === "object") {
+    var tipo = (data.anexo.tipo || "").toString().toLowerCase();
+    if (ANEXO_TIPOS.indexOf(tipo) === -1) return jsonOut({ error: "tipo de arquivo não permitido (envie foto ou PDF)" });
+    var bytes;
+    try { bytes = Utilities.base64Decode(String(data.anexo.base64 || "").replace(/^data:[^,]*,/, "")); } catch (e) { return jsonOut({ error: "arquivo inválido" }); }
+    if (!bytes || !bytes.length) return jsonOut({ error: "arquivo vazio" });
+    if (bytes.length > ANEXO_MAX_BYTES) return jsonOut({ error: "arquivo maior que 5 MB" });
+    var nome = (data.anexo.nome || "arquivo").toString().replace(/[\\/:*?"<>|]+/g, "_").slice(0, 80) || "arquivo";
+    anexo = { nome: nome, tipo: tipo, bytes: bytes };
+  }
+  if (!texto && !anexo) return jsonOut({ error: "escreva a mensagem" });
   var para = normUser(data.para);
   var raw = PropertiesService.getScriptProperties().getProperty("user_" + para);
   if (!raw) return jsonOut({ error: "destinatário não encontrado" });
@@ -1168,8 +1202,28 @@ function enviarMensagem(data) {
     }
     if (!falou) return jsonOut({ error: "aguarde o gestor iniciar a conversa" });
   }
-  var r = enviarMensagem_(caller, para, rec, texto, (data.abertoId || "").toString().slice(0, 40));
+  var r = enviarMensagem_(caller, para, rec, texto, (data.abertoId || "").toString().slice(0, 40), anexo);
   return jsonOut({ ok: true, id: r.id, push: r.push });
+}
+// Devolve o arquivo anexado a uma mensagem, só para quem enviou ou recebeu.
+function baixarAnexo(data) {
+  var caller = authCaller(data);
+  if (!caller || caller.role === "admin") return jsonOut({ error: "não autorizado" });
+  var id = (data.id || "").toString();
+  var sh = mensagensSheet(), n = sh.getLastRow();
+  if (n < 2 || !id) return jsonOut({ error: "mensagem não encontrada" });
+  var vals = sh.getRange(2, 1, n - 1, MENSAGENS_HEADERS.length).getValues();
+  for (var i = vals.length - 1; i >= 0; i--) {
+    if (String(vals[i][0]) !== id) continue;
+    var m = msgObj_(vals[i]);
+    if (m.de !== caller.username && m.para !== caller.username) return jsonOut({ error: "não autorizado" });
+    if (!vals[i][9]) return jsonOut({ error: "mensagem sem anexo" });
+    try {
+      var blob = DriveApp.getFileById(String(vals[i][9])).getBlob();
+      return jsonOut({ ok: true, nome: m.anexo.nome, tipo: m.anexo.tipo, base64: Utilities.base64Encode(blob.getBytes()) });
+    } catch (e) { return jsonOut({ error: "o arquivo não está mais disponível" }); }
+  }
+  return jsonOut({ error: "mensagem não encontrada" });
 }
 function listMensagens(data) {
   var caller = authCaller(data);
@@ -1186,10 +1240,14 @@ function listMensagens(data) {
     }
     out.reverse();
     var props = PropertiesService.getScriptProperties();
+    var papeis = {};
     out.forEach(function (m) {
       var outro = m.de === caller.username ? m.para : m.de;
-      if (!(outro in nomes)) { try { nomes[outro] = JSON.parse(props.getProperty("user_" + outro)).nome || outro; } catch (e) { nomes[outro] = outro; } }
-      m.outro = outro; m.outroNome = nomes[outro];
+      if (!(outro in nomes)) {
+        try { var ur = JSON.parse(props.getProperty("user_" + outro)); nomes[outro] = ur.nome || outro; papeis[outro] = ur.role || ""; }
+        catch (e) { nomes[outro] = outro; papeis[outro] = ""; }
+      }
+      m.outro = outro; m.outroNome = nomes[outro]; m.outroRole = papeis[outro];
     });
   }
   return jsonOut({ ok: true, mensagens: out, naoLidas: nao, eu: caller.username });
